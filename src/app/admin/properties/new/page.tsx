@@ -1,0 +1,402 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ArrowLeft, Plus, X, Video, MapPin,
+  Car, Wifi, Droplets, Zap, Trees, Dumbbell, ShieldCheck, Building2,
+  Upload, Trash2, Check
+} from 'lucide-react';
+import { createProperty, getAgentsForSelect } from '../actions';
+
+function Youtube({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
+
+const amenityOptions = [
+  { id: 'covered_parking', label: 'Covered Parking', icon: 'car' },
+  { id: 'smart_home', label: 'Smart Home', icon: 'wifi' },
+  { id: 'water_supply', label: '24/7 Water', icon: 'droplets' },
+  { id: 'power_backup', label: 'Power Backup', icon: 'zap' },
+  { id: 'open_space', label: 'Open Space', icon: 'trees' },
+  { id: 'gym_pool', label: 'Gym & Pool', icon: 'dumbbell' },
+  { id: 'security', label: '24/7 Security', icon: 'shield' },
+  { id: 'clubhouse', label: 'Clubhouse', icon: 'building' },
+  { id: 'jogging_track', label: 'Jogging Track', icon: 'trees' },
+  { id: 'play_area', label: 'Play Area', icon: 'trees' },
+  { id: 'garden', label: 'Garden', icon: 'trees' },
+  { id: 'indoor_games', label: 'Indoor Games', icon: 'dumbbell' },
+  { id: 'ev_charging', label: 'EV Charging', icon: 'zap' },
+  { id: 'rainwater', label: 'Rainwater', icon: 'droplets' },
+  { id: 'intercom', label: 'Intercom', icon: 'wifi' },
+  { id: 'cctv', label: 'CCTV', icon: 'shield' },
+];
+
+const highlightOptions = [
+  'Near Metro Station', 'Gated Community', 'RERA Approved', 'Top Builder',
+  'Vastu Compliant', 'Lake View', 'Park Facing', 'Corner Unit',
+  'Ready to Move', 'Under Construction', 'Premium Location', 'Investment Hotspot',
+];
+
+const iconMap: Record<string, any> = {
+  car: Car, wifi: Wifi, droplets: Droplets, zap: Zap,
+  trees: Trees, dumbbell: Dumbbell, shield: ShieldCheck, building: Building2,
+};
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const input = "w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400";
+const textarea = "w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400 resize-none";
+const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1";
+const reqDot = " after:content-['*'] after:ml-0.5 after:text-red-400";
+
+export default function NewPropertyPage() {
+  const router = useRouter();
+  const [agents, setAgents] = useState<{ id: string; name: string; company: string }[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [bulkUrls, setBulkUrls] = useState('');
+  const [showBulk, setShowBulk] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [selectedHighlights, setSelectedHighlights] = useState<string[]>([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState([{ name: '', distance: '' }]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Fetch agents from DB on mount
+  useEffect(() => {
+    getAgentsForSelect().then(setAgents);
+  }, []);
+
+  const addImage = () => {
+    const url = newImageUrl.trim();
+    if (url && !imageUrls.includes(url)) { setImageUrls([...imageUrls, url]); setNewImageUrl(''); }
+  };
+  const addBulk = () => {
+    const urls = bulkUrls.split('\n').map(u => u.trim()).filter(u => u && !imageUrls.includes(u));
+    if (urls.length) { setImageUrls([...imageUrls, ...urls]); setBulkUrls(''); setShowBulk(false); }
+  };
+  const toggle = (list: string[], item: string, setter: (v: string[]) => void) =>
+    setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    const fd = new FormData(e.currentTarget);
+    fd.append('image_urls', JSON.stringify(imageUrls));
+    fd.append('video_url', videoUrl);
+    fd.append('youtube_url', youtubeUrl);
+    fd.append('amenities', JSON.stringify(selectedAmenities));
+    fd.append('highlights', JSON.stringify(selectedHighlights));
+    fd.append('nearby_places', JSON.stringify(nearbyPlaces.filter(p => p.name.trim())));
+
+    const result = await createProperty(fd);
+
+    if (result?.error) {
+      setSubmitError(result.error);
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(false);
+    router.push('/admin/properties');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto pb-12">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/properties" className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 flex items-center justify-center transition-colors">
+            <ArrowLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          </Link>
+          <h1 className="text-xl font-bold text-navy dark:text-white">Add Property</h1>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/admin/properties" className="h-9 px-4 rounded-lg border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 transition-colors inline-flex items-center">Cancel</Link>
+          <button form="property-form" type="submit" disabled={isSubmitting}
+            className="h-9 px-5 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-all disabled:opacity-60 inline-flex items-center gap-1.5">
+            {isSubmitting ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-4 h-4" />}
+            {isSubmitting ? 'Saving...' : 'Save Property'}
+          </button>
+        </div>
+      </div>
+
+      {submitError && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-xl border border-red-200 dark:border-red-900">
+          Error: {submitError}
+        </div>
+      )}
+
+      <form id="property-form" onSubmit={handleSubmit} className="space-y-5">
+
+        {/* ═══ SECTION 1: BASIC INFO ═══════════════════════════════════ */}
+        <Card title="Basic Information">
+          <div className="grid grid-cols-6 gap-x-4 gap-y-4">
+            <div className="col-span-6">
+              <label className={labelCls + reqDot}>Title</label>
+              <input name="title" required placeholder="Prestige Lakeside Habitat" className={input} />
+            </div>
+            <div className="col-span-6">
+              <label className={labelCls}>Description</label>
+              <textarea name="description" rows={3} placeholder="Describe the property..." className={textarea} />
+            </div>
+            <div className="col-span-3 md:col-span-2">
+              <label className={labelCls}>Type</label>
+              <select name="property_type" className={input}>
+                <option>Apartment</option><option>Villa</option><option>Plot</option>
+                <option>Penthouse</option><option>Commercial</option><option>Row House</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Listing Type</label>
+              <select name="listing_type" className={input}>
+                <option value="Sale">Sale (Buy)</option>
+                <option value="Rent">Rent</option>
+                <option value="Resale">Resale</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Ownership</label>
+              <select name="ownership" className={input}>
+                <option value="1st Owner">1st Owner / Builder</option>
+                <option value="2nd Owner">2nd Owner</option>
+                <option value="3rd Owner">3rd Owner</option>
+                <option value="4th+ Owner">4th+ Owner</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>BHK</label>
+              <select name="bhk" className={input}>
+                <option value="1">1 BHK</option><option value="2">2 BHK</option>
+                <option value="3">3 BHK</option><option value="4">4 BHK</option>
+                <option value="5">5+ BHK</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-2">
+              <label className={labelCls + reqDot}>Price (₹)</label>
+              <input name="price" type="number" required placeholder="12800000" className={input} />
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Price Type</label>
+              <select name="price_type" className={input}>
+                <option value="fixed">Fixed</option><option value="negotiable">Negotiable</option>
+                <option value="starting_from">Starting From</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Carpet (sqft)</label>
+              <input name="carpet_area" type="number" placeholder="1200" className={input} />
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Super Area</label>
+              <input name="built_up_area" type="number" placeholder="1450" className={input} />
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Floor</label>
+              <input name="floor" placeholder="12th of 24" className={input} />
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Possession</label>
+              <input name="possession" placeholder="Dec 2025" className={input} />
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Furnishing</label>
+              <select name="furnishing" className={input}>
+                <option>Unfurnished</option><option value="Semi">Semi</option><option value="Full">Fully</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Status</label>
+              <select name="status" className={input}>
+                <option value="available">Available</option><option value="sold">Sold</option>
+                <option value="reserved">Reserved</option><option value="coming_soon">Coming Soon</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-2">
+              <label className={labelCls}>RERA Number</label>
+              <input name="rera_number" placeholder="PRM/KA/RERA/1234/..." className={input} />
+            </div>
+            <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Demand</label>
+              <select name="demand_tag" className={input}>
+                <option value="high">🔥 High</option><option value="moderate">📈 Moderate</option><option value="low">📉 Low</option>
+              </select>
+            </div>
+            <div className="col-span-6 md:col-span-3">
+              <label className={labelCls + reqDot}>Primary Agent</label>
+              <select name="primary_agent_id" required className={input}>
+                <option value="">— Select —</option>
+                {agents.map(agent => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name}{agent.company ? ` — ${agent.company}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        {/* ═══ SECTION 2: LOCATION ════════════════════════════════════ */}
+        <Card title="Location">
+          <div className="grid grid-cols-6 gap-x-4 gap-y-4">
+            <div className="col-span-6">
+              <label className={labelCls + reqDot}>Full Address</label>
+              <input name="location_address" required placeholder="ITPL Main Road, Whitefield, Bangalore - 560066" className={input} />
+            </div>
+            <div className="col-span-3">
+              <label className={labelCls}>City</label>
+              <input name="city" placeholder="Bangalore" className={input} />
+            </div>
+            <div className="col-span-3">
+              <label className={labelCls}>Locality</label>
+              <input name="locality" placeholder="Whitefield" className={input} />
+            </div>
+          </div>
+
+          {/* Nearby */}
+          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <label className={labelCls + " mb-2"}>Nearby Landmarks</label>
+            <div className="space-y-2">
+              {nearbyPlaces.map((p, i) => (
+                <div key={i} className="flex gap-2">
+                  <input placeholder="ITPL Tech Park" value={p.name} onChange={e => { const u = [...nearbyPlaces]; u[i].name = e.target.value; setNearbyPlaces(u); }} className={input + " flex-1"} />
+                  <input placeholder="0.5 km" value={p.distance} onChange={e => { const u = [...nearbyPlaces]; u[i].distance = e.target.value; setNearbyPlaces(u); }} className={input + " !w-24"} />
+                  <button type="button" onClick={() => setNearbyPlaces(nearbyPlaces.filter((_, j) => j !== i))} className="h-10 w-10 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center shrink-0">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setNearbyPlaces([...nearbyPlaces, { name: '', distance: '' }])} className="mt-2 text-xs font-semibold text-primary hover:text-teal-700 flex items-center gap-1">
+              <Plus className="w-3.5 h-3.5" /> Add landmark
+            </button>
+          </div>
+        </Card>
+
+        {/* ═══ SECTION 3: MEDIA ═══════════════════════════════════════ */}
+        <Card title="Media">
+          {/* Single image URL */}
+          <div className="flex gap-2">
+            <input placeholder="Paste image URL..." value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }}
+              className={input + " flex-1"} />
+            <button type="button" onClick={addImage} className="h-10 px-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-teal-700 shrink-0 flex items-center gap-1">
+              <Plus className="w-4 h-4" /> Add
+            </button>
+          </div>
+
+          <button type="button" onClick={() => setShowBulk(!showBulk)} className="mt-2 text-xs font-semibold text-primary hover:text-teal-700 flex items-center gap-1">
+            <Upload className="w-3.5 h-3.5" /> {showBulk ? 'Hide' : 'Bulk upload (multiple URLs)'}
+          </button>
+
+          {showBulk && (
+            <div className="mt-2 space-y-2">
+              <textarea placeholder={"One URL per line:\nhttps://example.com/img1.jpg\nhttps://example.com/img2.jpg"} value={bulkUrls} onChange={e => setBulkUrls(e.target.value)} className={textarea + " min-h-[80px]"} />
+              <button type="button" onClick={addBulk} className="h-8 px-3 bg-primary text-white rounded-lg text-xs font-medium hover:bg-teal-700 flex items-center gap-1">
+                <Upload className="w-3.5 h-3.5" /> Add All
+              </button>
+            </div>
+          )}
+
+          {/* Preview grid */}
+          {imageUrls.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2">{imageUrls.length} image(s) • First = cover photo</p>
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                {imageUrls.map((url, i) => (
+                  <div key={i} className="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 aspect-[4/3]">
+                    <img src={url} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    {i === 0 && <span className="absolute top-1 left-1 bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
+                    <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, j) => j !== i))}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Video & YouTube */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div>
+              <label className={labelCls}><Video className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />Video URL</label>
+              <input placeholder="https://example.com/walkthrough.mp4" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} className={input} />
+            </div>
+            <div>
+              <label className={labelCls}><Youtube className="w-3.5 h-3.5 inline mr-1 -mt-0.5 text-red-500 dark:text-red-400" />YouTube</label>
+              <input placeholder="https://youtube.com/watch?v=..." value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} className={input} />
+            </div>
+          </div>
+          {youtubeUrl && (() => {
+            let vid = '';
+            if (youtubeUrl.includes('youtu.be/')) vid = youtubeUrl.split('youtu.be/')[1]?.split('?')[0];
+            else if (youtubeUrl.includes('v=')) vid = youtubeUrl.split('v=')[1]?.split('&')[0];
+            return vid ? (
+              <div className="mt-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 aspect-video max-w-sm">
+                <iframe src={`https://www.youtube.com/embed/${vid}`} className="w-full h-full" allowFullScreen title="Preview" />
+              </div>
+            ) : null;
+          })()}
+        </Card>
+
+        {/* ═══ SECTION 4: HIGHLIGHTS ══════════════════════════════════ */}
+        <Card title="Highlights">
+          <div className="flex flex-wrap gap-1.5">
+            {highlightOptions.map(tag => (
+              <button key={tag} type="button" onClick={() => toggle(selectedHighlights, tag, setSelectedHighlights)}
+                className={`h-8 px-3 rounded-lg text-xs font-medium border transition-all ${selectedHighlights.includes(tag)
+                  ? 'bg-teal-50 dark:bg-teal-950/40 border-primary text-primary'
+                  : 'bg-white dark:bg-navy-900 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                  }`}>
+                {selectedHighlights.includes(tag) && <Check className="w-3 h-3 inline mr-1 -mt-0.5" />}
+                {tag}
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        {/* ═══ SECTION 5: AMENITIES ═══════════════════════════════════ */}
+        <Card title="Amenities">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {amenityOptions.map(a => {
+              const Icon = iconMap[a.icon] || Building2;
+              const on = selectedAmenities.includes(a.id);
+              return (
+                <button key={a.id} type="button" onClick={() => toggle(selectedAmenities, a.id, setSelectedAmenities)}
+                  className={`flex items-center gap-2 h-10 px-3 rounded-lg border text-xs font-medium transition-all ${on
+                    ? 'bg-teal-50 dark:bg-teal-950/40 border-primary text-primary'
+                    : 'bg-white dark:bg-navy-900 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                    }`}>
+                  <Icon className={`w-4 h-4 shrink-0 ${on ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`} />
+                  {a.label}
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+      </form>
+    </div>
+  );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl">
+      <div className="h-11 px-5 flex items-center border-b border-gray-100 dark:border-gray-800">
+        <h2 className="text-sm font-bold text-navy dark:text-white">{title}</h2>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
