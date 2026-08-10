@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, X, LocateFixed, Loader2 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
@@ -19,6 +19,87 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [location, setLocation] = useState({ locality: 'Detecting...', city: '', state: '' });
   const [locationLoading, setLocationLoading] = useState(true);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationResults, setLocationResults] = useState<any[]>([]);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+
+  const detectLocation = (highAccuracy: boolean) => {
+    setLocationLoading(true);
+    if (!('geolocation' in navigator)) {
+      setLocation({ locality: 'Your Location', city: 'India', state: '' });
+      setLocationLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const data = await res.json();
+          const address = data.address || {};
+
+          const locality = address.suburb || address.neighbourhood || address.village || address.town || address.city_district || address.city || 'Your Area';
+          const city = address.city || address.town || address.state_district || '';
+          const state = address.state || '';
+
+          const locationData = { locality, city, state };
+          setLocation(locationData);
+          localStorage.setItem('roofmint_user_location', JSON.stringify(locationData));
+        } catch {
+          setLocation({ locality: 'Your Location', city: 'India', state: '' });
+        }
+        setLocationLoading(false);
+      },
+      () => {
+        setLocation(prev => prev.locality === 'Detecting...' ? { locality: 'Your Location', city: 'India', state: '' } : prev);
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 10000 : 8000, maximumAge: highAccuracy ? 0 : 300000 }
+    );
+  };
+
+  const searchLocation = async (query: string) => {
+    if (query.trim().length < 3) {
+      setLocationResults([]);
+      return;
+    }
+    setSearchingLocation(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&addressdetails=1&limit=6`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      setLocationResults(Array.isArray(data) ? data : []);
+    } catch {
+      setLocationResults([]);
+    }
+    setSearchingLocation(false);
+  };
+
+  useEffect(() => {
+    if (!showLocationModal) return;
+    const timer = setTimeout(() => searchLocation(locationQuery), 400);
+    return () => clearTimeout(timer);
+  }, [locationQuery, showLocationModal]);
+
+  const selectManualLocation = (result: any) => {
+    const address = result.address || {};
+    const locality = address.suburb || address.neighbourhood || address.village || address.town || address.city_district || address.city || result.display_name?.split(',')[0] || 'Selected Area';
+    const city = address.city || address.town || address.state_district || '';
+    const state = address.state || '';
+    const locationData = { locality, city, state };
+    setLocation(locationData);
+    setLocationLoading(false);
+    localStorage.setItem('roofmint_user_location', JSON.stringify(locationData));
+    setShowLocationModal(false);
+    setLocationQuery('');
+    setLocationResults([]);
+  };
 
   useEffect(() => {
     try {
@@ -27,43 +108,10 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(cached);
         setLocation(parsed);
         setLocationLoading(false);
+        return;
       }
     } catch {}
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`,
-              { headers: { 'Accept-Language': 'en' } }
-            );
-            const data = await res.json();
-            const address = data.address || {};
-            
-            const locality = address.suburb || address.neighbourhood || address.village || address.town || address.city_district || address.city || 'Your Area';
-            const city = address.city || address.town || address.state_district || '';
-            const state = address.state || '';
-
-            const locationData = { locality, city, state };
-            setLocation(locationData);
-            localStorage.setItem('roofmint_user_location', JSON.stringify(locationData));
-          } catch {
-            setLocation(prev => prev.locality === 'Detecting...' ? { locality: 'Your Location', city: 'India', state: '' } : prev);
-          }
-          setLocationLoading(false);
-        },
-        () => {
-          setLocation(prev => prev.locality === 'Detecting...' ? { locality: 'Your Location', city: 'India', state: '' } : prev);
-          setLocationLoading(false);
-        },
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-      );
-    } else {
-      setLocation({ locality: 'Your Location', city: 'India', state: '' });
-      setLocationLoading(false);
-    }
+    detectLocation(false);
   }, []);
 
   const displayLocation = location.city
@@ -78,7 +126,10 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       {/* Top App Bar */}
       <header className="sticky top-0 z-40 w-full bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 md:w-[calc(100%-4rem)] md:ml-16">
         <div className="flex items-center justify-between px-4 md:px-8 h-14 md:h-16">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLocationModal(true)}
+            className="flex items-center gap-2 text-left hover:opacity-75 transition-opacity"
+          >
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary" />
             <div>
               <div className="flex items-center gap-1">
@@ -91,7 +142,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               </div>
               <span className="text-[10px] md:text-xs text-gray-400 dark:text-gray-500">{displaySubtext}</span>
             </div>
-          </div>
+          </button>
           <div className="flex items-center gap-3">
             <Link
               href="/onboarding/ai"
@@ -100,40 +151,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               <Sparkles className="w-3.5 h-3.5" /> AI Recommendation
             </Link>
             <button
-              onClick={() => {
-                setLocationLoading(true);
-                localStorage.removeItem('roofmint_user_location');
-                setLocation({ locality: 'Detecting...', city: '', state: '' });
-                if ('geolocation' in navigator) {
-                  navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                      try {
-                        const { latitude, longitude } = position.coords;
-                        const res = await fetch(
-                          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`,
-                          { headers: { 'Accept-Language': 'en' } }
-                        );
-                        const data = await res.json();
-                        const address = data.address || {};
-                        const locality = address.suburb || address.neighbourhood || address.village || address.town || address.city_district || address.city || 'Your Area';
-                        const city = address.city || address.town || address.state_district || '';
-                        const state = address.state || '';
-                        const locationData = { locality, city, state };
-                        setLocation(locationData);
-                        localStorage.setItem('roofmint_user_location', JSON.stringify(locationData));
-                      } catch {
-                        setLocation({ locality: 'Your Location', city: 'India', state: '' });
-                      }
-                      setLocationLoading(false);
-                    },
-                    () => {
-                      setLocation({ locality: 'Your Location', city: 'India', state: '' });
-                      setLocationLoading(false);
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                  );
-                }
-              }}
+              onClick={() => detectLocation(true)}
               className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 transition-colors"
               title="Re-detect location"
             >
@@ -199,6 +217,70 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
           })}
         </div>
       </nav>
+
+      {/* Location Picker Modal — manual entry, plus a shortcut to auto-detect */}
+      {showLocationModal && (
+        <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4">
+          <div className="bg-white dark:bg-navy-900 rounded-t-2xl md:rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-navy dark:text-white">Set Your Location</h3>
+              <button
+                onClick={() => { setShowLocationModal(false); setLocationQuery(''); setLocationResults([]); }}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <button
+              onClick={() => { detectLocation(true); setShowLocationModal(false); }}
+              className="w-full flex items-center gap-2 justify-center h-11 rounded-xl bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary font-semibold text-sm transition-colors"
+            >
+              <LocateFixed className="w-4 h-4" /> Use My Current Location
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200 dark:bg-navy-700" />
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">OR SEARCH</span>
+              <div className="flex-1 h-px bg-gray-200 dark:bg-navy-700" />
+            </div>
+
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                autoFocus
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                placeholder="Enter city, locality or area..."
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400"
+              />
+              {searchingLocation && (
+                <Loader2 className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 animate-spin" />
+              )}
+            </div>
+
+            {locationResults.length > 0 && (
+              <div className="space-y-1">
+                {locationResults.map((result: any) => (
+                  <button
+                    key={result.place_id}
+                    onClick={() => selectManualLocation(result)}
+                    className="w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-sm text-navy dark:text-white line-clamp-2">{result.display_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {locationQuery.trim().length >= 3 && !searchingLocation && locationResults.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-2">No matches found. Try a different search term.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

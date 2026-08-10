@@ -258,16 +258,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Logout */}
-          <div className="px-4 md:px-0 pt-2">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 font-medium text-sm hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-          </div>
+          {/* Logout — only for signed-in users */}
+          {user && (
+            <div className="px-4 md:px-0 pt-2">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 font-medium text-sm hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
