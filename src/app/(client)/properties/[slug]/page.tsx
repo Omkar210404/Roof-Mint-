@@ -45,10 +45,26 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
   const [copiedShare, setCopiedShare] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLoginGate, setShowLoginGate] = useState(false);
+  const [enquiryPrefill, setEnquiryPrefill] = useState({ name: '', phone: '', email: '' });
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user));
+    supabase.auth.getUser().then(async ({ data }) => {
+      setIsLoggedIn(!!data.user);
+      if (!data.user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, phone')
+        .eq('id', data.user.id)
+        .single();
+
+      setEnquiryPrefill({
+        name: profile?.full_name || data.user.user_metadata?.full_name || '',
+        phone: profile?.phone || '',
+        email: data.user.email || '',
+      });
+    });
   }, []);
 
   // Enquire and WhatsApp contact require a logged-in account so leads
@@ -225,9 +241,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                   </div>
                 )}
                 <form onSubmit={handleEnquirySubmit} className="space-y-3">
-                  <input name="name" required minLength={2} maxLength={80} placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="phone" required type="tel" inputMode="numeric" maxLength={13} placeholder="10-digit Mobile Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="email" type="email" placeholder="Email (optional)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="name" required minLength={2} maxLength={80} defaultValue={enquiryPrefill.name} placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="phone" required type="tel" inputMode="numeric" maxLength={13} defaultValue={enquiryPrefill.phone} placeholder="10-digit Mobile Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="email" type="email" defaultValue={enquiryPrefill.email} placeholder="Email (optional)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                   <input name="budget_hint" maxLength={40} placeholder="Budget Range (e.g. ₹1-1.5 Cr)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                   <textarea name="message" maxLength={500} placeholder="Any specific requirements..." rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
                   <div className="flex gap-3 pt-2">
