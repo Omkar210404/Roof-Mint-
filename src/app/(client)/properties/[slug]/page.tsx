@@ -39,6 +39,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
   const [showFullAbout, setShowFullAbout] = useState(false);
   const [showEnquiryModal, setShowEnquiryModal] = useState(false);
   const [enquirySubmitted, setEnquirySubmitted] = useState(false);
+  const [enquiryError, setEnquiryError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [copiedShare, setCopiedShare] = useState(false);
@@ -132,16 +133,45 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     }
   };
 
+  const validateEnquiry = (fd: FormData): string | null => {
+    const name = ((fd.get('name') as string) || '').trim();
+    const phone = ((fd.get('phone') as string) || '').trim();
+    const email = ((fd.get('email') as string) || '').trim();
+
+    if (name.length < 2) return 'Please enter your full name.';
+    if (!/[A-Za-z]/.test(name)) return 'Name must contain letters, not just numbers or symbols.';
+
+    const phoneDigits = phone.replace(/[\s-]/g, '');
+    if (!/^(\+?91)?[6-9]\d{9}$/.test(phoneDigits)) {
+      return 'Please enter a valid 10-digit mobile number.';
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return 'Please enter a valid email address.';
+    }
+
+    return null;
+  };
+
   const handleEnquirySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitting(true);
     const fd = new FormData(e.currentTarget);
+
+    const validationError = validateEnquiry(fd);
+    if (validationError) {
+      setEnquiryError(validationError);
+      return;
+    }
+    setEnquiryError(null);
+
+    setSubmitting(true);
     fd.append('property_id', property.id);
     try {
       await submitEnquiry(fd);
       setEnquirySubmitted(true);
     } catch (err) {
       console.error(err);
+      setEnquiryError('Something went wrong submitting your enquiry. Please try again.');
     }
     setSubmitting(false);
   };
@@ -180,7 +210,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                 <p className="text-gray-600 dark:text-gray-300 text-base mb-8 leading-relaxed">
                   Thank you for your interest in <span className="font-semibold text-navy dark:text-white">{property.title}</span>. Our team will reach out within 24 hours.
                 </p>
-                <button onClick={() => { setShowEnquiryModal(false); setEnquirySubmitted(false); }}
+                <button onClick={() => { setShowEnquiryModal(false); setEnquirySubmitted(false); setEnquiryError(null); }}
                   className="w-full h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all">
                   Continue Exploring
                 </button>
@@ -189,14 +219,19 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               <>
                 <h2 className="text-xl font-bold text-navy dark:text-white mb-1">Enquire about {property.title}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Fill in your details and we&apos;ll get back to you</p>
+                {enquiryError && (
+                  <div className="mb-3 p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-xl border border-red-200 dark:border-red-900">
+                    {enquiryError}
+                  </div>
+                )}
                 <form onSubmit={handleEnquirySubmit} className="space-y-3">
-                  <input name="name" required placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="phone" required placeholder="Phone Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="name" required minLength={2} maxLength={80} placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="phone" required type="tel" inputMode="numeric" maxLength={13} placeholder="10-digit Mobile Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                   <input name="email" type="email" placeholder="Email (optional)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="budget_hint" placeholder="Budget Range (e.g. ₹1-1.5 Cr)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <textarea name="message" placeholder="Any specific requirements..." rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
+                  <input name="budget_hint" maxLength={40} placeholder="Budget Range (e.g. ₹1-1.5 Cr)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <textarea name="message" maxLength={500} placeholder="Any specific requirements..." rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
                   <div className="flex gap-3 pt-2">
-                    <button type="button" onClick={() => setShowEnquiryModal(false)}
+                    <button type="button" onClick={() => { setShowEnquiryModal(false); setEnquiryError(null); }}
                       className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50">Cancel</button>
                     <button type="submit" disabled={submitting}
                       className="flex-1 h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
