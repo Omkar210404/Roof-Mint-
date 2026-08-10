@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
@@ -19,22 +19,6 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [location, setLocation] = useState({ locality: 'Detecting...', city: '', state: '' });
   const [locationLoading, setLocationLoading] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  useEffect(() => {
-    try {
-      const collapsed = localStorage.getItem('roofmint_sidebar_collapsed');
-      if (collapsed === 'true') setSidebarCollapsed(true);
-    } catch {}
-  }, []);
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed((prev) => {
-      const next = !prev;
-      try { localStorage.setItem('roofmint_sidebar_collapsed', String(next)); } catch {}
-      return next;
-    });
-  };
 
   useEffect(() => {
     try {
@@ -92,7 +76,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background max-w-[480px] md:max-w-none mx-auto relative">
       {/* Top App Bar */}
-      <header className={`sticky top-0 z-50 w-full bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 transition-[margin,width] duration-300 ${sidebarCollapsed ? 'md:w-full md:ml-0' : 'md:w-[calc(100%-14rem)] md:ml-56'}`}>
+      <header className="sticky top-0 z-40 w-full bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 md:w-[calc(100%-4rem)] md:ml-16">
         <div className="flex items-center justify-between px-4 md:px-8 h-14 md:h-16">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary" />
@@ -169,24 +153,15 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className={`flex-1 pb-16 md:pb-0 min-h-[calc(100vh-4rem)] transition-[margin] duration-300 ${sidebarCollapsed ? 'md:ml-0' : 'md:ml-56'}`}>
+      <main className="flex-1 pb-16 md:pb-0 md:ml-16 min-h-[calc(100vh-4rem)]">
         {children}
       </main>
 
-      {/* Desktop sidebar collapse/expand handle */}
-      <button
-        onClick={toggleSidebar}
-        title={sidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
-        className={`hidden md:flex fixed top-1/2 -translate-y-1/2 z-[70] w-6 h-12 items-center justify-center rounded-r-lg bg-white dark:bg-navy-900 border border-l-0 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-navy-800 shadow-sm transition-[left] duration-300 ${sidebarCollapsed ? 'left-0' : 'left-56'}`}
-      >
-        {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </button>
-
-      {/* Navigation (Mobile Bottom Bar / Desktop Sidebar) */}
-      <nav className={`fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100 dark:border-gray-800 z-[60] safe-area-bottom overflow-hidden transition-[width] duration-300 ${sidebarCollapsed ? 'md:w-0 md:border-r-0' : 'md:w-56'}`}>
-        <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-56">
-          {/* Logo for Desktop */}
-          <div className="hidden md:flex h-14 items-center px-3 mb-2 border-b border-gray-100 dark:border-gray-800">
+      {/* Navigation (Mobile Bottom Bar / Desktop Hover-Expand Rail) */}
+      <nav className="group fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100 dark:border-gray-800 z-50 safe-area-bottom overflow-hidden md:w-16 md:hover:w-56 transition-[width] duration-200 ease-out">
+        <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-16 md:group-hover:w-56 transition-[width] duration-200 ease-out">
+          {/* Logo for Desktop — only shown once the rail expands */}
+          <div className="hidden md:group-hover:flex h-14 items-center px-3 mb-2 border-b border-gray-100 dark:border-gray-800 shrink-0">
             <Link href="/">
               <Image
                 src="/images/logo.png"
@@ -198,7 +173,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               />
             </Link>
           </div>
-          <div className="hidden md:block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-3 mt-2">Navigation</div>
+          <div className="hidden md:group-hover:block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-3 mt-2 whitespace-nowrap shrink-0">Navigation</div>
           {navItems.map((item) => {
             const isActive = pathname === item.href ||
               (item.href === "/" && pathname === "/") ||
@@ -209,15 +184,16 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex md:flex-row flex-col items-center md:justify-start justify-center gap-0.5 md:gap-3 py-1 md:h-11 px-3 rounded-xl transition-colors ${isActive
+                title={item.label}
+                className={`flex md:flex-row flex-col items-center md:justify-center md:group-hover:justify-start justify-center gap-0.5 md:gap-0 md:group-hover:gap-3 py-1 md:h-11 px-3 rounded-xl transition-colors shrink-0 ${isActive
                     ? "text-primary md:bg-teal-50 md:font-semibold"
                     : "text-gray-400 dark:text-gray-500 hover:text-gray-600 md:hover:bg-gray-50 md:hover:text-navy"
                   }`}
               >
-                <div className={`p-1 md:p-0 rounded-lg transition-all duration-200 ${isActive ? 'bg-teal-50 dark:bg-teal-950/40 md:bg-transparent' : ''}`}>
+                <div className={`p-1 md:p-0 rounded-lg transition-all duration-200 shrink-0 ${isActive ? 'bg-teal-50 dark:bg-teal-950/40 md:bg-transparent' : ''}`}>
                   <Icon className={`w-5 h-5 md:w-4 md:h-4 ${isActive ? 'stroke-[2.5px] text-primary' : 'stroke-[1.5px]'}`} />
                 </div>
-                <span className={`text-[10px] md:text-sm font-medium ${isActive ? 'font-semibold text-primary' : ''}`}>{item.label}</span>
+                <span className={`text-[10px] md:text-sm font-medium whitespace-nowrap md:hidden md:group-hover:inline ${isActive ? 'font-semibold text-primary' : ''}`}>{item.label}</span>
               </Link>
             );
           })}
