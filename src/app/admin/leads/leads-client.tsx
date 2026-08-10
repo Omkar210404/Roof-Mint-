@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead } from './actions'
 import {
@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -26,10 +26,20 @@ function getStatusStyle(status: string) {
   return statusOptions.find(s => s.value === status)?.style || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60'
 }
 
+type SortKey = 'date' | 'name'
+type SortDir = 'asc' | 'desc'
+
 export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads: any[]; agents?: any[] }) {
   const [leads, setLeads] = useState<any[]>(initialLeads)
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 5
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortKey, setSortKey] = useState<SortKey>('date')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const pageSize = 10
   const supabase = createClient()
 
   useEffect(() => {
@@ -50,6 +60,16 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
     }
   }, [supabase])
 
+  // Debounce search so filtering doesn't re-run on every keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim().toLowerCase()), 250)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedQuery, statusFilter])
+
   const handleStatusChange = async (id: string, newStatus: string) => {
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
     await updateLeadStatus(id, newStatus)
@@ -64,11 +84,120 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
   const handleDeleteLead = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete lead from "${name}"?`)) return
     setLeads(prev => prev.filter(l => l.id !== id))
+    setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
     await deleteLead(id)
   }
 
-  const totalPages = Math.ceil(leads.length / pageSize) || 1
-  const paginatedLeads = leads.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const filteredSorted = useMemo(() => {
+    let result = leads
+
+    if (statusFilter !== 'all') {
+      result = result.filter(l => (l.status || 'new') === statusFilter)
+    }
+
+    if (debouncedQuery) {
+      result = result.filter(l => {
+        const haystack = [l.name, l.phone, l.email, l.message, l.property?.title, l.property?.location_address]
+          .filter(Boolean).join(' ').toLowerCase()
+        return haystack.includes(debouncedQuery)
+      })
+    }
+
+    const sorted = [...result].sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'date') {
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      } else {
+        cmp = (a.name || '').localeCompare(b.name || '')
+      }
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+
+    return sorted
+  }, [leads, statusFilter, debouncedQuery, sortKey, sortDir])
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir(key === 'date' ? 'desc' : 'asc')
+    }
+  }
+
+  const totalPages = Math.ceil(filteredSorted.length / pageSize) || 1
+  const paginatedLeads = filteredSorted.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const pageIds = paginatedLeads.map(l => l.id)
+  const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id))
+
+  const toggleSelectAllOnPage = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allPageSelected) {
+        pageIds.forEach(id => next.delete(id))
+      } else {
+        pageIds.forEach(id => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const clearSelection = () => setSelectedIds(new Set())
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Delete ${ids.length} selected lead${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return
+    setBulkBusy(true)
+    setLeads(prev => prev.filter(l => !selectedIds.has(l.id)))
+    await Promise.all(ids.map(id => deleteLead(id)))
+    clearSelection()
+    setBulkBusy(false)
+  }
+
+  const bulkStatusChange = async (status: string) => {
+    if (!status) return
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setBulkBusy(true)
+    setLeads(prev => prev.map(l => selectedIds.has(l.id) ? { ...l, status } : l))
+    await Promise.all(ids.map(id => updateLeadStatus(id, status)))
+    setBulkBusy(false)
+  }
+
+  const bulkAssignAgent = async (agentId: string) => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    const selectedAgent = agents.find(a => a.id === agentId)
+    setBulkBusy(true)
+    setLeads(prev => prev.map(l => selectedIds.has(l.id) ? { ...l, assigned_agent_id: agentId, assigned_agent: selectedAgent } : l))
+    await Promise.all(ids.map(id => assignLeadAgent(id, agentId)))
+    setBulkBusy(false)
+  }
+
+  const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
+    <button
+      onClick={() => toggleSort(sortKeyVal)}
+      className="flex items-center gap-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hover:text-navy dark:hover:text-white transition-colors"
+    >
+      {label}
+      {sortKey === sortKeyVal ? (
+        sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+      ) : (
+        <ArrowUpDown className="w-3 h-3 opacity-40" />
+      )}
+    </button>
+  )
 
   return (
     <div className="space-y-6">
@@ -76,6 +205,71 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Leads & Enquiries</h1>
         <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{leads.length} total</span>
       </div>
+
+      {/* Search + Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, phone, email, property..."
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="all">All Statuses</option>
+          {statusOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl px-4 py-2.5">
+          <span className="text-sm font-bold text-primary">{selectedIds.size} selected</span>
+          <button onClick={clearSelection} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 flex items-center gap-1">
+            <X className="w-3.5 h-3.5" /> Clear
+          </button>
+          <div className="flex-1" />
+          <select
+            defaultValue=""
+            disabled={bulkBusy}
+            onChange={(e) => { bulkStatusChange(e.target.value); e.target.value = '' }}
+            className="h-8 text-xs font-medium bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 rounded-lg px-2 text-navy dark:text-white focus:outline-none disabled:opacity-50"
+          >
+            <option value="" disabled>Set Status...</option>
+            {statusOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <select
+            defaultValue=""
+            disabled={bulkBusy}
+            onChange={(e) => { bulkAssignAgent(e.target.value); e.target.value = '' }}
+            className="h-8 text-xs font-medium bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 rounded-lg px-2 text-navy dark:text-white focus:outline-none disabled:opacity-50"
+          >
+            <option value="" disabled>Assign Agent...</option>
+            <option value="">Unassigned</option>
+            {agents.map((agent: any) => (
+              <option key={agent.id} value={agent.id}>{agent.name}</option>
+            ))}
+          </select>
+          <button
+            onClick={bulkDelete}
+            disabled={bulkBusy}
+            className="h-8 px-3 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </button>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
         <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
@@ -86,9 +280,17 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Date</TableHead>
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    onChange={toggleSelectAllOnPage}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                  />
+                </TableHead>
+                <TableHead><SortHeader label="Date" sortKeyVal="date" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Property</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Enquirer Info</TableHead>
+                <TableHead><SortHeader label="Enquirer Info" sortKeyVal="name" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Message / Budget</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Assigned Agent</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</TableHead>
@@ -98,10 +300,20 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
             <TableBody>
               {paginatedLeads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-400 dark:text-gray-500">No leads found</TableCell>
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-400 dark:text-gray-500">
+                    {leads.length === 0 ? 'No leads found' : 'No leads match your search/filter'}
+                  </TableCell>
                 </TableRow>
               ) : paginatedLeads.map((lead: any) => (
-                <TableRow key={lead.id}>
+                <TableRow key={lead.id} className={selectedIds.has(lead.id) ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(lead.id)}
+                      onChange={() => toggleSelectOne(lead.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                    />
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs font-medium">
                     {new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                   </TableCell>
@@ -171,7 +383,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
         {totalPages > 1 && (
           <div className="px-5 py-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center justify-between">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, leads.length)} of {leads.length} leads
+              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredSorted.length)} of {filteredSorted.length} leads
             </p>
             <div className="flex items-center gap-2">
               <button

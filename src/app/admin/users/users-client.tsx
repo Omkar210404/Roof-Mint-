@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Search, Download, Printer, Filter, Calendar, CheckCircle2, XCircle, UserCheck, Trash2 } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, Download, Printer, Filter, Calendar, CheckCircle2, XCircle, UserCheck, Trash2, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -40,20 +40,85 @@ function getMonthLabel(monthKey: string) {
   return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 }
 
+type SortKey = 'date' | 'name';
+type SortDir = 'asc' | 'desc';
+
 export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
   const [usersList, setUsersList] = useState<any[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim().toLowerCase()), 250);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const handleDeleteUser = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete user "${name || 'User'}"?`)) return;
     setUsersList(prev => prev.filter(u => u.id !== id));
+    setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     await deleteUserProfile(id);
   };
 
   const handleRoleChange = async (id: string, role: string) => {
     setUsersList(prev => prev.map(u => u.id === id ? { ...u, role } : u));
     await updateUserRole(id, role);
+  };
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'date' ? 'desc' : 'asc');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => {
+      const allSelected = filteredUsers.length > 0 && filteredUsers.every(u => prev.has(u.id));
+      const next = new Set(prev);
+      if (allSelected) filteredUsers.forEach(u => next.delete(u.id));
+      else filteredUsers.forEach(u => next.add(u.id));
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkDeleteUsers = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} selected user${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    setUsersList(prev => prev.filter(u => !selectedIds.has(u.id)));
+    await Promise.all(ids.map(id => deleteUserProfile(id)));
+    clearSelection();
+    setBulkBusy(false);
+  };
+
+  const bulkRoleChange = async (role: string) => {
+    if (!role) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    setUsersList(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, role } : u));
+    await Promise.all(ids.map(id => updateUserRole(id, role)));
+    setBulkBusy(false);
   };
 
   // Extract unique available months from data
@@ -69,23 +134,45 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
 
   // Filter users based on search term and selected month
   const filteredUsers = useMemo(() => {
-    return usersList.filter(user => {
+    const filtered = usersList.filter(user => {
       // Month filter
       if (selectedMonth !== 'all' && getMonthKey(user.created_at) !== selectedMonth) {
         return false;
       }
       // Search term filter
-      if (searchTerm.trim()) {
-        const query = searchTerm.toLowerCase();
+      if (debouncedSearch) {
         const name = (user.full_name || '').toLowerCase();
         const phone = (user.phone || '').toLowerCase();
         const location = (user.pref_location || '').toLowerCase();
         const propType = (user.pref_property_type || '').toLowerCase();
-        return name.includes(query) || phone.includes(query) || location.includes(query) || propType.includes(query);
+        return name.includes(debouncedSearch) || phone.includes(debouncedSearch) || location.includes(debouncedSearch) || propType.includes(debouncedSearch);
       }
       return true;
     });
-  }, [usersList, selectedMonth, searchTerm]);
+
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'date') cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      else cmp = (a.full_name || '').localeCompare(b.full_name || '');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [usersList, selectedMonth, debouncedSearch, sortKey, sortDir]);
+
+  const allFilteredSelected = filteredUsers.length > 0 && filteredUsers.every(u => selectedIds.has(u.id));
+
+  const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
+    <button
+      onClick={() => toggleSort(sortKeyVal)}
+      className="flex items-center gap-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hover:text-navy dark:hover:text-white transition-colors"
+    >
+      {label}
+      {sortKey === sortKeyVal ? (
+        sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+      ) : (
+        <ArrowUpDown className="w-3 h-3 opacity-40" />
+      )}
+    </button>
+  );
 
   // Download Excel / CSV
   const handleExportCSV = () => {
@@ -231,6 +318,34 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl px-4 py-2.5">
+          <span className="text-sm font-bold text-primary">{selectedIds.size} selected</span>
+          <button onClick={clearSelection} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 flex items-center gap-1">
+            <X className="w-3.5 h-3.5" /> Clear
+          </button>
+          <div className="flex-1" />
+          <select
+            defaultValue=""
+            disabled={bulkBusy}
+            onChange={(e) => { bulkRoleChange(e.target.value); e.target.value = ''; }}
+            className="h-8 text-xs font-medium bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 rounded-lg px-2 text-navy dark:text-white focus:outline-none disabled:opacity-50"
+          >
+            <option value="" disabled>Set Role...</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button
+            onClick={bulkDeleteUsers}
+            disabled={bulkBusy}
+            className="h-8 px-3 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </button>
+        </div>
+      )}
+
       {/* Main Table */}
       <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
         <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
@@ -247,8 +362,16 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/60 dark:bg-navy-800">
-                <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">User Info</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Joined Date</TableHead>
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    checked={allFilteredSelected}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                  />
+                </TableHead>
+                <TableHead><SortHeader label="User Info" sortKeyVal="name" /></TableHead>
+                <TableHead><SortHeader label="Joined Date" sortKeyVal="date" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preferred Area</TableHead>
@@ -261,13 +384,21 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-12 text-gray-400 dark:text-gray-500">
+                  <TableCell colSpan={10} className="text-center py-12 text-gray-400 dark:text-gray-500">
                     No user data matching the selected criteria.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                  <TableRow key={user.id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.has(user.id) ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}`}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(user.id)}
+                        onChange={() => toggleSelectOne(user.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                      />
+                    </TableCell>
                     {/* User Info */}
                     <TableCell>
                       <div>
