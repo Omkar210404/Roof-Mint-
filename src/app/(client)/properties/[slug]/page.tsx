@@ -171,14 +171,14 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                 <h2 className="text-xl font-bold text-navy dark:text-white mb-1">Enquire about {property.title}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Fill in your details and we&apos;ll get back to you</p>
                 <form onSubmit={handleEnquirySubmit} className="space-y-3">
-                  <input name="name" required placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="phone" required placeholder="Phone Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="email" type="email" placeholder="Email (optional)" className="w-full h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <input name="budget_hint" placeholder="Budget Range (e.g. ₹1-1.5 Cr)" className="w-full h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                  <textarea name="message" placeholder="Any specific requirements..." rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
+                  <input name="name" required placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="phone" required placeholder="Phone Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="email" type="email" placeholder="Email (optional)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input name="budget_hint" placeholder="Budget Range (e.g. ₹1-1.5 Cr)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <textarea name="message" placeholder="Any specific requirements..." rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setShowEnquiryModal(false)}
-                      className="flex-1 h-12 border border-gray-200 dark:border-gray-800 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50">Cancel</button>
+                      className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50">Cancel</button>
                     <button type="submit" disabled={submitting}
                       className="flex-1 h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
                       {submitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Phone className="w-4 h-4" />}
@@ -267,7 +267,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               { icon: Layers, label: 'Floor', value: property.floor || '—' },
               { icon: Calendar, label: 'Possession', value: property.possession || '—' },
             ].map((spec) => (
-              <div key={spec.label} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-2.5 md:p-3 text-center shadow-sm border border-gray-100 dark:border-gray-800">
+              <div key={spec.label} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-2.5 md:p-3 text-center shadow-sm border border-gray-100/60 dark:border-gray-800/60">
                 <spec.icon className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1 md:mb-1.5" />
                 <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mb-0.5 uppercase tracking-wide font-medium">{spec.label}</p>
                 <p className="text-xs md:text-sm font-semibold text-navy dark:text-white truncate">{spec.value}</p>
@@ -286,7 +286,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             </div>
           )}
 
-          <hr className="border-gray-100 dark:border-gray-800" />
+          <hr className="border-gray-100/60 dark:border-gray-800/60" />
 
           {/* About */}
           {property.description && (
@@ -304,7 +304,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
           {/* Top Highlights (Amenities) Grid */}
           {property.amenities?.length > 0 && (
             <>
-              <hr className="border-gray-100 dark:border-gray-800 md:hidden" />
+              <hr className="border-gray-100/60 dark:border-gray-800/60 md:hidden" />
               <div>
                 <h2 className="text-base md:text-xl font-bold text-navy dark:text-white mb-3 md:mb-4">Top Highlights</h2>
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
@@ -313,7 +313,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                     if (!amenity) return null;
                     const Icon = amenity.icon;
                     return (
-                      <div key={amenityId} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-3 md:p-4 text-center border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+                      <div key={amenityId} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-3 md:p-4 text-center border border-gray-100/60 dark:border-gray-800/60 shadow-sm hover:shadow-md transition-shadow">
                         <Icon className="w-5 h-5 md:w-6 md:h-6 text-primary mx-auto mb-1.5 md:mb-2" />
                         <p className="text-[10px] md:text-xs font-semibold text-gray-700 dark:text-gray-300">{amenity.label}</p>
                       </div>
@@ -324,7 +324,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             </>
           )}
 
-          <hr className="border-gray-100 dark:border-gray-800" />
+          <hr className="border-gray-100/60 dark:border-gray-800/60" />
 
           {/* Location Advantage */}
           {property.nearby?.length > 0 && (
@@ -332,7 +332,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               <h2 className="text-base md:text-xl font-bold text-navy dark:text-white mb-3 md:mb-4">Location Advantage</h2>
               <div className="space-y-2 md:space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
                 {property.nearby.map((place: any) => (
-                  <div key={place.name} className="flex items-center justify-between bg-gray-50 dark:bg-navy-800 rounded-xl px-3 py-2.5 md:p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
+                  <div key={place.name} className="flex items-center justify-between bg-gray-50 dark:bg-navy-800 rounded-xl px-3 py-2.5 md:p-4 border border-gray-100/60 dark:border-gray-800/60 shadow-sm">
                     <div className="flex items-center gap-2 md:gap-3">
                       <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
                       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{place.name}</span>
@@ -356,7 +356,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
         </div>
 
         {/* Right Column (Sticky Actions - Desktop) */}
-        <div className="hidden md:block w-[340px] shrink-0 sticky top-20 bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-lg rounded-xl p-6 z-10">
+        <div className="hidden md:block w-[340px] shrink-0 sticky top-20 bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-lg rounded-xl p-6 z-10">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl font-bold text-primary">{property.formattedPrice}</span>
             {property.priceLabel && <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{property.priceLabel}</span>}
@@ -383,7 +383,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                 } catch {}
                 window.location.href = '/compare';
               }}
-              className="w-full h-10 border border-gray-200 dark:border-gray-800 hover:border-primary hover:text-primary text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
+              className="w-full h-10 border border-gray-200/60 dark:border-gray-800/60 hover:border-primary hover:text-primary text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <Layers className="w-4 h-4" /> Compare Property
             </button>
@@ -392,7 +392,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
       </div>
 
       {/* Sticky Bottom Bar (Mobile Only) */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:hidden bg-white dark:bg-navy-900 border-t border-gray-100 dark:border-gray-800 px-4 py-3 z-40 flex gap-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:hidden bg-white dark:bg-navy-900 border-t border-gray-100/60 dark:border-gray-800/60 px-4 py-3 z-40 flex gap-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <button onClick={() => setShowEnquiryModal(true)} className="flex-1 h-11 bg-primary hover:bg-teal-700 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]">
           <Phone className="w-4 h-4" /> Enquire
         </button>

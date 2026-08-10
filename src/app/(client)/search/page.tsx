@@ -102,7 +102,7 @@ export default function SearchPage() {
   return (
     <div className="bg-background min-h-screen max-w-7xl mx-auto pb-8">
       {/* Header with Search (Sticks right below main header) */}
-      <div className="sticky top-14 md:top-16 z-40 bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 md:px-8 shadow-xs">
+      <div className="sticky top-14 md:top-16 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 px-4 py-3 md:px-8 shadow-xs">
         <form onSubmit={handleSubmit} className="flex items-center gap-3 max-w-4xl mx-auto">
           <Link href="/" className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-100 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-200 transition-colors flex-shrink-0">
             <ArrowLeft className="w-4 h-4 text-gray-800 dark:text-gray-200" />
@@ -115,7 +115,7 @@ export default function SearchPage() {
               placeholder="Search by location, project name, locality, or property type..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full h-10 md:h-12 pl-10 pr-9 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full h-10 md:h-12 pl-10 pr-9 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
             {query && (
               <button type="button" onClick={() => { setQuery(''); setSearched(false); setResults([]); }}
@@ -150,7 +150,7 @@ export default function SearchPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((property) => (
                 <Link key={property.id} href={`/properties/${property.slug}`}>
-                  <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-800 flex md:flex-col md:h-full">
+                  <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100/60 dark:border-gray-800/60 flex md:flex-col md:h-full">
                     <div className="relative w-[35%] md:w-full min-h-[120px] md:h-[200px]">
                       <Image src={property.coverImage} alt={property.title} fill className="object-cover" />
                     </div>
@@ -185,7 +185,7 @@ export default function SearchPage() {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Recent Searches */}
               {recentSearches.length > 0 && (
-                <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100/60 dark:border-gray-800/60 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-navy dark:text-white flex items-center gap-2">
                       <Clock className="w-4 h-4 text-primary" /> Recent Searches
@@ -210,7 +210,7 @@ export default function SearchPage() {
               )}
 
               {/* Popular Searches */}
-              <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
+              <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100/60 dark:border-gray-800/60 shadow-sm">
                 <h3 className="text-sm font-bold text-navy dark:text-white mb-3 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-primary" />
                   {hasHistory ? 'Your Top Searches' : 'Popular Suggestions'}
@@ -219,7 +219,7 @@ export default function SearchPage() {
                   {hasHistory ? (
                     topSearches.map(item => (
                       <button key={item.label} onClick={() => { setQuery(item.label); doSearch(item.label); }}
-                        className="h-9 px-4 rounded-xl bg-gray-50 dark:bg-navy-800 border border-gray-200 dark:border-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary hover:bg-teal-50 flex items-center gap-1.5 transition-colors">
+                        className="h-9 px-4 rounded-xl bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary hover:bg-teal-50 flex items-center gap-1.5 transition-colors">
                         <span className="capitalize">{item.label}</span>
                         <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal">({item.count})</span>
                       </button>
@@ -227,7 +227,7 @@ export default function SearchPage() {
                   ) : (
                     defaultSuggestions.map(label => (
                       <button key={label} onClick={() => { setQuery(label); doSearch(label); }}
-                        className="h-9 px-4 rounded-xl bg-gray-50 dark:bg-navy-800 border border-gray-200 dark:border-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary hover:bg-teal-50 flex items-center gap-1.5 transition-colors">
+                        className="h-9 px-4 rounded-xl bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary hover:bg-teal-50 flex items-center gap-1.5 transition-colors">
                         {label}
                       </button>
                     ))

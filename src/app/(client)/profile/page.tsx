@@ -128,7 +128,7 @@ export default function ProfilePage() {
         {/* Left Column: Profile Card, Stats & Preferences */}
         <div className="space-y-4">
           {/* Profile Header Card */}
-          <div className="bg-white dark:bg-navy-900 px-4 pt-6 pb-5 md:p-6 md:rounded-2xl md:border md:border-gray-100 md:shadow-sm">
+          <div className="bg-white dark:bg-navy-900 px-4 pt-6 pb-5 md:p-6 md:rounded-2xl md:border md:border-gray-100/60 md:shadow-sm">
             <div className="flex items-center gap-4">
               {/* Avatar */}
               <div className="relative">
@@ -174,7 +174,7 @@ export default function ProfilePage() {
                 { label: 'Enquiries', value: enquiriesCount, icon: MessageSquare, href: '/enquiries' },
               ].map((stat) => (
                 <Link key={stat.label} href={stat.href} className="block group">
-                  <div className="bg-white dark:bg-navy-900 rounded-xl p-3 md:p-4 text-center shadow-sm border border-gray-100 dark:border-gray-800 group-hover:border-teal-200 group-hover:shadow-md transition-all">
+                  <div className="bg-white dark:bg-navy-900 rounded-xl p-3 md:p-4 text-center shadow-sm border border-gray-100/60 dark:border-gray-800/60 group-hover:border-teal-200 group-hover:shadow-md transition-all">
                     <stat.icon className="w-4 h-4 text-primary mx-auto mb-1 group-hover:scale-110 transition-transform" />
                     <p className="text-lg md:text-xl font-bold text-navy dark:text-white">{stat.value}</p>
                     <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 font-medium">{stat.label}</p>
@@ -187,7 +187,7 @@ export default function ProfilePage() {
           {/* Current Preferences */}
           <div className="px-4 md:px-0">
             <h3 className="text-sm font-bold text-navy dark:text-white mb-2 px-1">Your Current Preferences</h3>
-            <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800">
+            <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm border border-gray-100/60 dark:border-gray-800/60 divide-y divide-gray-50 dark:divide-gray-800">
               {[
                 { icon: MapPin, label: 'Location', value: profile?.pref_location || 'Not set' },
                 { icon: Building2, label: 'Property Type', value: profile?.pref_bhk ? `${profile.pref_bhk} BHK ${profile.pref_property_type || ''}`.trim() : (profile?.pref_property_type || 'Not set') },
@@ -229,7 +229,7 @@ export default function ProfilePage() {
 
           {/* Menu Items */}
           <div className="px-4 md:px-0">
-            <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800">
+            <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm border border-gray-100/60 dark:border-gray-800/60 divide-y divide-gray-50 dark:divide-gray-800">
               {menuItems.map((item) => (
                 item.isAction ? (
                   <button
@@ -323,14 +323,14 @@ export default function ProfilePage() {
                     value={feedbackNote}
                     onChange={(e) => setFeedbackNote(e.target.value)}
                     placeholder="Tell us what you loved or how we can improve..."
-                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                    className="w-full p-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                   />
                 </div>
 
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setShowRateModal(false)}
-                    className="flex-1 h-10 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50"
+                    className="flex-1 h-10 border border-gray-200/60 dark:border-gray-800/60 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50"
                   >
                     Cancel
                   </button>

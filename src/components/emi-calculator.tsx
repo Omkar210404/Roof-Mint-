@@ -43,7 +43,7 @@ export function EMICalculator({ propertyPrice }: { propertyPrice: number }) {
   }
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 md:p-6 shadow-sm">
+    <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 p-5 md:p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-5">
         <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center text-primary">
           <Calculator className="w-5 h-5" />
@@ -92,7 +92,7 @@ export function EMICalculator({ propertyPrice }: { propertyPrice: number }) {
                   className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                     downPaymentPercent === pct
                       ? 'bg-primary text-white border-primary shadow-xs'
-                      : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-800 hover:bg-gray-100'
+                      : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-100'
                   }`}
                 >
                   {pct}%
@@ -134,7 +134,7 @@ export function EMICalculator({ propertyPrice }: { propertyPrice: number }) {
                   className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                     tenureYears === yrs
                       ? 'bg-primary text-white border-primary shadow-xs'
-                      : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-800 hover:bg-gray-100'
+                      : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-100'
                   }`}
                 >
                   {yrs}Y
@@ -145,7 +145,7 @@ export function EMICalculator({ propertyPrice }: { propertyPrice: number }) {
         </div>
 
         {/* Right Output Box */}
-        <div className="bg-gray-50/80 dark:bg-navy-800 rounded-xl p-5 border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
+        <div className="bg-gray-50/80 dark:bg-navy-800 rounded-xl p-5 border border-gray-100/60 dark:border-gray-800/60 flex flex-col justify-between">
           <div>
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Estimated Monthly EMI</p>
             <p className="text-3xl font-extrabold text-primary mt-1">
@@ -166,7 +166,7 @@ export function EMICalculator({ propertyPrice }: { propertyPrice: number }) {
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800 text-xs">
+          <div className="space-y-2 pt-2 border-t border-gray-200/60 dark:border-gray-800/60 text-xs">
             <div className="flex justify-between text-gray-600 dark:text-gray-300">
               <span>Principal Amount</span>
               <span className="font-semibold text-navy dark:text-white">{formatRupees(principal)}</span>
@@ -175,7 +175,7 @@ export function EMICalculator({ propertyPrice }: { propertyPrice: number }) {
               <span>Total Interest Payable</span>
               <span className="font-semibold text-amber-600">{formatRupees(totalInterest)}</span>
             </div>
-            <div className="flex justify-between text-navy dark:text-white font-bold pt-1 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between text-navy dark:text-white font-bold pt-1 border-t border-gray-200/60 dark:border-gray-800/60">
               <span>Total Amount Payable</span>
               <span>{formatRupees(totalPayable)}</span>
             </div>

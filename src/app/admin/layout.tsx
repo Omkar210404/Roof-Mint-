@@ -23,8 +23,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-navy-800">
       {/* Sidebar */}
-      <aside className="w-56 bg-white dark:bg-navy-900 border-r border-gray-100 dark:border-gray-800 hidden md:flex flex-col">
-        <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800">
+      <aside className="w-56 bg-white dark:bg-navy-900 border-r border-gray-100/60 dark:border-gray-800/60 hidden md:flex flex-col">
+        <div className="h-16 flex items-center px-6 border-b border-gray-100/60 dark:border-gray-800/60">
           <Link href="/admin">
             <Image
               src="/images/logo.png"
@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="p-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
+        <div className="p-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center gap-2">
           <ThemeToggle />
           <button
             onClick={async () => {
@@ -77,7 +77,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         {/* Mobile Header (Placeholder if needed) */}
-        <header className="md:hidden bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 p-4 flex items-center justify-between">
+        <header className="md:hidden bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 p-4 flex items-center justify-between">
           <Image src="/images/logo.png" alt="Roofmint" width={100} height={28} className="h-6 w-auto" />
           {/* Mobile menu button could go here */}
         </header>

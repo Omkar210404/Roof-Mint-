@@ -80,8 +80,8 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Add / Edit Form */}
-        <div className="md:col-span-1 h-fit bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden">
-          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+        <div className="md:col-span-1 h-fit bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
+          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
             <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">
               {editingAgent ? 'Edit Agent' : 'Add New Agent'}
             </h2>
@@ -101,7 +101,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Rahul Dravid"
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
@@ -111,7 +111,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
@@ -122,7 +122,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="rahul@realty.com"
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
@@ -132,7 +132,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   value={company}
                   onChange={e => setCompany(e.target.value)}
                   placeholder="Prestige / Sattva"
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
@@ -142,7 +142,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   value={commissionNotes}
                   onChange={e => setCommissionNotes(e.target.value)}
                   placeholder="2% commission agreement signed..."
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[80px] resize-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[80px] resize-none"
                 />
               </div>
 
@@ -159,8 +159,8 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
         </div>
 
         {/* Agent Table */}
-        <div className="md:col-span-2 bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden h-fit">
-          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center">
+        <div className="md:col-span-2 bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden h-fit">
+          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center">
             <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Agent Directory</h2>
           </div>
           <div className="overflow-x-auto">

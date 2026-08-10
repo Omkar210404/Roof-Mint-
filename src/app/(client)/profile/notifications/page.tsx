@@ -151,7 +151,7 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>
@@ -188,8 +188,8 @@ export default function NotificationsPage() {
 
       <div className="space-y-6">
         {/* Notifications Feed */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-100/60 dark:border-gray-800/60 pb-3">
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('all')}
@@ -256,8 +256,8 @@ export default function NotificationsPage() {
         </div>
 
         {/* Preferences & Delivery Settings */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
             <Bell className="w-4 h-4 text-primary" /> Delivery Channels & Alerts
           </h2>
 

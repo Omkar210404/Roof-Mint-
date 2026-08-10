@@ -63,7 +63,7 @@ export function ChatInterface() {
                       className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${
                         message.role === 'user'
                           ? 'bg-emerald-600 text-white rounded-tr-sm'
-                          : 'bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
+                          : 'bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
                       }`}
                     >
                       {message.content}
@@ -90,7 +90,7 @@ export function ChatInterface() {
                             ) : (
                               properties.map((property: any) => (
                                 <Link key={property.id} href={`/properties/${property.slug}`}>
-                                  <div className="bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex group">
+                                  <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex group">
                                     <div className="w-24 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0 flex items-center justify-center">
                                       <span className="text-xs text-emerald-600/50 font-medium">Image</span>
                                     </div>
@@ -137,7 +137,7 @@ export function ChatInterface() {
                  <div className="shrink-0 w-8 h-8 rounded-full bg-gray-100 text-gray-600 dark:bg-zinc-800 flex items-center justify-center">
                     <Bot className="w-5 h-5" />
                  </div>
-                 <div className="bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1">
+                 <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1">
                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
@@ -148,7 +148,7 @@ export function ChatInterface() {
         </div>
       </ScrollArea>
 
-      <div className="p-4 bg-gray-50 dark:bg-zinc-950 border-t border-gray-100 dark:border-zinc-800">
+      <div className="p-4 bg-gray-50 dark:bg-zinc-950 border-t border-gray-100/60 dark:border-zinc-800">
         <form
           onSubmit={handleSubmit}
           className="flex items-center gap-2 relative"
@@ -157,7 +157,7 @@ export function ChatInterface() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="E.g. 2BHK in South Mumbai under 5 Cr..."
-            className="flex-1 pr-24 bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 focus-visible:ring-emerald-600 rounded-full h-12 shadow-sm"
+            className="flex-1 pr-24 bg-white dark:bg-zinc-900 border-gray-200/60 dark:border-zinc-700 focus-visible:ring-emerald-600 rounded-full h-12 shadow-sm"
           />
           <Button 
             type="submit" 

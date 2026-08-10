@@ -10,9 +10,9 @@ export default function OnboardingPage() {
 
   return (
     <div className="bg-white dark:bg-navy-900 min-h-[calc(100vh-4rem)] flex items-center justify-center p-0 md:p-6">
-      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 border-0 md:border md:border-gray-200 md:rounded-3xl md:shadow-md overflow-hidden flex flex-col md:flex-row md:min-h-[520px]">
+      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 border-0 md:border md:border-gray-200/60 md:rounded-3xl md:shadow-md overflow-hidden flex flex-col md:flex-row md:min-h-[520px]">
         {/* Left Side (Desktop Hero - Clean White Theme) */}
-        <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 p-10 flex-col justify-between border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 relative">
+        <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 p-10 flex-col justify-between border-b md:border-b-0 md:border-r border-gray-100/60 dark:border-gray-800/60 relative">
           <div>
             <Image
               src="/images/logo.png"
@@ -44,7 +44,7 @@ export default function OnboardingPage() {
             />
           </div>
 
-          <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
             <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-semibold">
               <CheckCircle className="w-4 h-4 text-primary" /> RERA Approved
             </div>
@@ -97,7 +97,7 @@ export default function OnboardingPage() {
                 className={`w-full text-left p-4 md:p-5 rounded-2xl border-2 transition-all duration-200 ${
                   selectedMode === 'ai'
                     ? 'border-primary bg-teal-50/50 dark:bg-teal-950/40 shadow-xs'
-                    : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 hover:border-gray-300'
+                    : 'border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-3.5">
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
                 className={`w-full text-left p-4 md:p-5 rounded-2xl border-2 transition-all duration-200 ${
                   selectedMode === 'browse'
                     ? 'border-primary bg-teal-50/50 dark:bg-teal-950/40 shadow-xs'
-                    : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 hover:border-gray-300'
+                    : 'border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-3.5">

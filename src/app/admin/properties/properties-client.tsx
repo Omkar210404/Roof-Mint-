@@ -75,8 +75,8 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
         </Link>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden">
-        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
+        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
           <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">All Properties</h2>
           <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-2.5 py-1 rounded-md">
             {properties.length} total • Page {currentPage} of {totalPages}
@@ -118,7 +118,7 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
                     <select
                       value={property.status || 'available'}
                       onChange={(e) => handleStatusUpdate(property.id, e.target.value)}
-                      className={`h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 ${statusStyles[property.status] || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                      className={`h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200/60 dark:border-gray-800/60 focus:outline-none focus:ring-2 focus:ring-primary/20 ${statusStyles[property.status] || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
                     >
                       <option value="available">Available</option>
                       <option value="reserved">Reserved</option>
@@ -155,7 +155,7 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <div className="px-5 py-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center justify-between">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
               Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, properties.length)} of {properties.length} properties
             </p>
@@ -163,7 +163,7 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+                className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -171,7 +171,7 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+                className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

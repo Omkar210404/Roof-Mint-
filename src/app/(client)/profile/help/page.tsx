@@ -87,7 +87,7 @@ export default function HelpPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>
@@ -128,7 +128,7 @@ export default function HelpPage() {
             </div>
           </a>
 
-          <div className="bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300 flex items-center justify-center shrink-0">
               <Clock className="w-5 h-5" />
             </div>
@@ -140,8 +140,8 @@ export default function HelpPage() {
         </div>
 
         {/* FAQs */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-gray-100/60 dark:border-gray-800/60 pb-3">
             <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-primary" /> Frequently Asked Questions
             </h2>
@@ -150,7 +150,7 @@ export default function HelpPage() {
               placeholder="Search FAQs..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 px-3.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs bg-gray-50 dark:bg-navy-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-9 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs bg-gray-50 dark:bg-navy-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -165,7 +165,7 @@ export default function HelpPage() {
                   <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${openIndex === idx ? 'rotate-180 text-primary' : ''}`} />
                 </button>
                 {openIndex === idx && (
-                  <p className="mt-2 text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50/70 dark:bg-navy-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <p className="mt-2 text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50/70 dark:bg-navy-800 p-3.5 rounded-xl border border-gray-100/60 dark:border-gray-800/60">
                     {faq.answer}
                   </p>
                 )}
@@ -175,8 +175,8 @@ export default function HelpPage() {
         </div>
 
         {/* Support Intake Form */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-primary" /> Send Us a Message
           </h2>
 
@@ -202,7 +202,7 @@ export default function HelpPage() {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Rohit Sharma"
-                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
@@ -214,7 +214,7 @@ export default function HelpPage() {
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     placeholder="+91 99887 76655"
-                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
@@ -225,7 +225,7 @@ export default function HelpPage() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="rohit@example.com"
-                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
@@ -234,7 +234,7 @@ export default function HelpPage() {
                   <select
                     value={category}
                     onChange={e => setCategory(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs bg-white dark:bg-navy-900 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full h-10 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs bg-white dark:bg-navy-900 focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
                     <option>General Query</option>
                     <option>Property Enquiry</option>
@@ -253,7 +253,7 @@ export default function HelpPage() {
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="Describe your issue or request in detail..."
-                  className="w-full p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  className="w-full p-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                 />
               </div>
 

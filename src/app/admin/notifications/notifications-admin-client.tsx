@@ -103,15 +103,15 @@ export function NotificationsAdminClientWrapper({
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total Sent Logs</p>
           <p className="text-2xl font-bold text-navy dark:text-white mt-1">{logs.length}</p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Unread Client Alerts</p>
           <p className="text-2xl font-bold text-amber-600 mt-1">{logs.filter(l => !l.is_read).length}</p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Client Audience</p>
           <p className="text-2xl font-bold text-teal-600 mt-1">{users.length} Users</p>
         </div>
@@ -119,8 +119,8 @@ export function NotificationsAdminClientWrapper({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Compose Form */}
-        <div className="lg:col-span-1 h-fit bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden">
-          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+        <div className="lg:col-span-1 h-fit bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
+          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
             <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide flex items-center gap-2">
               <Bell className="w-4 h-4 text-primary" /> Compose Notification
             </h2>
@@ -138,7 +138,7 @@ export function NotificationsAdminClientWrapper({
                     className={`h-9 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
                       targetType === 'all'
                         ? 'bg-primary text-white border-primary shadow-xs'
-                        : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-800 hover:bg-gray-100'
+                        : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-100'
                     }`}
                   >
                     <Users className="w-3.5 h-3.5" /> All Users ({users.length})
@@ -149,7 +149,7 @@ export function NotificationsAdminClientWrapper({
                     className={`h-9 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
                       targetType === 'specific'
                         ? 'bg-primary text-white border-primary shadow-xs'
-                        : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-800 hover:bg-gray-100'
+                        : 'bg-gray-50 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-100'
                     }`}
                   >
                     Specific User
@@ -164,7 +164,7 @@ export function NotificationsAdminClientWrapper({
                   <select
                     value={selectedUserId}
                     onChange={e => setSelectedUserId(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="">-- Choose Client Profile --</option>
                     {users.map(u => (
@@ -182,7 +182,7 @@ export function NotificationsAdminClientWrapper({
                 <select
                   value={notifType}
                   onChange={e => setNotifType(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="system">🛡️ System Alert / Platform Update</option>
                   <option value="price_drop">🎉 Price Drop Announcement</option>
@@ -197,7 +197,7 @@ export function NotificationsAdminClientWrapper({
                 <select
                   value={selectedPropertyId}
                   onChange={e => setSelectedPropertyId(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">-- None / General Notification --</option>
                   {properties.map(p => (
@@ -217,7 +217,7 @@ export function NotificationsAdminClientWrapper({
                   value={messageText}
                   onChange={e => setMessageText(e.target.value)}
                   placeholder="e.g. Price drop alert! Sattva Lumina starting price reduced by ₹5 Lakhs."
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  className="w-full p-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                 />
               </div>
 
@@ -234,8 +234,8 @@ export function NotificationsAdminClientWrapper({
         </div>
 
         {/* Sent Notifications Log */}
-        <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden h-fit">
-          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+        <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden h-fit">
+          <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
             <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Client Notifications Feed</h2>
             <span className="text-xs text-gray-400 dark:text-gray-500">Synced to Client Profile Notifications</span>
           </div>

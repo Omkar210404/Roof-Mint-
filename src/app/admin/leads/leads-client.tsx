@@ -23,7 +23,7 @@ const statusOptions = [
 ]
 
 function getStatusStyle(status: string) {
-  return statusOptions.find(s => s.value === status)?.style || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-800'
+  return statusOptions.find(s => s.value === status)?.style || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60'
 }
 
 export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads: any[]; agents?: any[] }) {
@@ -77,8 +77,8 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
         <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{leads.length} total</span>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden">
-        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
+        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
           <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Enquiries Inbox</h2>
           <span className="text-xs text-gray-400 dark:text-gray-500">Page {currentPage} of {totalPages}</span>
         </div>
@@ -127,7 +127,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
                     <select
                       value={lead.assigned_agent_id || lead.assigned_agent?.id || ''}
                       onChange={(e) => handleAgentAssign(lead.id, e.target.value)}
-                      className="h-8 text-xs font-medium bg-gray-50 dark:bg-navy-800 border border-gray-200 dark:border-gray-800 rounded-lg px-2 text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="h-8 text-xs font-medium bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 rounded-lg px-2 text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="">Unassigned</option>
                       {agents.map((agent: any) => (
@@ -169,7 +169,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <div className="px-5 py-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center justify-between">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
               Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, leads.length)} of {leads.length} leads
             </p>
@@ -177,7 +177,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+                className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -185,7 +185,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+                className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

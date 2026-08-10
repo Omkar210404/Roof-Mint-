@@ -20,7 +20,7 @@ export default async function AIResultsPage() {
   return (
     <div className="bg-background min-h-screen max-w-[480px] md:max-w-none mx-auto pb-6">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      <div className="sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 px-4 py-3">
         <div className="flex items-center gap-3">
           <Link href="/onboarding" className="w-9 h-9 rounded-full bg-gray-100 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-200 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-800 dark:text-gray-200" />
@@ -95,7 +95,7 @@ export default async function AIResultsPage() {
 
             {/* Switch to normal */}
             <Link href="/"
-              className="block w-full py-3.5 bg-white dark:bg-navy-900 border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-center hover:bg-gray-50 transition-colors text-sm">
+              className="block w-full py-3.5 bg-white dark:bg-navy-900 border-2 border-gray-200/60 dark:border-gray-800/60 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-center hover:bg-gray-50 transition-colors text-sm">
               <span className="flex items-center justify-center gap-2">
                 <LayoutGrid className="w-4 h-4" />
                 Switch to Normal Browsing

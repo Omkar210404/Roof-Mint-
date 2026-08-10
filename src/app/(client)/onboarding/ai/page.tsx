@@ -154,9 +154,9 @@ export default function AIQuestionnairePage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] bg-white dark:bg-navy-900 md:bg-gray-50/50 flex items-center justify-center p-0 md:p-6 overflow-hidden">
-      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 md:rounded-2xl md:border md:border-gray-100 md:shadow-sm overflow-hidden flex flex-col md:flex-row h-full md:max-h-[540px]">
+      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 md:rounded-2xl md:border md:border-gray-100/60 md:shadow-sm overflow-hidden flex flex-col md:flex-row h-full md:max-h-[540px]">
         {/* Left Side (Desktop Progress & Assistant Info) */}
-        <div className="hidden md:flex w-1/3 bg-teal-50/40 dark:bg-teal-950/40 p-8 text-navy dark:text-white flex-col justify-between relative overflow-hidden border-r border-gray-100 dark:border-gray-800">
+        <div className="hidden md:flex w-1/3 bg-teal-50/40 dark:bg-teal-950/40 p-8 text-navy dark:text-white flex-col justify-between relative overflow-hidden border-r border-gray-100/60 dark:border-gray-800/60">
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center border border-teal-200 dark:border-teal-800">
@@ -198,7 +198,7 @@ export default function AIQuestionnairePage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-gray-200/80 dark:border-gray-800 text-xs text-gray-600 dark:text-gray-300 flex items-center gap-2">
+          <div className="pt-4 border-t border-gray-200/80 dark:border-gray-800/60 text-xs text-gray-600 dark:text-gray-300 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <span>AI calculates 100% real DB property match scores</span>
           </div>
@@ -241,7 +241,7 @@ export default function AIQuestionnairePage() {
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden flex-shrink-0 bg-teal-50 dark:bg-teal-950/40 p-1 md:hidden">
                 <Image src="/images/roofmintai.png" alt="AI" width={40} height={40} className="w-full h-full rounded-full object-cover" />
               </div>
-              <div className="bg-teal-50/80 dark:bg-teal-950/40 md:bg-gray-50 rounded-2xl rounded-tl-sm p-4 md:p-6 w-full border border-teal-100/60 dark:border-teal-800 md:border-gray-100">
+              <div className="bg-teal-50/80 dark:bg-teal-950/40 md:bg-gray-50 rounded-2xl rounded-tl-sm p-4 md:p-6 w-full border border-teal-100/60 dark:border-teal-800 md:border-gray-100/60">
                 <p className="text-base md:text-xl font-bold text-navy dark:text-white">{question.question}</p>
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">{question.subtitle}</p>
               </div>
@@ -260,7 +260,7 @@ export default function AIQuestionnairePage() {
                   value={(answers[question.id] as string) || ''}
                   onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
                   placeholder="Type your preferences here..."
-                  className="w-full h-40 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none placeholder:text-gray-400"
+                  className="w-full h-40 p-4 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none placeholder:text-gray-400"
                 />
               ) : question.type === 'text_input' ? (
                 <div>
@@ -269,7 +269,7 @@ export default function AIQuestionnairePage() {
                     value={(answers[question.id] as string) || ''}
                     onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
                     placeholder={question.placeholder}
-                    className="w-full h-12 md:h-14 px-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-gray-400"
+                    className="w-full h-12 md:h-14 px-5 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-gray-400"
                     autoFocus
                   />
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-2.5 px-1">
@@ -286,7 +286,7 @@ export default function AIQuestionnairePage() {
                       className={`px-4 py-3.5 md:py-4 rounded-2xl text-xs md:text-sm font-semibold transition-colors text-center flex items-center justify-center ${
                         isSelected(option)
                           ? 'bg-primary text-white border-2 border-primary shadow-sm'
-                          : 'bg-white dark:bg-navy-900 text-navy dark:text-white border border-gray-200 dark:border-gray-800 hover:border-gray-300 active:bg-gray-50'
+                          : 'bg-white dark:bg-navy-900 text-navy dark:text-white border border-gray-200/60 dark:border-gray-800/60 hover:border-gray-300 active:bg-gray-50'
                       }`}
                     >
                       {question.labels?.[idx] || option}

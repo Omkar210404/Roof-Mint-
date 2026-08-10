@@ -13,7 +13,7 @@ export default function TermsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-start sm:items-center gap-3 min-w-0">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0 mt-0.5 sm:mt-0">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0 mt-0.5 sm:mt-0">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div className="min-w-0">
@@ -24,7 +24,7 @@ export default function TermsPage() {
 
         <button
           onClick={handlePrint}
-          className="h-9 px-3.5 bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 text-navy dark:text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto shadow-xs"
+          className="h-9 px-3.5 bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 text-navy dark:text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto shadow-xs"
         >
           <Printer className="w-3.5 h-3.5 text-primary" />
           Print / Save PDF
@@ -43,10 +43,10 @@ export default function TermsPage() {
         </div>
 
         {/* Legal Sections */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 md:p-8 border border-gray-100 dark:border-gray-800 shadow-sm space-y-8 text-xs md:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 md:p-8 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-8 text-xs md:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
           {/* Section 1 */}
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100/60 dark:border-gray-800/60 pb-2">
               1. Acceptance of Terms & Service Scope
             </h2>
             <p>
@@ -56,7 +56,7 @@ export default function TermsPage() {
 
           {/* Section 2 */}
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100/60 dark:border-gray-800/60 pb-2">
               2. Listing Accuracy & RERA Compliance Disclaimer
             </h2>
             <p>
@@ -66,7 +66,7 @@ export default function TermsPage() {
 
           {/* Section 3 */}
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2 flex items-center gap-2">
+            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100/60 dark:border-gray-800/60 pb-2 flex items-center gap-2">
               <Lock className="w-4 h-4 text-primary inline" /> 3. Strict Agent PII Confidentiality Guarantee
             </h2>
             <p>
@@ -76,7 +76,7 @@ export default function TermsPage() {
 
           {/* Section 4 */}
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100/60 dark:border-gray-800/60 pb-2">
               4. User Data Collection & Privacy Policy
             </h2>
             <p>
@@ -86,7 +86,7 @@ export default function TermsPage() {
 
           {/* Section 5 */}
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100/60 dark:border-gray-800/60 pb-2">
               5. Intellectual Property & Brand Usage
             </h2>
             <p>
@@ -96,13 +96,13 @@ export default function TermsPage() {
 
           {/* Section 6 */}
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h2 className="text-base font-bold text-navy dark:text-white border-b border-gray-100/60 dark:border-gray-800/60 pb-2">
               6. Governing Law & Support Contact
             </h2>
             <p>
               These terms shall be governed by the laws of India. For legal or compliance inquiries, please contact:
             </p>
-            <div className="bg-gray-50 dark:bg-navy-800 p-4 rounded-xl border border-gray-200 dark:border-gray-800 mt-2 space-y-1 font-mono text-xs">
+            <div className="bg-gray-50 dark:bg-navy-800 p-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 mt-2 space-y-1 font-mono text-xs">
               <p className="font-bold text-navy dark:text-white">Roofmint Legal & Compliance Desk</p>
               <p>Email: legal@roofmint.in | support@roofmint.in</p>
               <p>Address: Yashwant Shrushti, Boisar, Maharashtra - 401501</p>

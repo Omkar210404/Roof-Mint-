@@ -80,7 +80,7 @@ export default function ComparePage() {
   return (
     <div className="bg-background min-h-screen pb-12">
       {/* Top Bar */}
-      <div className="sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 md:px-8">
+      <div className="sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 px-4 py-3 md:px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="w-9 h-9 rounded-full bg-gray-100 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-200 transition-colors">
@@ -105,7 +105,7 @@ export default function ComparePage() {
 
       <div className="px-4 pt-6 md:px-8 max-w-7xl mx-auto">
         {comparedProperties.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-navy-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 text-center">
+          <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-6 text-center">
             <Building2 className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
             <h3 className="text-lg font-bold text-navy dark:text-white">No properties selected</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-4">Select properties to compare specs, prices, and amenities side by side.</p>
@@ -115,7 +115,7 @@ export default function ComparePage() {
           </div>
         ) : (
           <div className="overflow-x-auto pb-4">
-            <div className="min-w-[700px] bg-white dark:bg-navy-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="min-w-[700px] bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm divide-y divide-gray-100 dark:divide-gray-800">
               {/* Header Cards Row */}
               <div className="grid grid-cols-4 p-4 gap-4 items-stretch bg-gray-50/50 dark:bg-navy-800">
                 <div className="flex flex-col justify-center">
@@ -124,7 +124,7 @@ export default function ComparePage() {
                 </div>
 
                 {comparedProperties.map((p, idx) => (
-                  <div key={p.id} className="bg-white dark:bg-navy-900 rounded-xl p-3 border border-gray-200 dark:border-gray-800 shadow-xs relative flex flex-col justify-between">
+                  <div key={p.id} className="bg-white dark:bg-navy-900 rounded-xl p-3 border border-gray-200/60 dark:border-gray-800/60 shadow-xs relative flex flex-col justify-between">
                     <button
                       onClick={() => removeProperty(p.id)}
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center hover:bg-red-200 transition-colors"
@@ -143,7 +143,7 @@ export default function ComparePage() {
                     <select
                       value={p.id}
                       onChange={(e) => handleSelectProperty(idx, e.target.value)}
-                      className="mt-2 w-full h-8 px-2 rounded-md border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-[11px] font-medium text-gray-700 dark:text-gray-300 focus:outline-none"
+                      className="mt-2 w-full h-8 px-2 rounded-md border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-[11px] font-medium text-gray-700 dark:text-gray-300 focus:outline-none"
                     >
                       {allProperties.map(opt => (
                         <option key={opt.id} value={opt.id}>{opt.title}</option>
@@ -154,7 +154,7 @@ export default function ComparePage() {
 
                 {/* Empty Slot if less than 3 */}
                 {Array.from({ length: 3 - comparedProperties.length }).map((_, i) => (
-                  <div key={i} className="border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50/30 dark:bg-navy-800">
+                  <div key={i} className="border-2 border-dashed border-gray-200/60 dark:border-gray-800/60 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50/30 dark:bg-navy-800">
                     <button onClick={addPropertySlot} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
                       <Plus className="w-4 h-4" /> Add Property
                     </button>

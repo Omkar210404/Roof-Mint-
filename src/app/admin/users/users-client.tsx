@@ -173,21 +173,21 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
 
       {/* Metric Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total Registered Users</p>
           <p className="text-2xl font-bold text-navy dark:text-white mt-1">{initialUsers.length}</p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Profiles Completed</p>
           <p className="text-2xl font-bold text-teal-600 mt-1">
             {initialUsers.filter(u => u.profile_completed).length}
           </p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Filtered Count</p>
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{filteredUsers.length}</p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Selected Period</p>
           <p className="text-sm font-bold text-navy dark:text-white mt-2 truncate">
             {selectedMonth === 'all' ? 'All Time' : getMonthLabel(selectedMonth)}
@@ -196,7 +196,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Search Input */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -205,7 +205,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
             placeholder="Search by name, phone, location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            className="w-full h-10 pl-9 pr-4 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
         </div>
 
@@ -216,7 +216,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white w-full md:w-56"
+            className="h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white w-full md:w-56"
           >
             <option value="all">All Months ({initialUsers.length} users)</option>
             {availableMonths.map(monthKey => {
@@ -232,8 +232,8 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
       </div>
 
       {/* Main Table */}
-      <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden">
-        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
+        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
           <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">
             User Preference Directory ({filteredUsers.length})
           </h2>
@@ -345,7 +345,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
                         <select
                           value={user.role || 'user'}
                           onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                          className="h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          className="h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
                         >
                           <option value="user">User</option>
                           <option value="admin">Admin</option>

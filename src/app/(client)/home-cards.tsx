@@ -51,7 +51,7 @@ export function HomePropertyCards({ properties }: { properties: any[] }) {
           const isSaved = savedIds.includes(property.id);
           return (
             <Link key={property.id} href={`/properties/${property.slug}`}>
-              <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-800 active:scale-[0.99] md:hover:-translate-y-1 md:h-full">
+              <div className="bg-white dark:bg-navy-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100/60 dark:border-gray-800/60 active:scale-[0.99] md:hover:-translate-y-1 md:h-full">
                 <div className="flex md:flex-col h-full">
                   {/* Image Section */}
                   <div className="relative w-[38%] md:w-full min-h-[160px] md:h-[220px]">
@@ -151,7 +151,7 @@ export function HomePropertyCards({ properties }: { properties: any[] }) {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -159,7 +159,7 @@ export function HomePropertyCards({ properties }: { properties: any[] }) {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

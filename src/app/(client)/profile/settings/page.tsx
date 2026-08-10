@@ -92,8 +92,8 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
-  const inputCls = "w-full h-11 px-3.5 pl-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
-  const selectCls = "w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white";
+  const inputCls = "w-full h-11 px-3.5 pl-10 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+  const selectCls = "w-full h-11 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white";
   const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
 
   if (loading) {
@@ -109,7 +109,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>
@@ -130,8 +130,8 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Details */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
             <User className="w-4 h-4 text-primary" /> Personal Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -179,8 +179,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Home Buyer / Tenant Search Preferences */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <div className="border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center justify-between">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <div className="border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide flex items-center gap-2">
               <Compass className="w-4 h-4 text-primary" /> My Home Search Preferences
             </h2>
@@ -260,7 +260,7 @@ export default function SettingsPage() {
 
         {/* Submit */}
         <div className="flex justify-end gap-3 pt-2">
-          <Link href="/profile" className="h-11 px-5 rounded-xl border border-gray-200 dark:border-gray-800 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 flex items-center transition-colors">
+          <Link href="/profile" className="h-11 px-5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 flex items-center transition-colors">
             Cancel
           </Link>
           <button

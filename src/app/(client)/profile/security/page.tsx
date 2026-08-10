@@ -81,7 +81,7 @@ export default function SecurityPage() {
     setDownloading(false);
   };
 
-  const inputCls = "w-full h-11 px-3.5 pl-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+  const inputCls = "w-full h-11 px-3.5 pl-10 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
   const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
 
   return (
@@ -89,7 +89,7 @@ export default function SecurityPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>
@@ -110,8 +110,8 @@ export default function SecurityPage() {
 
       <div className="space-y-6">
         {/* Password Update */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
             <Lock className="w-4 h-4 text-primary" /> Update Password
           </h2>
 
@@ -177,8 +177,8 @@ export default function SecurityPage() {
         </div>
 
         {/* Data Rights & Export */}
-        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" /> Data Ownership & Control
           </h2>
 
@@ -191,7 +191,7 @@ export default function SecurityPage() {
               <button
                 onClick={handleDownloadData}
                 disabled={downloading}
-                className="h-9 px-4 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5"
+                className="h-9 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5"
               >
                 {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-primary" />}
                 Download JSON
@@ -231,7 +231,7 @@ export default function SecurityPage() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 h-10 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50"
+                className="flex-1 h-10 border border-gray-200/60 dark:border-gray-800/60 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50"
               >
                 Keep My Account
               </button>

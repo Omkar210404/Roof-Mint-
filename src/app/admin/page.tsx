@@ -39,7 +39,7 @@ const weeklyActivity = [
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-navy-900 border border-gray-100 dark:border-gray-800 shadow-lg rounded-xl p-3 text-sm">
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-lg rounded-xl p-3 text-sm">
         <p className="font-semibold text-navy dark:text-white mb-1">{label}</p>
         {payload.map((entry: any, i: number) => (
           <p key={i} className="text-gray-600 dark:text-gray-300">
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
       {/* ─── Row: Activity Chart + Property Status ─────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Activity Area Chart */}
-        <div className="lg:col-span-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-navy-900 shadow-sm p-5">
+        <div className="lg:col-span-2 rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm p-5">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-bold text-navy dark:text-white">WEEKLY ACTIVITY</h2>
             <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">Last 7 days</span>
@@ -143,7 +143,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Property Status Donut */}
-        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-navy-900 shadow-sm p-5">
+        <div className="rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm p-5">
           <h2 className="text-sm font-bold text-navy dark:text-white mb-5 uppercase tracking-wide">Property Status</h2>
           <div className="h-[200px]">
             {statusCounts.length > 0 ? (
@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
       {/* ─── Row: Lead Sources + Conversion Funnel ─────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Lead Sources Bar Chart */}
-        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-navy-900 shadow-sm p-5">
+        <div className="rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm p-5">
           <h2 className="text-sm font-bold text-navy dark:text-white mb-5 uppercase tracking-wide">Lead Sources</h2>
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -199,7 +199,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Conversion Funnel */}
-        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-navy-900 shadow-sm p-5">
+        <div className="rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm p-5">
           <h2 className="text-sm font-bold text-navy dark:text-white mb-5 uppercase tracking-wide">Conversion Funnel</h2>
           <div className="space-y-4">
             {conversionFunnel.map((step, i) => {
@@ -231,8 +231,8 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ─── Recent Enquiries Table ────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-navy-900 shadow-sm overflow-hidden">
-        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+      <div className="rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm overflow-hidden">
+        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
           <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Recent Enquiries</h2>
           <a href="/admin/leads" className="text-sm font-medium text-primary hover:text-teal-700 transition-colors">
             View all →
@@ -289,7 +289,7 @@ function MetricCard({ icon: Icon, iconBg, iconColor, label, value, change, up }:
   icon: any; iconBg: string; iconColor: string; label: string; value: string; change: string; up?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-navy-900 shadow-sm hover:shadow-md transition-shadow p-5">
+    <div className="rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm hover:shadow-md transition-shadow p-5">
       <div className="flex items-center gap-4">
         <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
           <Icon className={`w-6 h-6 ${iconColor}`} />
