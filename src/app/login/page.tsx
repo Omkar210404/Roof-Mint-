@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, Shield, Sparkles, CheckCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -69,17 +69,26 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col max-w-[480px] md:max-w-none md:flex-row mx-auto w-full relative">
       <ThemeToggle className="absolute top-4 right-4 z-20" />
+      <Link
+        href="/"
+        title="Back to home"
+        className="absolute top-4 left-4 z-20 w-9 h-9 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"
+      >
+        <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+      </Link>
       {/* Left Side - Illustration (Desktop Only) */}
       <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 flex-col items-center justify-start pt-4 lg:pt-8 px-8 lg:px-16 pb-12">
         <div className="flex flex-col items-center w-full max-w-lg">
-          <Image
-            src="/images/logo.png"
-            alt="Roofmint"
-            width={240}
-            height={64}
-            className="mb-12 h-16 w-auto"
-            priority
-          />
+          <Link href="/">
+            <Image
+              src="/images/logo.png"
+              alt="Roofmint"
+              width={240}
+              height={64}
+              className="mb-12 h-16 w-auto"
+              priority
+            />
+          </Link>
           <Image
             src="/images/home1.png"
             alt="Find your perfect home"
@@ -102,14 +111,16 @@ export default function LoginPage() {
           {/* Mobile Header & Illustration (Hidden on Desktop) */}
           <div className="md:hidden text-center pb-4">
             <div className="flex justify-center mb-1">
-              <Image
-                src="/images/logo.png"
-                alt="Roofmint"
-                width={180}
-                height={48}
-                className="h-12 w-auto"
-                priority
-              />
+              <Link href="/">
+                <Image
+                  src="/images/logo.png"
+                  alt="Roofmint"
+                  width={180}
+                  height={48}
+                  className="h-12 w-auto"
+                  priority
+                />
+              </Link>
             </div>
             <p className="text-sm font-medium text-primary">AI finds. You decide. Perfect Home.</p>
           </div>
