@@ -160,9 +160,9 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       {/* Navigation (Mobile Bottom Bar / Desktop Hover-Expand Rail) */}
       <nav className="group fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100 dark:border-gray-800 z-50 safe-area-bottom overflow-hidden md:w-16 md:hover:w-56 transition-[width] duration-200 ease-out">
         <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-16 md:group-hover:w-56 transition-[width] duration-200 ease-out">
-          {/* Logo for Desktop — only shown once the rail expands */}
-          <div className="hidden md:group-hover:flex h-14 items-center px-3 mb-2 border-b border-gray-100 dark:border-gray-800 shrink-0">
-            <Link href="/">
+          {/* Logo for Desktop — space is always reserved so nav items don't jump; the mark itself fades in on expand */}
+          <div className="hidden md:flex h-14 items-center justify-center md:group-hover:justify-start px-3 mb-2 border-b border-gray-100 dark:border-gray-800 shrink-0 overflow-hidden">
+            <Link href="/" className="opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
               <Image
                 src="/images/logo.png"
                 alt="Roofmint"
