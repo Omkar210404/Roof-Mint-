@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json()
 
   const result = await streamText({
-    model: google('gemini-1.5-flash') as any,
+    model: google('gemini-flash-latest') as any,
     system: `You are the Roofmint AI real estate concierge. Your goal is to help users find their perfect property.
     Be extremely concise, polite, and professional. 
     Do not hallucinate properties. ALWAYS use the 'extract_filters' tool to search the database when the user expresses an intent to find properties.

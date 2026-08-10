@@ -5,9 +5,9 @@ import { NextResponse } from 'next/server';
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  try {
-    const { title, location_address, locality, city, price, property_type, bhk } = await req.json();
+  const { title, location_address, locality, city, price, property_type, bhk } = await req.json();
 
+  try {
     if (!price || (!locality && !city && !location_address)) {
       return NextResponse.json({ error: 'Missing required property parameters' }, { status: 400 });
     }
@@ -37,7 +37,7 @@ Respond ONLY with a valid JSON object matching this exact TypeScript structure:
 Do not include markdown formatting, backticks, or extra commentary outside the JSON.`;
 
     const { text } = await generateText({
-      model: google('gemini-1.5-flash') as any,
+      model: google('gemini-flash-latest') as any,
       prompt,
     });
 
@@ -49,8 +49,8 @@ Do not include markdown formatting, backticks, or extra commentary outside the J
   } catch (error: any) {
     console.error('Appreciation prediction error:', error);
     // Fallback calculation if AI API rate-limits or fails
-    const currentPrice = Number((await req.clone().json().catch(() => ({})))?.price || 10000000);
-    const estimated5Yr = Math.round(currentPrice * 1.42);
+    const fallbackPrice = Number(price || 10000000);
+    const estimated5Yr = Math.round(fallbackPrice * 1.42);
     return NextResponse.json({
       estimatedPrice5Yr: estimated5Yr,
       estimatedPriceFormatted: estimated5Yr >= 10000000 ? `₹${(estimated5Yr / 10000000).toFixed(2)} Cr` : `₹${(estimated5Yr / 100000).toFixed(0)} L`,
