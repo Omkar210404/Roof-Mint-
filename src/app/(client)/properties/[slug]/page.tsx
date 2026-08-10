@@ -192,6 +192,39 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     setSubmitting(false);
   };
 
+  // Once we already have valid saved contact details for this user, skip
+  // asking again on every property — submit straight away using them.
+  const openEnquiry = async () => {
+    if (requireLogin()) return;
+
+    const fd = new FormData();
+    fd.append('name', enquiryPrefill.name);
+    fd.append('phone', enquiryPrefill.phone);
+    fd.append('email', enquiryPrefill.email);
+
+    if (validateEnquiry(fd)) {
+      // No usable saved details yet (first time, or an incomplete profile) — ask once.
+      setShowEnquiryModal(true);
+      return;
+    }
+
+    setShowEnquiryModal(true);
+    setEnquiryError(null);
+    setSubmitting(true);
+    fd.append('property_id', property.id);
+    fd.append('budget_hint', '');
+    fd.append('message', '');
+    try {
+      await submitEnquiry(fd);
+      setEnquirySubmitted(true);
+    } catch (err) {
+      console.error(err);
+      // Fall back to the form so they can retry manually instead of a dead end.
+      setEnquiryError('Something went wrong submitting your enquiry. Please try again.');
+    }
+    setSubmitting(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -230,6 +263,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                   className="w-full h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all">
                   Continue Exploring
                 </button>
+              </div>
+            ) : submitting && !enquiryError ? (
+              <div className="text-center py-6">
+                <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Sending your enquiry using your saved details...</p>
               </div>
             ) : (
               <>
@@ -432,7 +470,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             {property.priceLabel && <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{property.priceLabel}</span>}
           </div>
           <div className="space-y-2.5 mt-6">
-            <button onClick={() => { if (requireLogin()) return; setShowEnquiryModal(true); }} className="w-full h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 active:scale-[0.98]">
+            <button onClick={openEnquiry} className="w-full h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 active:scale-[0.98]">
               <Phone className="w-4 h-4" /> Contact Agent
             </button>
             <a
@@ -464,7 +502,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
 
       {/* Sticky Bottom Bar (Mobile Only) */}
       <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:hidden bg-white dark:bg-navy-900 border-t border-gray-100/60 dark:border-gray-800/60 px-4 py-3 z-40 flex gap-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <button onClick={() => { if (requireLogin()) return; setShowEnquiryModal(true); }} className="flex-1 h-11 bg-primary hover:bg-teal-700 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]">
+        <button onClick={openEnquiry} className="flex-1 h-11 bg-primary hover:bg-teal-700 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]">
           <Phone className="w-4 h-4" /> Enquire
         </button>
         <a
