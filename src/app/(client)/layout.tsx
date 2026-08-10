@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
@@ -19,6 +19,22 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [location, setLocation] = useState({ locality: 'Detecting...', city: '', state: '' });
   const [locationLoading, setLocationLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const collapsed = localStorage.getItem('roofmint_sidebar_collapsed');
+      if (collapsed === 'true') setSidebarCollapsed(true);
+    } catch {}
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('roofmint_sidebar_collapsed', String(next)); } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -76,7 +92,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background max-w-[480px] md:max-w-none mx-auto relative">
       {/* Top App Bar */}
-      <header className="sticky top-0 z-50 w-full bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 md:w-[calc(100%-14rem)] md:ml-56">
+      <header className={`sticky top-0 z-50 w-full bg-white dark:bg-navy-900 border-b border-gray-100 dark:border-gray-800 transition-[margin,width] duration-300 ${sidebarCollapsed ? 'md:w-full md:ml-0' : 'md:w-[calc(100%-14rem)] md:ml-56'}`}>
         <div className="flex items-center justify-between px-4 md:px-8 h-14 md:h-16">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary" />
@@ -153,13 +169,22 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pb-16 md:pb-0 md:ml-56 min-h-[calc(100vh-4rem)]">
+      <main className={`flex-1 pb-16 md:pb-0 min-h-[calc(100vh-4rem)] transition-[margin] duration-300 ${sidebarCollapsed ? 'md:ml-0' : 'md:ml-56'}`}>
         {children}
       </main>
 
+      {/* Desktop sidebar collapse/expand handle */}
+      <button
+        onClick={toggleSidebar}
+        title={sidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+        className={`hidden md:flex fixed top-1/2 -translate-y-1/2 z-[70] w-6 h-12 items-center justify-center rounded-r-lg bg-white dark:bg-navy-900 border border-l-0 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-navy-800 shadow-sm transition-[left] duration-300 ${sidebarCollapsed ? 'left-0' : 'left-56'}`}
+      >
+        {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+      </button>
+
       {/* Navigation (Mobile Bottom Bar / Desktop Sidebar) */}
-      <nav className="fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:w-56 md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100 dark:border-gray-800 z-[60] safe-area-bottom">
-        <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1">
+      <nav className={`fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100 dark:border-gray-800 z-[60] safe-area-bottom overflow-hidden transition-[width] duration-300 ${sidebarCollapsed ? 'md:w-0 md:border-r-0' : 'md:w-56'}`}>
+        <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-56">
           {/* Logo for Desktop */}
           <div className="hidden md:flex h-14 items-center px-3 mb-2 border-b border-gray-100 dark:border-gray-800">
             <Link href="/">
