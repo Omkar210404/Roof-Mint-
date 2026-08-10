@@ -366,7 +366,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               <Phone className="w-4 h-4" /> Contact Agent
             </button>
             <a
-              href={`https://wa.me/919988776655?text=${encodeURIComponent(`Hi Roofmint, I'm interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`}
+              href={`https://wa.me/917096867438?text=${encodeURIComponent(`Hi Roofmint, I'm interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full h-12 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 active:scale-[0.98]"
@@ -397,7 +397,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
           <Phone className="w-4 h-4" /> Enquire
         </button>
         <a
-          href={`https://wa.me/919988776655?text=${encodeURIComponent(`Hi Roofmint, I'm interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`}
+          href={`https://wa.me/917096867438?text=${encodeURIComponent(`Hi Roofmint, I'm interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 h-11 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]"

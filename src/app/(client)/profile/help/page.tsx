@@ -101,7 +101,7 @@ export default function HelpPage() {
         {/* Contact Channels Bar */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <a
-            href="https://wa.me/919988776655?text=Hi%20Roofmint%20Support"
+            href="https://wa.me/917096867438?text=Hi%20Roofmint%20Support"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-2xl p-4 transition-colors flex items-center gap-3"
@@ -111,7 +111,7 @@ export default function HelpPage() {
             </div>
             <div>
               <p className="text-xs font-bold text-emerald-950">WhatsApp Support</p>
-              <p className="text-xs text-emerald-700 font-semibold mt-0.5">+91 99887 76655</p>
+              <p className="text-xs text-emerald-700 font-semibold mt-0.5">+91 70968 67438</p>
             </div>
           </a>
 

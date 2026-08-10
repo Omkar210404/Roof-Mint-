@@ -66,7 +66,7 @@ export function AppreciationPredictor({ property }: PropertyProps) {
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-white">5-Year Price & Growth Predictor</h3>
               <span className="text-[10px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Gemini AI
+                Roofmint AI
               </span>
             </div>
             <p className="text-xs text-slate-400">Location-based market appreciation forecast (2026 - 2031)</p>

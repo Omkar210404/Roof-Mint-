@@ -30,7 +30,7 @@ export default function OnboardingPage() {
               Let&apos;s find your perfect home
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-              Tell us your preferences to get 100% personalized real estate recommendations powered by Gemini AI.
+              Tell us your preferences to get 100% personalized real estate recommendations powered by Roofmint AI.
             </p>
           </div>
 
