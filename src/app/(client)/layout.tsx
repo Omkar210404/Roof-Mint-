@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, X, LocateFixed, Loader2 } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, X, LocateFixed, Loader2, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { createClient } from "@/utils/supabase/client";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -23,6 +24,16 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const [locationQuery, setLocationQuery] = useState('');
   const [locationResults, setLocationResults] = useState<any[]>([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const detectLocation = (highAccuracy: boolean) => {
     setLocationLoading(true);
@@ -165,6 +176,15 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-white dark:ring-navy-900" />
             </Link>
+            {isLoggedIn === false && (
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 h-9 md:h-10 px-3 md:px-4 bg-primary hover:bg-teal-700 text-white text-xs md:text-sm font-bold rounded-lg transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
+              </Link>
+            )}
             <ThemeToggle />
           </div>
         </div>
