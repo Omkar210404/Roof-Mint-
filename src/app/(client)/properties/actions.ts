@@ -112,9 +112,20 @@ export async function submitEnquiry(formData: FormData) {
   const budget_hint = formData.get('budget_hint') as string
   const message = formData.get('message') as string
 
+  let assigned_agent_id: string | null = null
+  if (property_id) {
+    const { data: property } = await supabase
+      .from('properties')
+      .select('primary_agent_id')
+      .eq('id', property_id)
+      .single()
+    assigned_agent_id = property?.primary_agent_id || null
+  }
+
   const { error } = await supabase.from('enquiries').insert({
     property_id: property_id || null,
     user_id: user?.id || null,
+    assigned_agent_id,
     name,
     phone,
     email,
