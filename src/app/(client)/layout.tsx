@@ -7,6 +7,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, X, LocateFixed, Loader2, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/utils/supabase/client";
+import { LoginPromptModal } from "@/components/login-prompt-modal";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -25,6 +26,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const [locationResults, setLocationResults] = useState<any[]>([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [showFirstVisitPrompt, setShowFirstVisitPrompt] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -34,6 +36,18 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isLoggedIn !== false) return;
+    let seen = false;
+    try { seen = localStorage.getItem('roofmint_login_prompt_seen') === 'true'; } catch {}
+    if (seen) return;
+    const timer = setTimeout(() => {
+      setShowFirstVisitPrompt(true);
+      try { localStorage.setItem('roofmint_login_prompt_seen', 'true'); } catch {}
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [isLoggedIn]);
 
   const detectLocation = (highAccuracy: boolean) => {
     setLocationLoading(true);
@@ -196,17 +210,17 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       </main>
 
       {/* Navigation (Mobile Bottom Bar / Desktop Hover-Expand Rail) */}
-      <nav className="group fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100/60 dark:border-gray-800/60 z-50 safe-area-bottom overflow-hidden md:w-16 md:hover:w-56 transition-[width] duration-200 ease-out">
-        <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-16 md:group-hover:w-56 transition-[width] duration-200 ease-out">
+      <nav className="group fixed bottom-0 md:bottom-auto md:top-0 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 w-full max-w-[480px] md:max-w-none md:h-screen bg-white dark:bg-navy-900 border-t md:border-t-0 md:border-r border-gray-100/60 dark:border-gray-800/60 z-50 safe-area-bottom overflow-hidden md:w-16 md:hover:w-56 transition-[width] duration-100 ease-out">
+        <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-16 md:group-hover:w-56 transition-[width] duration-100 ease-out">
           {/* Logo for Desktop — mini mark at rest, crossfades to the full wordmark on hover-expand */}
           <div className="hidden md:flex h-14 items-center justify-center md:group-hover:justify-start px-3 mb-2 border-b border-gray-100/60 dark:border-gray-800/60 shrink-0 overflow-hidden">
-            <Link href="/" className="relative shrink-0 w-7 h-7 md:group-hover:w-[130px] transition-[width] duration-200">
+            <Link href="/" className="relative shrink-0 w-7 h-7 md:group-hover:w-[130px] transition-[width] duration-100">
               <Image
                 src="/images/logo-icon.png"
                 alt="Roofmint"
                 width={28}
                 height={28}
-                className="absolute inset-0 object-contain h-7 w-7 opacity-100 md:group-hover:opacity-0 transition-opacity duration-150"
+                className="absolute inset-0 object-contain h-7 w-7 opacity-100 md:group-hover:opacity-0 transition-opacity duration-75"
                 priority
               />
               <Image
@@ -214,7 +228,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
                 alt="Roofmint"
                 width={130}
                 height={36}
-                className="absolute left-0 top-1/2 -translate-y-1/2 object-contain h-10 w-auto opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 delay-75"
+                className="absolute left-0 top-1/2 -translate-y-1/2 object-contain h-10 w-auto opacity-0 md:group-hover:opacity-100 transition-opacity duration-100"
                 priority
               />
             </Link>
@@ -309,6 +323,13 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       )}
+
+      <LoginPromptModal
+        open={showFirstVisitPrompt}
+        onClose={() => setShowFirstVisitPrompt(false)}
+        title="Welcome to Roofmint"
+        message="Login or create a free account to save properties, get AI-personalized matches, and enquire directly with our agents."
+      />
     </div>
   );
 }
