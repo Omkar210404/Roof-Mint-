@@ -3,13 +3,38 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+
+  // Auto sign-out after 20 minutes of inactivity — admin sessions are
+  // higher-privilege, so this shouldn't stay open indefinitely.
+  useEffect(() => {
+    const IDLE_LIMIT_MS = 20 * 60 * 1000;
+    const supabase = createClient();
+    let idleTimer: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login?reason=session_expired';
+      }, IDLE_LIMIT_MS);
+    };
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      clearTimeout(idleTimer);
+      activityEvents.forEach((evt) => window.removeEventListener(evt, resetTimer));
+    };
+  }, []);
 
   const navItems = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },

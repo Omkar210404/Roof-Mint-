@@ -27,6 +27,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const [searchingLocation, setSearchingLocation] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showFirstVisitPrompt, setShowFirstVisitPrompt] = useState(false);
+  const [showSessionExpired, setShowSessionExpired] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -37,16 +38,44 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Shown once per browser session (tab/window), not once ever — sessionStorage
+  // resets on every fresh visit, unlike localStorage which would only ever fire once.
   useEffect(() => {
     if (isLoggedIn !== false) return;
     let seen = false;
-    try { seen = localStorage.getItem('roofmint_login_prompt_seen') === 'true'; } catch {}
+    try { seen = sessionStorage.getItem('roofmint_login_prompt_seen') === 'true'; } catch {}
     if (seen) return;
     const timer = setTimeout(() => {
       setShowFirstVisitPrompt(true);
-      try { localStorage.setItem('roofmint_login_prompt_seen', 'true'); } catch {}
+      try { sessionStorage.setItem('roofmint_login_prompt_seen', 'true'); } catch {}
     }, 1500);
     return () => clearTimeout(timer);
+  }, [isLoggedIn]);
+
+  // Auto sign-out after 20 minutes with no mouse/keyboard/touch/scroll activity.
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const IDLE_LIMIT_MS = 20 * 60 * 1000;
+    const supabase = createClient();
+    let idleTimer: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(async () => {
+        await supabase.auth.signOut();
+        setShowSessionExpired(true);
+      }, IDLE_LIMIT_MS);
+    };
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      clearTimeout(idleTimer);
+      activityEvents.forEach((evt) => window.removeEventListener(evt, resetTimer));
+    };
   }, [isLoggedIn]);
 
   const detectLocation = (highAccuracy: boolean) => {
@@ -329,6 +358,13 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         onClose={() => setShowFirstVisitPrompt(false)}
         title="Welcome to Roofmint"
         message="Login or create a free account to save properties, get AI-personalized matches, and enquire directly with our agents."
+      />
+
+      <LoginPromptModal
+        open={showSessionExpired}
+        onClose={() => setShowSessionExpired(false)}
+        title="Session Expired"
+        message="You were logged out after 20 minutes of inactivity. Please log in again to continue."
       />
     </div>
   );
