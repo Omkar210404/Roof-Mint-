@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAgent } from '@/utils/supabase/agent-guard'
+import { revalidatePath } from 'next/cache'
 
 export async function getMyLeads() {
   const { authorized, supabase, agent } = await requireAgent()
@@ -21,6 +22,28 @@ export async function getMyLeads() {
   }
 
   return data || []
+}
+
+export async function updateMyLeadStatus(leadId: string, status: string) {
+  const { authorized, supabase, agent } = await requireAgent()
+  if (!authorized || !agent) return { error: 'Unauthorized' }
+
+  // Belt-and-suspenders on top of RLS (enquiries_update_agent) and the
+  // restrict_agent_enquiry_update trigger, which already pin this to
+  // status-only changes on the agent's own rows.
+  const { error } = await supabase
+    .from('enquiries')
+    .update({ status })
+    .eq('id', leadId)
+    .eq('assigned_agent_id', agent.id)
+
+  if (error) {
+    console.error('updateMyLeadStatus error:', error.message)
+    return { error: error.message }
+  }
+
+  revalidatePath('/agent/leads')
+  return { success: true }
 }
 
 export async function getMyProperties() {

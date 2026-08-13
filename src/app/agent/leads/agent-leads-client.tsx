@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { getMyLeads } from '../actions'
+import { getMyLeads, updateMyLeadStatus } from '../actions'
 import {
   Table,
   TableBody,
@@ -24,10 +24,6 @@ const statusOptions = [
 
 function getStatusStyle(status: string) {
   return statusOptions.find(s => s.value === status)?.style || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60'
-}
-
-function getStatusLabel(status: string) {
-  return statusOptions.find(s => s.value === status)?.label || status
 }
 
 function toWaLink(phone: string) {
@@ -93,6 +89,11 @@ export function AgentLeadsClient({ initialLeads }: { initialLeads: any[] }) {
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
     else { setSortKey(key); setSortDir(key === 'date' ? 'desc' : 'asc') }
+  }
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
+    await updateMyLeadStatus(id, newStatus)
   }
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
@@ -186,9 +187,15 @@ export function AgentLeadsClient({ initialLeads }: { initialLeads: any[] }) {
                     <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{lead.message || '—'}</div>
                   </TableCell>
                   <TableCell>
-                    <span className={`inline-block h-8 leading-8 text-xs font-semibold rounded-lg px-2 border ${getStatusStyle(lead.status || 'new')}`}>
-                      {getStatusLabel(lead.status || 'new')}
-                    </span>
+                    <select
+                      value={lead.status || 'new'}
+                      onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                      className={`h-8 text-xs font-semibold rounded-lg px-2 border focus:outline-none focus:ring-2 focus:ring-primary/20 ${getStatusStyle(lead.status || 'new')}`}
+                    >
+                      {statusOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">

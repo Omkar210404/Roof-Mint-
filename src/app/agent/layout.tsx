@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { Building2, Users, LogOut, Eye } from "lucide-react";
+import { Building2, Users, LogOut } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -52,12 +52,6 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
             height={40}
             className="h-12 w-auto"
           />
-        </div>
-
-        <div className="px-4 pt-4">
-          <div className="flex items-center gap-1.5 bg-teal-50 dark:bg-teal-950/40 text-primary text-[10px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full w-fit">
-            <Eye className="w-3 h-3" /> Read-only Agent View
-          </div>
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 p-3">
