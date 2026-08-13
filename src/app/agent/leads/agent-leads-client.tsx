@@ -130,7 +130,7 @@ export function AgentLeadsClient({ initialLeads }: { initialLeads: any[] }) {
 
   const exportPDF = async () => {
     const { default: jsPDF } = await import('jspdf')
-    await import('jspdf-autotable')
+    const { default: autoTable } = await import('jspdf-autotable')
     const doc = new jsPDF()
 
     doc.setFontSize(16)
@@ -142,7 +142,7 @@ export function AgentLeadsClient({ initialLeads }: { initialLeads: any[] }) {
       14, 22
     )
 
-    ;(doc as any).autoTable({
+    autoTable(doc, {
       startY: 28,
       head: [['Date', 'Property', 'Name', 'Phone', 'Email', 'Budget', 'Status']],
       body: filteredSorted.map(l => [
