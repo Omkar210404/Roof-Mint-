@@ -44,7 +44,7 @@ const questions = [
     subtitle: "Choose transaction type",
     type: 'grid',
     options: ['Sale', 'Rent', 'Resale', 'Any'],
-    labels: ['Buy (Sale)', 'Rent', 'Resale', 'Any / Open'],
+    labels: ['Buy', 'Rent', 'Resale', 'Any / Open'],
   },
   {
     id: 'pref_ownership',

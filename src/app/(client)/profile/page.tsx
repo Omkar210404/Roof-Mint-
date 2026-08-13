@@ -191,7 +191,7 @@ export default function ProfilePage() {
               {[
                 { icon: MapPin, label: 'Location', value: profile?.pref_location || 'Not set' },
                 { icon: Building2, label: 'Property Type', value: profile?.pref_bhk ? `${profile.pref_bhk} BHK ${profile.pref_property_type || ''}`.trim() : (profile?.pref_property_type || 'Not set') },
-                { icon: Tag, label: 'Transaction Type', value: profile?.pref_listing_type ? (profile.pref_listing_type === 'Sale' ? 'Buy (Sale)' : profile.pref_listing_type) : 'Not set' },
+                { icon: Tag, label: 'Transaction Type', value: profile?.pref_listing_type ? (profile.pref_listing_type === 'Sale' ? 'Buy' : profile.pref_listing_type) : 'Not set' },
                 { icon: UserCheck, label: 'Ownership Pref', value: profile?.pref_ownership || 'Not set' },
                 { icon: Wallet, label: 'Budget', value: formatBudget(profile?.pref_budget_min, profile?.pref_budget_max) },
               ].map((pref) => (
