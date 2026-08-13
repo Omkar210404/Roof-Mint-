@@ -1,7 +1,8 @@
 import { getAgents } from './actions';
+import { getPlanTiers } from '../../plans/actions';
 import { AgentsClientWrapper } from './agents-client';
 
 export default async function AdminAgentsPage() {
-  const agents = await getAgents();
-  return <AgentsClientWrapper initialAgents={agents} />;
+  const [agents, planTiers] = await Promise.all([getAgents(), getPlanTiers()]);
+  return <AgentsClientWrapper initialAgents={agents} initialPlanTiers={planTiers} />;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle } from 'lucide-react';
+import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle, Settings } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,13 +11,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, revokeAgentAccess, setAgentPlan } from './actions';
-import { AGENT_PLANS, computePlanStatus, formatPlanPrice, type AgentPlanId } from '@/lib/agent-plans';
+import { computePlanStatus, formatPlanPrice, findTier, type AgentPlanTier } from '@/lib/agent-plans';
+import { PlanManagerModal } from './plan-manager-modal';
 
 type SortKey = 'date' | 'name';
 type SortDir = 'asc' | 'desc';
 
-export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] }) {
+export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initialAgents: any[]; initialPlanTiers: AgentPlanTier[] }) {
   const [agents, setAgents] = useState<any[]>(initialAgents);
+  const [planTiers, setPlanTiers] = useState<AgentPlanTier[]>(initialPlanTiers);
+  const [showPlanManager, setShowPlanManager] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -116,7 +119,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
   // Plan (pricing tier) state
   const [planBusy, setPlanBusy] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<AgentPlanId>('trial_pack');
+  const [selectedPlan, setSelectedPlan] = useState<string>(planTiers[0]?.id || 'trial_pack');
 
   const resetForm = () => {
     setEditingAgent(null);
@@ -142,13 +145,13 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
     setPortalError(null);
     setPortalSuccess(null);
     setPlanError(null);
-    setSelectedPlan((agent.plan as AgentPlanId) || 'trial_pack');
+    setSelectedPlan(agent.plan || planTiers[0]?.id || 'trial_pack');
   };
 
   const handleSetPlan = async () => {
     if (!editingAgent) return;
-    const tier = AGENT_PLANS.find(p => p.id === selectedPlan)!;
-    if (!confirm(`Set "${editingAgent.name}" to ${tier.label} (${formatPlanPrice(tier.price)})? This starts a fresh ${tier.durationMonths === 12 ? '1-year' : '1-month'} period from today.`)) return;
+    const tier = findTier(planTiers, selectedPlan);
+    if (!confirm(`Set "${editingAgent.name}" to ${tier.label} (${formatPlanPrice(tier.price)})? This starts a fresh ${tier.duration_months === 12 ? '1-year' : '1-month'} period from today.`)) return;
     setPlanError(null);
     setPlanBusy(true);
     const res = await setAgentPlan(editingAgent.id, selectedPlan);
@@ -243,10 +246,26 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Agents Management</h1>
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{agents.length} total</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPlanManager(true)}
+            className="h-9 px-3.5 rounded-lg bg-navy dark:bg-teal-700 text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-1.5"
+          >
+            <Settings className="w-3.5 h-3.5" /> Manage Plans
+          </button>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{agents.length} total</span>
+        </div>
       </div>
+
+      {showPlanManager && (
+        <PlanManagerModal
+          tiers={planTiers}
+          onClose={() => setShowPlanManager(false)}
+          onSaved={(updated) => setPlanTiers(prev => prev.map(t => t.id === updated.id ? updated : t))}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Add / Edit Form */}
@@ -395,8 +414,8 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
 
             {/* Plan — gates how many leads/properties this agent's portal shows */}
             {editingAgent && editingAgent.user_id && (() => {
-              const status = computePlanStatus(editingAgent.plan, editingAgent.plan_started_at);
-              const selectedTier = AGENT_PLANS.find(p => p.id === selectedPlan) || AGENT_PLANS[0];
+              const status = computePlanStatus(findTier(planTiers, editingAgent.plan), editingAgent.plan_started_at);
+              const selectedTier = findTier(planTiers, selectedPlan);
               return (
                 <div className="mt-5 pt-5 border-t border-gray-100/60 dark:border-gray-800/60 space-y-3">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
@@ -415,10 +434,10 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
 
                   <select
                     value={selectedPlan}
-                    onChange={e => setSelectedPlan(e.target.value as AgentPlanId)}
+                    onChange={e => setSelectedPlan(e.target.value)}
                     className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    {AGENT_PLANS.map(tier => (
+                    {planTiers.map(tier => (
                       <option key={tier.id} value={tier.id}>{tier.label} — {formatPlanPrice(tier.price)}</option>
                     ))}
                   </select>
@@ -426,13 +445,13 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-navy-800 rounded-lg p-3 space-y-1">
                     <p>{selectedTier.tagline}</p>
                     <p>
-                      {selectedTier.propertyCap ? `${selectedTier.propertyCap} propert${selectedTier.propertyCap === 1 ? 'y' : 'ies'}` : 'Unlimited properties'}
+                      {selectedTier.property_cap ? `${selectedTier.property_cap} propert${selectedTier.property_cap === 1 ? 'y' : 'ies'}` : 'Unlimited properties'}
                       {' · '}
-                      {selectedTier.leadCap ? `${selectedTier.leadCap} leads` : 'Unlimited leads'}
+                      {selectedTier.lead_cap ? `${selectedTier.lead_cap} leads` : 'Unlimited leads'}
                       {' · '}
-                      {selectedTier.canExport ? 'CSV/PDF export' : 'No CSV/PDF export'}
+                      {selectedTier.can_export ? 'CSV/PDF export' : 'No CSV/PDF export'}
                       {' · '}
-                      {selectedTier.durationMonths === 12 ? '1 year' : '1 month'}
+                      {selectedTier.duration_months === 12 ? '1 year' : '1 month'}
                     </p>
                   </div>
 
@@ -550,7 +569,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                       {!agent.user_id ? (
                         <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">—</span>
                       ) : (() => {
-                        const status = computePlanStatus(agent.plan, agent.plan_started_at);
+                        const status = computePlanStatus(findTier(planTiers, agent.plan), agent.plan_started_at);
                         return (
                           <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${status.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-green-700 bg-green-50 dark:bg-green-950/40'}`}>
                             {status.expired ? <AlertTriangle className="w-3 h-3" /> : <Crown className="w-3 h-3" />}

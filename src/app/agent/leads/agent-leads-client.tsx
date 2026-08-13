@@ -162,7 +162,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
     doc.save(`roofmint-leads-${new Date().toISOString().slice(0, 10)}.pdf`)
   }
 
-  const canExport = plan?.tier.canExport ?? false
+  const canExport = plan?.tier.can_export ?? false
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
@@ -234,9 +234,9 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
         </select>
       </div>
 
-      {plan && !plan.expired && plan.tier.leadCap != null && (
+      {plan && !plan.expired && plan.tier.lead_cap != null && (
         <p className="text-xs text-gray-400 dark:text-gray-500 -mt-2">
-          {plan.tier.label} shows your oldest {plan.tier.leadCap} assigned leads. Upgrade for full access.
+          {plan.tier.label} shows your oldest {plan.tier.lead_cap} assigned leads. Upgrade for full access.
         </p>
       )}
 

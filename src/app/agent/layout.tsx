@@ -3,13 +3,25 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect } from "react";
-import { Building2, Users, LogOut } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
+import { Building2, Users, LogOut, Crown } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getMyPlanInfo } from "./actions";
+import { getPlanTiers } from "../plans/actions";
+import { PlansModal } from "./plans-modal";
+import type { AgentPlanTier } from "@/lib/agent-plans";
 
 export default function AgentLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [showPlans, setShowPlans] = useState(false);
+  const [planTiers, setPlanTiers] = useState<AgentPlanTier[]>([]);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getPlanTiers().then(setPlanTiers);
+    getMyPlanInfo().then(info => setCurrentPlanId(info?.tier.id ?? null));
+  }, []);
 
   // Auto sign-out after 20 minutes of inactivity, same policy as admin/client.
   useEffect(() => {
@@ -73,6 +85,13 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          <button
+            onClick={() => setShowPlans(true)}
+            className="flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-navy dark:hover:bg-navy-800 transition-colors"
+          >
+            <Crown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            Plans
+          </button>
         </nav>
 
         {/* Bottom Actions */}
@@ -112,6 +131,10 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </main>
+
+      {showPlans && (
+        <PlansModal tiers={planTiers} currentPlanId={currentPlanId} onClose={() => setShowPlans(false)} />
+      )}
     </div>
   );
 }

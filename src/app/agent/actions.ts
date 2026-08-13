@@ -2,7 +2,8 @@
 
 import { requireAgent } from '@/utils/supabase/agent-guard'
 import { revalidatePath } from 'next/cache'
-import { computePlanStatus } from '@/lib/agent-plans'
+import { computePlanStatus, findTier } from '@/lib/agent-plans'
+import { getPlanTiers } from '../plans/actions'
 
 export async function getMyLeads() {
   const { authorized, supabase, agent } = await requireAgent()
@@ -29,7 +30,8 @@ export async function getMyPlanInfo() {
   const { authorized, agent } = await requireAgent()
   if (!authorized || !agent) return null
 
-  return computePlanStatus(agent.plan, agent.plan_started_at)
+  const tiers = await getPlanTiers()
+  return computePlanStatus(findTier(tiers, agent.plan), agent.plan_started_at)
 }
 
 export async function updateMyLeadStatus(leadId: string, status: string) {
@@ -62,7 +64,8 @@ export async function getMyProperties() {
   // site), so the cap here is a portal display limit, not an RLS security
   // boundary — the plan's oldest N assigned properties, same "oldest first"
   // rule as the lead cap. Expired plans see nothing, matching leads.
-  const status = computePlanStatus(agent.plan, agent.plan_started_at)
+  const tiers = await getPlanTiers()
+  const status = computePlanStatus(findTier(tiers, agent.plan), agent.plan_started_at)
   if (!status.started || status.expired) return []
 
   let query = supabase
@@ -74,8 +77,8 @@ export async function getMyProperties() {
     .eq('primary_agent_id', agent.id)
     .order('created_at', { ascending: true })
 
-  if (status.tier.propertyCap != null) {
-    query = query.limit(status.tier.propertyCap)
+  if (status.tier.property_cap != null) {
+    query = query.limit(status.tier.property_cap)
   }
 
   const { data, error } = await query

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -324,6 +324,12 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
                         <button className="text-primary hover:text-teal-700 font-medium text-xs transition-colors bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 h-8 px-2.5 rounded-md flex items-center gap-1" title="View Listing">
                           <Eye className="w-3.5 h-3.5" />
                           View
+                        </button>
+                      </Link>
+                      <Link href={`/admin/properties/${property.id}/edit`}>
+                        <button className="text-navy dark:text-white hover:opacity-80 font-medium text-xs transition-colors bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 dark:hover:bg-navy-700 h-8 px-2.5 rounded-md flex items-center gap-1" title="Edit Property">
+                          <Edit className="w-3.5 h-3.5" />
+                          Edit
                         </button>
                       </Link>
                       <button

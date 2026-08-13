@@ -3,7 +3,6 @@
 import { requireAdmin } from '@/utils/supabase/admin-guard'
 import { createServiceRoleClient } from '@/utils/supabase/service-admin'
 import { revalidatePath } from 'next/cache'
-import type { AgentPlanId } from '@/lib/agent-plans'
 
 export async function createAgent(formData: FormData) {
   const { authorized, supabase } = await requireAdmin()
@@ -149,7 +148,7 @@ export async function revokeAgentAccess(agentId: string) {
 // Selecting any tier always (re)starts that tier's clock from now — this is
 // how an admin records "I just sold/renewed them this plan."
 
-export async function setAgentPlan(agentId: string, plan: AgentPlanId) {
+export async function setAgentPlan(agentId: string, plan: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 

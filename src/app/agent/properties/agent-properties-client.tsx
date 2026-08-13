@@ -124,9 +124,9 @@ export function AgentPropertiesClient({ initialProperties, plan }: { initialProp
         </div>
       )}
 
-      {plan && !plan.expired && plan.tier.propertyCap != null && (
+      {plan && !plan.expired && plan.tier.property_cap != null && (
         <p className="text-xs text-gray-400 dark:text-gray-500 -mt-2">
-          {plan.tier.label} shows up to {plan.tier.propertyCap} propert{plan.tier.propertyCap === 1 ? 'y' : 'ies'}. Upgrade for more.
+          {plan.tier.label} shows up to {plan.tier.property_cap} propert{plan.tier.property_cap === 1 ? 'y' : 'ies'}. Upgrade for more.
         </p>
       )}
 
