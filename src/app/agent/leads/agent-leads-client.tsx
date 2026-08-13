@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Phone, MessageCircle, FileSpreadsheet, FileText, Crown, Clock3, AlertTriangle, Lock } from 'lucide-react'
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Phone, MessageCircle, FileSpreadsheet, FileText, Crown, AlertTriangle, Lock } from 'lucide-react'
+import type { PlanStatus } from '@/lib/agent-plans'
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -35,14 +36,7 @@ function toWaLink(phone: string) {
 type SortKey = 'date' | 'name'
 type SortDir = 'asc' | 'desc'
 
-type PlanInfo = {
-  plan: 'trial' | 'paid'
-  trialEndsAt: string | null
-  trialExpired: boolean
-  daysLeft: number | null
-} | null
-
-export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; plan: PlanInfo }) {
+export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; plan: PlanStatus | null }) {
   const [leads, setLeads] = useState<any[]>(initialLeads)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -168,7 +162,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
     doc.save(`roofmint-leads-${new Date().toISOString().slice(0, 10)}.pdf`)
   }
 
-  const canExport = plan?.plan === 'paid'
+  const canExport = plan?.tier.canExport ?? false
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
@@ -190,35 +184,29 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">My Leads</h1>
         <div className="flex items-center gap-2">
           {plan && (
-            plan.plan === 'paid' ? (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 dark:bg-green-950/40 px-2.5 py-1 rounded-full">
-                <Crown className="w-3.5 h-3.5" /> Paid Plan
-              </span>
-            ) : (
-              <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${plan.trialExpired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-amber-700 bg-amber-50 dark:bg-amber-950/40'}`}>
-                {plan.trialExpired ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock3 className="w-3.5 h-3.5" />}
-                {plan.trialExpired ? 'Trial Plan · Expired' : `Trial Plan · ${plan.daysLeft}d left`}
-              </span>
-            )
+            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${plan.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-green-700 bg-green-50 dark:bg-green-950/40'}`}>
+              {plan.expired ? <AlertTriangle className="w-3.5 h-3.5" /> : <Crown className="w-3.5 h-3.5" />}
+              {plan.tier.label}{plan.expired ? ' · Expired' : plan.daysLeft != null ? ` · ${plan.daysLeft}d left` : ''}
+            </span>
           )}
           <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{leads.length} total</span>
         </div>
       </div>
 
-      {plan?.trialExpired && (
+      {plan?.expired && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl px-4 py-3">
           <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-bold text-red-700 dark:text-red-400">Your trial version is over</p>
-            <p className="text-xs text-red-600 dark:text-red-400/80">Your 1-month trial has ended, so your leads are no longer shown here. Upgrade to a paid plan to get full access back.</p>
+            <p className="text-sm font-bold text-red-700 dark:text-red-400">Your {plan.tier.label} has ended</p>
+            <p className="text-xs text-red-600 dark:text-red-400/80">Your plan period is over, so your leads are no longer shown here. Renew or upgrade to get access back.</p>
           </div>
           <a
-            href="https://wa.me/917096867438?text=Hi%20Roofmint%2C%20my%20agent%20trial%20has%20ended%20and%20I%27d%20like%20to%20upgrade%20to%20a%20paid%20plan."
+            href="https://wa.me/917096867438?text=Hi%20Roofmint%2C%20my%20agent%20plan%20has%20ended%20and%20I%27d%20like%20to%20renew%20or%20upgrade."
             target="_blank"
             rel="noopener noreferrer"
             className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0"
           >
-            Contact to Upgrade
+            Contact to Renew
           </a>
         </div>
       )}
@@ -246,9 +234,9 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
         </select>
       </div>
 
-      {plan?.plan === 'trial' && !plan.trialExpired && (
+      {plan && !plan.expired && plan.tier.leadCap != null && (
         <p className="text-xs text-gray-400 dark:text-gray-500 -mt-2">
-          Trial plan shows your oldest 25 assigned leads. Upgrade to Paid for full access.
+          {plan.tier.label} shows your oldest {plan.tier.leadCap} assigned leads. Upgrade for full access.
         </p>
       )}
 

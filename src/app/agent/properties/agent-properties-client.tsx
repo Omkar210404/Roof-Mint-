@@ -13,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react'
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, Crown, AlertTriangle } from 'lucide-react'
+import type { PlanStatus } from '@/lib/agent-plans'
 
 const statusStyles: Record<string, string> = {
   available: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700',
@@ -26,7 +27,7 @@ const statusStyles: Record<string, string> = {
 type SortKey = 'date' | 'title' | 'price'
 type SortDir = 'asc' | 'desc'
 
-export function AgentPropertiesClient({ initialProperties }: { initialProperties: any[] }) {
+export function AgentPropertiesClient({ initialProperties, plan }: { initialProperties: any[]; plan: PlanStatus | null }) {
   const [properties, setProperties] = useState<any[]>(initialProperties)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -92,10 +93,42 @@ export function AgentPropertiesClient({ initialProperties }: { initialProperties
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">My Properties</h1>
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{properties.length} total</span>
+        <div className="flex items-center gap-2">
+          {plan && (
+            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${plan.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-green-700 bg-green-50 dark:bg-green-950/40'}`}>
+              {plan.expired ? <AlertTriangle className="w-3.5 h-3.5" /> : <Crown className="w-3.5 h-3.5" />}
+              {plan.tier.label}{plan.expired ? ' · Expired' : plan.daysLeft != null ? ` · ${plan.daysLeft}d left` : ''}
+            </span>
+          )}
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{properties.length} total</span>
+        </div>
       </div>
+
+      {plan?.expired && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl px-4 py-3">
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-red-700 dark:text-red-400">Your {plan.tier.label} has ended</p>
+            <p className="text-xs text-red-600 dark:text-red-400/80">Your plan period is over, so your properties are no longer shown here. Renew or upgrade to get access back.</p>
+          </div>
+          <a
+            href="https://wa.me/917096867438?text=Hi%20Roofmint%2C%20my%20agent%20plan%20has%20ended%20and%20I%27d%20like%20to%20renew%20or%20upgrade."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0"
+          >
+            Contact to Renew
+          </a>
+        </div>
+      )}
+
+      {plan && !plan.expired && plan.tier.propertyCap != null && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 -mt-2">
+          {plan.tier.label} shows up to {plan.tier.propertyCap} propert{plan.tier.propertyCap === 1 ? 'y' : 'ies'}. Upgrade for more.
+        </p>
+      )}
 
       <div className="relative">
         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />

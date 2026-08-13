@@ -2,6 +2,7 @@
 
 import { requireAgent } from '@/utils/supabase/agent-guard'
 import { revalidatePath } from 'next/cache'
+import { computePlanStatus } from '@/lib/agent-plans'
 
 export async function getMyLeads() {
   const { authorized, supabase, agent } = await requireAgent()
@@ -28,21 +29,7 @@ export async function getMyPlanInfo() {
   const { authorized, agent } = await requireAgent()
   if (!authorized || !agent) return null
 
-  const plan: 'trial' | 'paid' = agent.plan || 'trial'
-  let trialEndsAt: string | null = null
-  let trialExpired = false
-  let daysLeft: number | null = null
-
-  if (plan === 'trial' && agent.trial_started_at) {
-    const end = new Date(agent.trial_started_at)
-    end.setMonth(end.getMonth() + 1)
-    trialEndsAt = end.toISOString()
-    const msLeft = end.getTime() - Date.now()
-    trialExpired = msLeft <= 0
-    daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
-  }
-
-  return { plan, trialEndsAt, trialExpired, daysLeft }
+  return computePlanStatus(agent.plan, agent.plan_started_at)
 }
 
 export async function updateMyLeadStatus(leadId: string, status: string) {
@@ -71,19 +58,32 @@ export async function getMyProperties() {
   const { authorized, supabase, agent } = await requireAgent()
   if (!authorized || !agent) return []
 
-  const { data, error } = await supabase
+  // Properties aren't confidential (they're public listings on the main
+  // site), so the cap here is a portal display limit, not an RLS security
+  // boundary — the plan's oldest N assigned properties, same "oldest first"
+  // rule as the lead cap. Expired plans see nothing, matching leads.
+  const status = computePlanStatus(agent.plan, agent.plan_started_at)
+  if (!status.started || status.expired) return []
+
+  let query = supabase
     .from('properties')
     .select(`
       *,
       property_media(url, is_cover)
     `)
     .eq('primary_agent_id', agent.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: true })
+
+  if (status.tier.propertyCap != null) {
+    query = query.limit(status.tier.propertyCap)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.warn('getMyProperties error:', error.message)
     return []
   }
 
-  return data || []
+  return (data || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }

@@ -3,6 +3,7 @@
 import { requireAdmin } from '@/utils/supabase/admin-guard'
 import { createServiceRoleClient } from '@/utils/supabase/service-admin'
 import { revalidatePath } from 'next/cache'
+import type { AgentPlanId } from '@/lib/agent-plans'
 
 export async function createAgent(formData: FormData) {
   const { authorized, supabase } = await requireAdmin()
@@ -95,7 +96,7 @@ export async function grantAgentAccess(agentId: string, email: string, password:
 
   const { error: linkError } = await supabase
     .from('agents')
-    .update({ user_id: newUserId, email, plan: 'trial', trial_started_at: new Date().toISOString() })
+    .update({ user_id: newUserId, email, plan: 'trial_pack', plan_started_at: new Date().toISOString() })
     .eq('id', agentId)
 
   if (linkError) {
@@ -144,21 +145,19 @@ export async function revokeAgentAccess(agentId: string) {
   return { success: true }
 }
 
-// ── Agent plan (Trial / Paid) — gates leads visible in the agent portal ─────
+// ── Agent plan (one of the 6 pricing tiers) — gates what the agent portal shows ─
+// Selecting any tier always (re)starts that tier's clock from now — this is
+// how an admin records "I just sold/renewed them this plan."
 
-export async function setAgentPlan(agentId: string, plan: 'trial' | 'paid') {
+export async function setAgentPlan(agentId: string, plan: AgentPlanId) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
-  const update: { plan: 'trial' | 'paid'; trial_started_at?: string } = { plan }
-  // Setting (or resetting) to Trial always restarts the 1-month clock —
-  // this is the only place trial_started_at changes, so re-selecting
-  // Trial is how an admin grants a fresh trial period.
-  if (plan === 'trial') {
-    update.trial_started_at = new Date().toISOString()
-  }
+  const { error } = await supabase
+    .from('agents')
+    .update({ plan, plan_started_at: new Date().toISOString() })
+    .eq('id', agentId)
 
-  const { error } = await supabase.from('agents').update(update).eq('id', agentId)
   if (error) return { error: error.message }
 
   revalidatePath('/admin/agents')
