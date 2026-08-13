@@ -54,5 +54,22 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Protect agent-portal routes
+  if (request.nextUrl.pathname.startsWith('/agent')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+
+    if (!profile || profile.role !== 'agent') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+  }
+
   return supabaseResponse
 }

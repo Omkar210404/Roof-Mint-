@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAdmin } from '@/utils/supabase/admin-guard'
+import { createServiceRoleClient } from '@/utils/supabase/service-admin'
 import { revalidatePath } from 'next/cache'
 
 export async function createAgent(formData: FormData) {
@@ -56,6 +57,88 @@ export async function deleteAgent(id: string) {
     console.error('deleteAgent error:', error.message)
     return { error: error.message }
   }
+
+  revalidatePath('/admin/agents')
+  return { success: true }
+}
+
+// ── Agent portal access (login for agents to view their own leads/listings) ─
+
+export async function grantAgentAccess(agentId: string, email: string, password: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  if (!email || !password || password.length < 6) {
+    return { error: 'Email and a password of at least 6 characters are required.' }
+  }
+
+  const adminClient = createServiceRoleClient()
+  if (!adminClient) return { error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY — cannot create portal logins.' }
+
+  const { data: agent } = await supabase.from('agents').select('name, user_id').eq('id', agentId).single()
+  if (agent?.user_id) return { error: 'This agent already has portal access. Use "Reset Password" instead.' }
+
+  const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: agent?.name },
+  })
+
+  if (createError || !created.user) {
+    return { error: createError?.message || 'Could not create portal login.' }
+  }
+
+  const newUserId = created.user.id
+
+  await supabase.from('profiles').update({ role: 'agent' }).eq('id', newUserId)
+
+  const { error: linkError } = await supabase
+    .from('agents')
+    .update({ user_id: newUserId, email })
+    .eq('id', agentId)
+
+  if (linkError) {
+    // Roll back the auth user so we don't leave an orphaned login.
+    await adminClient.auth.admin.deleteUser(newUserId)
+    return { error: linkError.message }
+  }
+
+  revalidatePath('/admin/agents')
+  return { success: true }
+}
+
+export async function resetAgentPassword(agentId: string, password: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  if (!password || password.length < 6) {
+    return { error: 'Password must be at least 6 characters.' }
+  }
+
+  const adminClient = createServiceRoleClient()
+  if (!adminClient) return { error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' }
+
+  const { data: agent } = await supabase.from('agents').select('user_id').eq('id', agentId).single()
+  if (!agent?.user_id) return { error: 'This agent does not have portal access yet.' }
+
+  const { error } = await adminClient.auth.admin.updateUserById(agent.user_id, { password })
+  if (error) return { error: error.message }
+
+  return { success: true }
+}
+
+export async function revokeAgentAccess(agentId: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { data: agent } = await supabase.from('agents').select('user_id').eq('id', agentId).single()
+  if (!agent?.user_id) return { success: true }
+
+  await supabase.from('profiles').update({ role: 'user' }).eq('id', agent.user_id)
+  const { error } = await supabase.from('agents').update({ user_id: null }).eq('id', agentId)
+
+  if (error) return { error: error.message }
 
   revalidatePath('/admin/agents')
   return { success: true }

@@ -56,6 +56,8 @@ export default function LoginPage() {
 
       if (profile?.role === 'admin') {
         router.push('/admin');
+      } else if (profile?.role === 'agent') {
+        router.push('/agent');
       } else if (!profile?.profile_completed) {
         // Profile not complete → send to onboarding
         router.push('/onboarding');

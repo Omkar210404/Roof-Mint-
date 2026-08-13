@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createAgent, updateAgent, deleteAgent } from './actions';
+import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, revokeAgentAccess } from './actions';
 
 type SortKey = 'date' | 'name';
 type SortDir = 'asc' | 'desc';
@@ -106,6 +106,12 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
   const [commissionNotes, setCommissionNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Portal access (agent login) state
+  const [portalPassword, setPortalPassword] = useState('');
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
+  const [portalSuccess, setPortalSuccess] = useState<string | null>(null);
+
   const resetForm = () => {
     setEditingAgent(null);
     setName('');
@@ -113,6 +119,9 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
     setEmail('');
     setCompany('');
     setCommissionNotes('');
+    setPortalPassword('');
+    setPortalError(null);
+    setPortalSuccess(null);
   };
 
   const startEdit = (agent: any) => {
@@ -122,6 +131,60 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
     setEmail(agent.email || '');
     setCompany(agent.company || '');
     setCommissionNotes(agent.commission_notes || '');
+    setPortalPassword('');
+    setPortalError(null);
+    setPortalSuccess(null);
+  };
+
+  const handleGrantAccess = async () => {
+    if (!editingAgent) return;
+    setPortalError(null);
+    setPortalSuccess(null);
+    if (!email) {
+      setPortalError('Add an email above first.');
+      return;
+    }
+    setPortalBusy(true);
+    const res = await grantAgentAccess(editingAgent.id, email, portalPassword);
+    setPortalBusy(false);
+    if (res?.error) {
+      setPortalError(res.error);
+      return;
+    }
+    setPortalSuccess('Portal access granted.');
+    setPortalPassword('');
+    setAgents(prev => prev.map(a => a.id === editingAgent.id ? { ...a, user_id: 'pending' } : a));
+    window.location.reload();
+  };
+
+  const handleResetPassword = async () => {
+    if (!editingAgent) return;
+    setPortalError(null);
+    setPortalSuccess(null);
+    setPortalBusy(true);
+    const res = await resetAgentPassword(editingAgent.id, portalPassword);
+    setPortalBusy(false);
+    if (res?.error) {
+      setPortalError(res.error);
+      return;
+    }
+    setPortalSuccess('Password updated.');
+    setPortalPassword('');
+  };
+
+  const handleRevokeAccess = async () => {
+    if (!editingAgent) return;
+    if (!confirm(`Revoke portal access for "${editingAgent.name}"? They will no longer be able to log in.`)) return;
+    setPortalError(null);
+    setPortalSuccess(null);
+    setPortalBusy(true);
+    const res = await revokeAgentAccess(editingAgent.id);
+    setPortalBusy(false);
+    if (res?.error) {
+      setPortalError(res.error);
+      return;
+    }
+    window.location.reload();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,6 +301,73 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                 {submitting ? 'Saving...' : editingAgent ? 'Update Agent' : 'Create Agent'}
               </button>
             </form>
+
+            {/* Portal Access — grant/reset/revoke this agent's login to their own read-only dashboard */}
+            {editingAgent && (
+              <div className="mt-5 pt-5 border-t border-gray-100/60 dark:border-gray-800/60 space-y-3">
+                <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5" /> Portal Access
+                </h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Lets this agent log in at /login to view (read-only) their assigned properties and leads.
+                </p>
+
+                {editingAgent.user_id ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Portal access active
+                    </div>
+                    <input
+                      type="password"
+                      value={portalPassword}
+                      onChange={e => setPortalPassword(e.target.value)}
+                      placeholder="New password (min 6 chars)"
+                      className="w-full h-9 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleResetPassword}
+                        disabled={portalBusy || !portalPassword}
+                        className="flex-1 h-9 rounded-lg bg-gray-100 dark:bg-navy-800 text-navy dark:text-white text-xs font-semibold hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-50 transition-colors"
+                      >
+                        Reset Password
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRevokeAccess}
+                        disabled={portalBusy}
+                        className="flex-1 h-9 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <ShieldOff className="w-3.5 h-3.5" /> Revoke Access
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      type="password"
+                      value={portalPassword}
+                      onChange={e => setPortalPassword(e.target.value)}
+                      placeholder="Set a password (min 6 chars)"
+                      className="w-full h-9 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGrantAccess}
+                      disabled={portalBusy || !portalPassword}
+                      className="w-full h-9 rounded-lg bg-navy dark:bg-teal-700 text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
+                      Grant Portal Access
+                    </button>
+                  </div>
+                )}
+
+                {portalError && <p className="text-xs text-red-600">{portalError}</p>}
+                {portalSuccess && <p className="text-xs text-green-700">{portalSuccess}</p>}
+              </div>
+            )}
           </div>
         </div>
 
@@ -294,13 +424,14 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Company</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Phone</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Email</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Portal</TableHead>
                   <TableHead className="text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSorted.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-400 dark:text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-400 dark:text-gray-500">
                       {agents.length === 0 ? 'No agents found' : 'No agents match your search'}
                     </TableCell>
                   </TableRow>
@@ -323,6 +454,15 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                     <TableCell className="text-gray-500 dark:text-gray-400 text-xs">{agent.company || '—'}</TableCell>
                     <TableCell className="text-gray-500 dark:text-gray-400 text-xs">{agent.phone || '—'}</TableCell>
                     <TableCell className="text-gray-500 dark:text-gray-400 text-xs">{agent.email || '—'}</TableCell>
+                    <TableCell>
+                      {agent.user_id ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full">
+                          <ShieldCheck className="w-3 h-3" /> Active
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">None</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
