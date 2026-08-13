@@ -95,7 +95,7 @@ export async function grantAgentAccess(agentId: string, email: string, password:
 
   const { error: linkError } = await supabase
     .from('agents')
-    .update({ user_id: newUserId, email })
+    .update({ user_id: newUserId, email, plan: 'trial', trial_started_at: new Date().toISOString() })
     .eq('id', agentId)
 
   if (linkError) {
@@ -138,6 +138,27 @@ export async function revokeAgentAccess(agentId: string) {
   await supabase.from('profiles').update({ role: 'user' }).eq('id', agent.user_id)
   const { error } = await supabase.from('agents').update({ user_id: null }).eq('id', agentId)
 
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/agents')
+  return { success: true }
+}
+
+// ── Agent plan (Trial / Paid) — gates leads visible in the agent portal ─────
+
+export async function setAgentPlan(agentId: string, plan: 'trial' | 'paid') {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const update: { plan: 'trial' | 'paid'; trial_started_at?: string } = { plan }
+  // Setting (or resetting) to Trial always restarts the 1-month clock —
+  // this is the only place trial_started_at changes, so re-selecting
+  // Trial is how an admin grants a fresh trial period.
+  if (plan === 'trial') {
+    update.trial_started_at = new Date().toISOString()
+  }
+
+  const { error } = await supabase.from('agents').update(update).eq('id', agentId)
   if (error) return { error: error.message }
 
   revalidatePath('/admin/agents')

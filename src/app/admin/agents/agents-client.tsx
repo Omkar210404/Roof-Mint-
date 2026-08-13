@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -10,10 +10,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, revokeAgentAccess } from './actions';
+import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, revokeAgentAccess, setAgentPlan } from './actions';
 
 type SortKey = 'date' | 'name';
 type SortDir = 'asc' | 'desc';
+
+// Mirrors the 1-month window enforced server-side in agent_lead_visible() —
+// this is only for display; the real cutoff lives in Postgres.
+function trialInfo(agent: any) {
+  if (agent.plan === 'paid') return { label: 'Paid Plan', expired: false, daysLeft: null as number | null };
+  if (!agent.trial_started_at) return { label: 'Trial Plan (not started)', expired: false, daysLeft: null };
+  const end = new Date(agent.trial_started_at);
+  end.setMonth(end.getMonth() + 1);
+  const msLeft = end.getTime() - Date.now();
+  const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+  return { label: msLeft <= 0 ? 'Trial Expired' : 'Trial Plan', expired: msLeft <= 0, daysLeft };
+}
 
 export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] }) {
   const [agents, setAgents] = useState<any[]>(initialAgents);
@@ -112,6 +124,10 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
   const [portalError, setPortalError] = useState<string | null>(null);
   const [portalSuccess, setPortalSuccess] = useState<string | null>(null);
 
+  // Plan (Trial / Paid) state
+  const [planBusy, setPlanBusy] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+
   const resetForm = () => {
     setEditingAgent(null);
     setName('');
@@ -122,6 +138,7 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
     setPortalPassword('');
     setPortalError(null);
     setPortalSuccess(null);
+    setPlanError(null);
   };
 
   const startEdit = (agent: any) => {
@@ -134,6 +151,21 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
     setPortalPassword('');
     setPortalError(null);
     setPortalSuccess(null);
+    setPlanError(null);
+  };
+
+  const handleSetPlan = async (plan: 'trial' | 'paid') => {
+    if (!editingAgent) return;
+    if (plan === 'trial' && !confirm('This (re)starts a fresh 1-month trial from today. Continue?')) return;
+    setPlanError(null);
+    setPlanBusy(true);
+    const res = await setAgentPlan(editingAgent.id, plan);
+    setPlanBusy(false);
+    if (res?.error) {
+      setPlanError(res.error);
+      return;
+    }
+    window.location.reload();
   };
 
   const handleGrantAccess = async () => {
@@ -368,6 +400,59 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                 {portalSuccess && <p className="text-xs text-green-700">{portalSuccess}</p>}
               </div>
             )}
+
+            {/* Plan — gates how many leads this agent can see in the portal */}
+            {editingAgent && editingAgent.user_id && (() => {
+              const info = trialInfo(editingAgent);
+              return (
+                <div className="mt-5 pt-5 border-t border-gray-100/60 dark:border-gray-800/60 space-y-3">
+                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                    {editingAgent.plan === 'paid' ? <Crown className="w-3.5 h-3.5" /> : <Clock3 className="w-3.5 h-3.5" />} Plan
+                  </h3>
+
+                  <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg w-fit ${
+                    editingAgent.plan === 'paid'
+                      ? 'text-green-700 bg-green-50 dark:bg-green-950/40'
+                      : info.expired
+                        ? 'text-red-600 bg-red-50 dark:bg-red-950/40'
+                        : 'text-amber-700 bg-amber-50 dark:bg-amber-950/40'
+                  }`}>
+                    {editingAgent.plan === 'paid' ? (
+                      <><Crown className="w-3.5 h-3.5" /> Paid Plan — full access</>
+                    ) : info.expired ? (
+                      <><AlertTriangle className="w-3.5 h-3.5" /> Trial expired — leads hidden from agent</>
+                    ) : (
+                      <><Clock3 className="w-3.5 h-3.5" /> Trial Plan — first 25 leads{info.daysLeft != null ? `, ${info.daysLeft}d left` : ''}</>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Trial: agent sees only their oldest 25 assigned leads, for 1 month from when the trial starts, and can&apos;t export CSV/PDF. Paid: full access, no cap.
+                  </p>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSetPlan('trial')}
+                      disabled={planBusy}
+                      className="flex-1 h-9 rounded-lg bg-gray-100 dark:bg-navy-800 text-navy dark:text-white text-xs font-semibold hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-50 transition-colors"
+                    >
+                      {editingAgent.plan === 'trial' ? 'Restart Trial' : 'Set to Trial'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetPlan('paid')}
+                      disabled={planBusy || editingAgent.plan === 'paid'}
+                      className="flex-1 h-9 rounded-lg bg-navy dark:bg-teal-700 text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Crown className="w-3.5 h-3.5" /> Upgrade to Paid
+                    </button>
+                  </div>
+
+                  {planError && <p className="text-xs text-red-600">{planError}</p>}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -425,13 +510,14 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Phone</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Email</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Portal</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Plan</TableHead>
                   <TableHead className="text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSorted.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-400 dark:text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-400 dark:text-gray-500">
                       {agents.length === 0 ? 'No agents found' : 'No agents match your search'}
                     </TableCell>
                   </TableRow>
@@ -462,6 +548,23 @@ export function AgentsClientWrapper({ initialAgents }: { initialAgents: any[] })
                       ) : (
                         <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">None</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {!agent.user_id ? (
+                        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">—</span>
+                      ) : agent.plan === 'paid' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full">
+                          <Crown className="w-3 h-3" /> Paid
+                        </span>
+                      ) : (() => {
+                        const info = trialInfo(agent);
+                        return (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${info.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-amber-700 bg-amber-50 dark:bg-amber-950/40'}`}>
+                            {info.expired ? <AlertTriangle className="w-3 h-3" /> : <Clock3 className="w-3 h-3" />}
+                            {info.expired ? 'Expired' : `Trial · ${info.daysLeft}d`}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">

@@ -1,8 +1,8 @@
-import { getMyLeads } from '../actions'
+import { getMyLeads, getMyPlanInfo } from '../actions'
 import { AgentLeadsClient } from './agent-leads-client'
 
 export default async function AgentLeadsPage() {
-  const leads = await getMyLeads()
+  const [leads, plan] = await Promise.all([getMyLeads(), getMyPlanInfo()])
 
-  return <AgentLeadsClient initialLeads={leads} />
+  return <AgentLeadsClient initialLeads={leads} plan={plan} />
 }

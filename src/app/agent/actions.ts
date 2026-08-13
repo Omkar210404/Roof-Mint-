@@ -24,6 +24,27 @@ export async function getMyLeads() {
   return data || []
 }
 
+export async function getMyPlanInfo() {
+  const { authorized, agent } = await requireAgent()
+  if (!authorized || !agent) return null
+
+  const plan: 'trial' | 'paid' = agent.plan || 'trial'
+  let trialEndsAt: string | null = null
+  let trialExpired = false
+  let daysLeft: number | null = null
+
+  if (plan === 'trial' && agent.trial_started_at) {
+    const end = new Date(agent.trial_started_at)
+    end.setMonth(end.getMonth() + 1)
+    trialEndsAt = end.toISOString()
+    const msLeft = end.getTime() - Date.now()
+    trialExpired = msLeft <= 0
+    daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
+  }
+
+  return { plan, trialEndsAt, trialExpired, daysLeft }
+}
+
 export async function updateMyLeadStatus(leadId: string, status: string) {
   const { authorized, supabase, agent } = await requireAgent()
   if (!authorized || !agent) return { error: 'Unauthorized' }

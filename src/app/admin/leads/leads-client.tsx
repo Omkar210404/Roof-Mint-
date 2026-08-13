@@ -362,6 +362,11 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
                         </option>
                       ))}
                     </select>
+                    {lead.status_updated_at && (
+                      <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                        since {new Date(lead.status_updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <button
