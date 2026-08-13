@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, Sparkles, X, LocateFixed, Loader2, LogIn } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, X, LocateFixed, Loader2, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
@@ -198,12 +198,6 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             </div>
           </button>
           <div className="flex items-center gap-3">
-            <Link
-              href="/onboarding/ai"
-              className="hidden md:flex items-center gap-1.5 h-9 px-3.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-bold rounded-lg transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" /> AI Recommendation
-            </Link>
             <button
               onClick={() => detectLocation(true)}
               className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 transition-colors"

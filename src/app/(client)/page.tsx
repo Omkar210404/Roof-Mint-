@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle, Sparkles, ArrowRight, Wand2 } from 'lucide-react';
+import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { getPublicProperties } from './properties/actions';
 import { HomePropertyCards } from './home-cards';
 import { FloatingAIButton } from '@/components/floating-ai-button';
@@ -45,14 +45,9 @@ export default async function HomePage() {
       </div>
 
       {/* Section Header */}
-      <div className="px-4 pt-2 pb-2 md:px-8 md:pt-4 md:pb-3 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg md:text-2xl font-bold text-navy dark:text-white">Verified Listings</h2>
-          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Explore available properties in your area</p>
-        </div>
-        <Link href="/onboarding/ai" className="text-xs font-semibold text-primary hover:text-teal-700 flex items-center gap-1">
-          <Wand2 className="w-3.5 h-3.5" /> AI Preferences
-        </Link>
+      <div className="px-4 pt-2 pb-2 md:px-8 md:pt-4 md:pb-3">
+        <h2 className="text-lg md:text-2xl font-bold text-navy dark:text-white">Find Verified Properties</h2>
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Explore available properties in your area</p>
       </div>
 
       {/* Info Bar */}
