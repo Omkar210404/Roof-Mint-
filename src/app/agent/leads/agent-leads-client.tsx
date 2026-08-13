@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Phone, MessageCircle } from 'lucide-react'
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Phone, MessageCircle, FileSpreadsheet, FileText } from 'lucide-react'
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -96,6 +96,71 @@ export function AgentLeadsClient({ initialLeads }: { initialLeads: any[] }) {
     await updateMyLeadStatus(id, newStatus)
   }
 
+  const statusLabel = (status: string) => statusOptions.find(s => s.value === status)?.label || status
+
+  // Exports whatever is currently filtered/searched into view — not
+  // necessarily every lead ever assigned — so what you download matches
+  // what you're looking at.
+  const exportCSV = () => {
+    const header = ['Date', 'Property', 'Location', 'Name', 'Phone', 'Email', 'Budget', 'Message', 'Status']
+    const rows = filteredSorted.map(l => [
+      new Date(l.created_at).toLocaleDateString('en-IN'),
+      l.property?.title || 'General Enquiry',
+      l.property?.location_address || '',
+      l.name,
+      l.phone,
+      l.email || '',
+      l.budget_hint || '',
+      l.message || '',
+      statusLabel(l.status || 'new'),
+    ])
+    const escape = (val: unknown) => {
+      const s = String(val ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const csv = [header, ...rows].map(r => r.map(escape).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `roofmint-leads-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+    await import('jspdf-autotable')
+    const doc = new jsPDF()
+
+    doc.setFontSize(16)
+    doc.text('Roofmint — My Leads', 14, 16)
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(
+      `Generated ${new Date().toLocaleString('en-IN')} · ${filteredSorted.length} lead${filteredSorted.length === 1 ? '' : 's'}`,
+      14, 22
+    )
+
+    ;(doc as any).autoTable({
+      startY: 28,
+      head: [['Date', 'Property', 'Name', 'Phone', 'Email', 'Budget', 'Status']],
+      body: filteredSorted.map(l => [
+        new Date(l.created_at).toLocaleDateString('en-IN'),
+        l.property?.title || 'General Enquiry',
+        l.name,
+        l.phone,
+        l.email || '',
+        l.budget_hint || '',
+        statusLabel(l.status || 'new'),
+      ]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [13, 148, 136] },
+    })
+
+    doc.save(`roofmint-leads-${new Date().toISOString().slice(0, 10)}.pdf`)
+  }
+
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
       onClick={() => toggleSort(sortKeyVal)}
@@ -141,9 +206,27 @@ export function AgentLeadsClient({ initialLeads }: { initialLeads: any[] }) {
       </div>
 
       <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
-        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Assigned Enquiries</h2>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{filteredSorted.length} shown</span>
+        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide shrink-0">Assigned Enquiries</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportCSV}
+              disabled={filteredSorted.length === 0}
+              className="h-8 px-2.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+              title="Download CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" /> CSV
+            </button>
+            <button
+              onClick={exportPDF}
+              disabled={filteredSorted.length === 0}
+              className="h-8 px-2.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+              title="Download PDF"
+            >
+              <FileText className="w-3.5 h-3.5" /> PDF
+            </button>
+            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{filteredSorted.length} shown</span>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <Table>
