@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText } from 'lucide-react'
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -185,6 +185,72 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
     setBulkBusy(false)
   }
 
+  const statusLabel = (status: string) => statusOptions.find(s => s.value === status)?.label || status
+
+  // Exports whatever is currently filtered/searched — not the full
+  // unfiltered inbox — so the download matches what's on screen.
+  const exportCSV = () => {
+    const header = ['Date', 'Property', 'Location', 'Name', 'Phone', 'Email', 'Budget', 'Message', 'Assigned Agent', 'Status']
+    const rows = filteredSorted.map(l => [
+      new Date(l.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      l.property?.title || 'General Enquiry',
+      l.property?.location_address || '',
+      l.name,
+      l.phone,
+      l.email || '',
+      l.budget_hint || '',
+      l.message || '',
+      l.assigned_agent?.name || 'Unassigned',
+      statusLabel(l.status || 'new'),
+    ])
+    const escape = (val: unknown) => {
+      const s = String(val ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const csv = [header, ...rows].map(r => r.map(escape).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `roofmint-leads-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const doc = new jsPDF({ orientation: 'landscape' })
+
+    doc.setFontSize(16)
+    doc.text('Roofmint — Leads & Enquiries', 14, 16)
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(
+      `Generated ${new Date().toLocaleString('en-IN')} · ${filteredSorted.length} lead${filteredSorted.length === 1 ? '' : 's'}`,
+      14, 22
+    )
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Date', 'Property', 'Name', 'Phone', 'Email', 'Budget', 'Agent', 'Status']],
+      body: filteredSorted.map(l => [
+        new Date(l.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        l.property?.title || 'General Enquiry',
+        l.name,
+        l.phone,
+        l.email || '',
+        l.budget_hint || '',
+        l.assigned_agent?.name || 'Unassigned',
+        statusLabel(l.status || 'new'),
+      ]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [13, 148, 136] },
+    })
+
+    doc.save(`roofmint-leads-${new Date().toISOString().slice(0, 10)}.pdf`)
+  }
+
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
       onClick={() => toggleSort(sortKeyVal)}
@@ -201,9 +267,25 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Leads & Enquiries</h1>
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{leads.length} total</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportCSV}
+            disabled={filteredSorted.length === 0}
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" /> Export CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={filteredSorted.length === 0}
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+          >
+            <FileText className="w-3.5 h-3.5" /> Export PDF
+          </button>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{leads.length} total</span>
+        </div>
       </div>
 
       {/* Search + Filter Bar */}
@@ -315,7 +397,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
                     />
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs font-medium">
-                    {new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                    {new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </TableCell>
                   <TableCell>
                     <div className="font-medium text-navy dark:text-white text-sm">{lead.property?.title || 'General Enquiry'}</div>
@@ -364,7 +446,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
                     </select>
                     {lead.status_updated_at && (
                       <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-                        since {new Date(lead.status_updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        since {new Date(lead.status_updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                     )}
                   </TableCell>
