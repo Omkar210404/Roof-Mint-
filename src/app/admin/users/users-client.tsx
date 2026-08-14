@@ -48,6 +48,8 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -132,11 +134,21 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
     return Array.from(monthsSet).sort().reverse();
   }, [usersList]);
 
-  // Filter users based on search term and selected month
+  // A date range takes precedence over the month dropdown when both start
+  // and end are set — they're two independent ways to narrow the same data,
+  // not meant to be combined.
+  const dateRangeActive = !!(startDate && endDate);
+
+  // Filter users based on search term and selected month/date-range
   const filteredUsers = useMemo(() => {
     const filtered = usersList.filter(user => {
-      // Month filter
-      if (selectedMonth !== 'all' && getMonthKey(user.created_at) !== selectedMonth) {
+      if (dateRangeActive) {
+        if (!user.created_at) return false;
+        const created = new Date(user.created_at).getTime();
+        const rangeStart = new Date(startDate + 'T00:00:00').getTime();
+        const rangeEnd = new Date(endDate + 'T23:59:59.999').getTime();
+        if (created < rangeStart || created > rangeEnd) return false;
+      } else if (selectedMonth !== 'all' && getMonthKey(user.created_at) !== selectedMonth) {
         return false;
       }
       // Search term filter
@@ -216,8 +228,8 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    const monthSuffix = selectedMonth === 'all' ? 'all_time' : selectedMonth;
-    link.setAttribute('download', `roofmint_user_data_${monthSuffix}.csv`);
+    const periodSuffix = dateRangeActive ? `${startDate}_to_${endDate}` : selectedMonth === 'all' ? 'all_time' : selectedMonth;
+    link.setAttribute('download', `roofmint_user_data_${periodSuffix}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -277,7 +289,9 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
         <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Selected Period</p>
           <p className="text-sm font-bold text-navy dark:text-white mt-2 truncate">
-            {selectedMonth === 'all' ? 'All Time' : getMonthLabel(selectedMonth)}
+            {dateRangeActive
+              ? `${formatDate(startDate)} → ${formatDate(endDate)}`
+              : selectedMonth === 'all' ? 'All Time' : getMonthLabel(selectedMonth)}
           </p>
         </div>
       </div>
@@ -315,6 +329,35 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
               );
             })}
           </select>
+        </div>
+
+        {/* Date Range Picker — independent of the Month dropdown above; whichever was set most recently wins */}
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex-shrink-0">Range:</span>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            max={endDate || undefined}
+            className="h-10 px-2.5 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white"
+          />
+          <span className="text-gray-400 dark:text-gray-500 text-xs">→</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            min={startDate || undefined}
+            className="h-10 px-2.5 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white"
+          />
+          {dateRangeActive && (
+            <button
+              onClick={() => { setStartDate(''); setEndDate(''); }}
+              title="Clear date range"
+              className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 dark:hover:bg-navy-700 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
