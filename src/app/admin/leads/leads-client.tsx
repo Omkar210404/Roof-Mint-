@@ -48,6 +48,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const [statusFilter, setStatusFilter] = useState('all')
   const [propertyFilter, setPropertyFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const dateRangeActive = !!(startDate && endDate)
@@ -84,7 +85,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedQuery, statusFilter, propertyFilter, agentFilter, startDate, endDate])
+  }, [debouncedQuery, statusFilter, propertyFilter, agentFilter, sourceFilter, startDate, endDate])
 
   // Properties available to filter by, derived from the leads actually
   // present — no separate fetch needed.
@@ -138,6 +139,10 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
       }
     }
 
+    if (sourceFilter !== 'all') {
+      result = result.filter(l => (l.source || 'form') === sourceFilter)
+    }
+
     if (dateRangeActive) {
       const rangeStart = new Date(startDate + 'T00:00:00').getTime()
       const rangeEnd = new Date(endDate + 'T23:59:59.999').getTime()
@@ -166,7 +171,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     })
 
     return sorted
-  }, [leads, statusFilter, propertyFilter, agentFilter, dateRangeActive, startDate, endDate, debouncedQuery, sortKey, sortDir])
+  }, [leads, statusFilter, propertyFilter, agentFilter, sourceFilter, dateRangeActive, startDate, endDate, debouncedQuery, sortKey, sortDir])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -403,6 +408,16 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
           {agents.map((agent: any) => (
             <option key={agent.id} value={agent.id}>{agent.name}</option>
           ))}
+        </select>
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="all">All Sources</option>
+          <option value="form">Website</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="manual">Manual</option>
         </select>
         <div className="flex items-center gap-2">
           <input

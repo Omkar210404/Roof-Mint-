@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Phone, MessageCircle, FileSpreadsheet, FileText, Crown, AlertTriangle, Lock } from 'lucide-react'
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Phone, MessageCircle, FileSpreadsheet, FileText, Crown, AlertTriangle, Lock, X } from 'lucide-react'
 import type { PlanStatus } from '@/lib/agent-plans'
 
 const statusOptions = [
@@ -33,6 +33,16 @@ function toWaLink(phone: string) {
   return `https://wa.me/${withCountryCode}`
 }
 
+function getMonthKey(dateStr: string) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+function getMonthLabel(monthKey: string) {
+  const [year, month] = monthKey.split('-')
+  return new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+}
+
 type SortKey = 'date' | 'name'
 type SortDir = 'asc' | 'desc'
 
@@ -41,6 +51,10 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [monthFilter, setMonthFilter] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const dateRangeActive = !!(startDate && endDate)
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const supabase = createClient()
@@ -64,11 +78,29 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
     return () => clearTimeout(timer)
   }, [searchQuery])
 
+  // Months present in this agent's own leads, for the Month dropdown.
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>()
+    leads.forEach(l => { if (l.created_at) set.add(getMonthKey(l.created_at)) })
+    return Array.from(set).sort().reverse()
+  }, [leads])
+
   const filteredSorted = useMemo(() => {
     let result = leads
 
     if (statusFilter !== 'all') {
       result = result.filter(l => (l.status || 'new') === statusFilter)
+    }
+
+    if (dateRangeActive) {
+      const rangeStart = new Date(startDate + 'T00:00:00').getTime()
+      const rangeEnd = new Date(endDate + 'T23:59:59.999').getTime()
+      result = result.filter(l => {
+        const created = new Date(l.created_at).getTime()
+        return created >= rangeStart && created <= rangeEnd
+      })
+    } else if (monthFilter !== 'all') {
+      result = result.filter(l => getMonthKey(l.created_at) === monthFilter)
     }
 
     if (debouncedQuery) {
@@ -85,7 +117,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
       else cmp = (a.name || '').localeCompare(b.name || '')
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [leads, statusFilter, debouncedQuery, sortKey, sortDir])
+  }, [leads, statusFilter, monthFilter, dateRangeActive, startDate, endDate, debouncedQuery, sortKey, sortDir])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
@@ -211,8 +243,8 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -232,6 +264,43 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
+        <select
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value)}
+          disabled={dateRangeActive}
+          className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+        >
+          <option value="all">All Months</option>
+          {availableMonths.map(m => (
+            <option key={m} value={m}>{getMonthLabel(m)}</option>
+          ))}
+        </select>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            max={endDate || undefined}
+            className="h-10 px-2.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium text-navy dark:text-white"
+          />
+          <span className="text-gray-400 dark:text-gray-500 text-xs">→</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            min={startDate || undefined}
+            className="h-10 px-2.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium text-navy dark:text-white"
+          />
+          {dateRangeActive && (
+            <button
+              onClick={() => { setStartDate(''); setEndDate('') }}
+              title="Clear date range"
+              className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 dark:hover:bg-navy-700 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {plan && !plan.expired && plan.tier.lead_cap != null && (
