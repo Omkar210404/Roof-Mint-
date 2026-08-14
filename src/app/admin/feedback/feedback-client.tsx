@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2, Search, Mail, Phone } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, Mail, Phone, Star } from 'lucide-react'
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -29,6 +29,17 @@ const categoryStyle: Record<string, string> = {
   'Site Visit Request': 'bg-indigo-50 text-indigo-700 border-indigo-200',
   'RERA / Legal Clarification': 'bg-amber-50 text-amber-700 border-amber-200',
   'General Query': 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60',
+  'App Rating': 'bg-amber-50 text-amber-700 border-amber-200',
+}
+
+function RatingStars({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5 mt-1">
+      {[1, 2, 3, 4, 5].map(s => (
+        <Star key={s} className={`w-3 h-3 ${s <= rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-600'}`} />
+      ))}
+    </div>
+  )
 }
 
 export function FeedbackClientWrapper({ initialFeedback }: { initialFeedback: any[] }) {
@@ -175,6 +186,7 @@ export function FeedbackClientWrapper({ initialFeedback }: { initialFeedback: an
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${categoryStyle[item.category] || categoryStyle['General Query']}`}>
                       {item.category}
                     </span>
+                    {typeof item.rating === 'number' && <RatingStars rating={item.rating} />}
                   </TableCell>
                   <TableCell className="max-w-md whitespace-normal text-sm text-gray-600 dark:text-gray-300">{item.message}</TableCell>
                   <TableCell>

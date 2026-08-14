@@ -10,6 +10,7 @@ import {
   MapPin, Building2, Wallet, Tag, UserCheck, X, Check
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { submitAppRating } from './actions';
 
 const menuItems = [
   { label: 'Notifications', icon: Bell, href: '/profile/notifications' },
@@ -46,6 +47,8 @@ export default function ProfilePage() {
   const [rating, setRating] = useState(5);
   const [feedbackNote, setFeedbackNote] = useState('');
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -101,12 +104,25 @@ export default function ProfilePage() {
     router.push('/login');
   };
 
-  const submitRating = () => {
+  const submitRating = async () => {
+    setRatingSubmitting(true);
+    setRatingError(null);
+
+    const result = await submitAppRating(rating, feedbackNote);
+
+    if (result?.error) {
+      setRatingError(result.error);
+      setRatingSubmitting(false);
+      return;
+    }
+
+    setRatingSubmitting(false);
     setRatingSubmitted(true);
     setTimeout(() => {
       setShowRateModal(false);
       setRatingSubmitted(false);
       setFeedbackNote('');
+      setRating(5);
     }, 2500);
   };
 
@@ -327,6 +343,12 @@ export default function ProfilePage() {
                   />
                 </div>
 
+                {ratingError && (
+                  <div className="p-2.5 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs rounded-lg border border-red-200 dark:border-red-900">
+                    {ratingError}
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setShowRateModal(false)}
@@ -336,9 +358,10 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={submitRating}
-                    className="flex-1 h-10 bg-primary hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-sm"
+                    disabled={ratingSubmitting}
+                    className="flex-1 h-10 bg-primary hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-sm disabled:opacity-60"
                   >
-                    Submit Feedback
+                    {ratingSubmitting ? 'Submitting...' : 'Submit Feedback'}
                   </button>
                 </div>
               </>
