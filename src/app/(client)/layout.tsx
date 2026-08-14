@@ -43,8 +43,13 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   // etc. — not just a fresh login through the form) would otherwise land
   // on the normal client site with no indication anything's off, since
   // nothing here previously checked role on page load. Bounce them to
-  // their own panel immediately instead of leaving it to chance.
+  // their own panel immediately instead of leaving it to chance — except
+  // on a property detail page, which is where admin's "View" button (and
+  // an agent checking their own listing) deliberately sends them to
+  // preview a live listing, not to browse the customer site.
   useEffect(() => {
+    if (pathname.startsWith('/properties/')) return;
+
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
@@ -55,7 +60,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         window.location.href = '/agent';
       }
     });
-  }, []);
+  }, [pathname]);
 
   // Shown once per browser session (tab/window), not once ever — sessionStorage
   // resets on every fresh visit, unlike localStorage which would only ever fire once.
