@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead } from './actions'
+import { AddLeadModal } from './add-lead-modal'
 import {
   Table,
   TableBody,
@@ -11,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Loader2, Check } from 'lucide-react'
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -29,8 +30,9 @@ function getStatusStyle(status: string) {
 type SortKey = 'date' | 'name'
 type SortDir = 'asc' | 'desc'
 
-export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads: any[]; agents?: any[] }) {
+export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = [] }: { initialLeads: any[]; agents?: any[]; allProperties?: any[] }) {
   const [leads, setLeads] = useState<any[]>(initialLeads)
+  const [showAddLead, setShowAddLead] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -98,6 +100,11 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
     setLeads(prev => prev.filter(l => l.id !== id))
     setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
     await deleteLead(id)
+  }
+
+  const handleLeadAdded = async () => {
+    setLeads(await getLeads())
+    setShowAddLead(false)
   }
 
   const filteredSorted = useMemo(() => {
@@ -294,6 +301,12 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
       <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Leads & Enquiries</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddLead(true)}
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-primary hover:bg-teal-700 text-white transition-colors inline-flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Lead
+          </button>
           <button
             onClick={exportCSV}
             disabled={filteredSorted.length === 0}
@@ -537,6 +550,15 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
           </div>
         )}
       </div>
+
+      {showAddLead && (
+        <AddLeadModal
+          agents={agents}
+          properties={allProperties}
+          onClose={() => setShowAddLead(false)}
+          onAdded={handleLeadAdded}
+        />
+      )}
     </div>
   )
 }

@@ -1,11 +1,12 @@
-import { getLeads, getAgentsList } from './actions'
+import { getLeads, getAgentsList, getPropertiesList } from './actions'
 import { LeadsClientWrapper } from './leads-client'
 
 export default async function AdminLeadsPage() {
-  const [dbLeads, agents] = await Promise.all([
+  const [dbLeads, agents, allProperties] = await Promise.all([
     getLeads(),
-    getAgentsList()
+    getAgentsList(),
+    getPropertiesList()
   ]);
 
-  return <LeadsClientWrapper initialLeads={dbLeads} agents={agents} />
+  return <LeadsClientWrapper initialLeads={dbLeads} agents={agents} allProperties={allProperties} />
 }
