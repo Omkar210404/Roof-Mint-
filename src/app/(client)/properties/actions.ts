@@ -169,6 +169,11 @@ export async function logWhatsAppLead(propertyId: string) {
     property_id: propertyId,
     user_id: user.id,
     assigned_agent_id: property?.primary_agent_id || null,
+    // WhatsApp leads land hidden from the agent by default — admin reviews
+    // and verifies the details first, then flips it visible (or re-enters
+    // a cleaned-up copy manually) rather than the agent seeing raw,
+    // unverified contact info straight away.
+    visible_to_agent: false,
     name: profile?.full_name || 'Roofmint User',
     phone: profile?.phone || '',
     email: user.email || '',
