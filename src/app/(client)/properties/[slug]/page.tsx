@@ -28,7 +28,23 @@ const amenityLabels: Record<string, { icon: any; label: string }> = {
   play_area: { icon: Trees, label: 'Play Area' },
   ev_charging: { icon: Zap, label: 'EV Charging' },
   rainwater: { icon: Droplets, label: 'Rainwater Harvesting' },
+  intercom: { icon: Wifi, label: 'Intercom' },
+  cctv: { icon: ShieldCheck, label: 'CCTV' },
+  indoor_games: { icon: Dumbbell, label: 'Indoor Games' },
 };
+
+// Admin can type in an amenity that isn't in the predefined list above —
+// those are stored with the raw text as both id and label, so anything
+// missing from the map falls back to showing that raw text with a generic
+// icon instead of silently disappearing.
+function resolveAmenity(amenityId: string): { icon: any; label: string } {
+  return amenityLabels[amenityId] || { icon: CheckCircle, label: amenityId };
+}
+
+function getYoutubeEmbedUrl(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -402,6 +418,31 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
 
+      {/* Property Video(s) */}
+      {property.videos?.length > 0 && (
+        <div className="md:px-8 px-4 mb-5 md:mb-8 space-y-4">
+          <h2 className="text-base md:text-xl font-bold text-navy dark:text-white">Property Video</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {property.videos.map((video: { url: string; type: string }, idx: number) => {
+              const embedUrl = video.type === 'video_youtube' ? getYoutubeEmbedUrl(video.url) : null;
+              return (
+                <div key={idx} className="relative rounded-xl md:rounded-2xl overflow-hidden bg-black aspect-video shadow-sm">
+                  {video.type === 'video_youtube' ? (
+                    embedUrl ? (
+                      <iframe src={embedUrl} title={`${property.title} video ${idx + 1}`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    ) : (
+                      <a href={video.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center h-full text-white text-sm underline">Watch video</a>
+                    )
+                  ) : (
+                    <video src={video.url} controls className="w-full h-full object-contain" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Main Content Layout */}
       <div className="md:px-8 md:flex md:gap-12 md:items-start">
         <div className="px-4 md:px-0 space-y-5 md:space-y-6 flex-1">
@@ -478,8 +519,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                 <h2 className="text-base md:text-xl font-bold text-navy dark:text-white mb-3 md:mb-4">Top Highlights</h2>
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
                   {property.amenities.map((amenityId: string) => {
-                    const amenity = amenityLabels[amenityId];
-                    if (!amenity) return null;
+                    const amenity = resolveAmenity(amenityId);
                     const Icon = amenity.icon;
                     return (
                       <div key={amenityId} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-3 md:p-4 text-center border border-gray-100/60 dark:border-gray-800/60 shadow-sm hover:shadow-md transition-shadow">

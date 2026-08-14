@@ -88,9 +88,15 @@ export async function getPropertyBySlug(slug: string) {
     ?.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
     ?.map((m: any) => m.url) || ['/images/property1.png']
 
+  const videos = data.media
+    ?.filter((m: any) => m.media_type === 'video' || m.media_type === 'video_youtube')
+    ?.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+    ?.map((m: any) => ({ url: m.url, type: m.media_type })) || []
+
   return {
     ...data,
     images,
+    videos,
     photos: data.media?.length || 0,
     formattedPrice: formatPrice(data.price),
     priceLabel: data.price_type === 'starting_from' ? 'Onwards' : data.price_type === 'negotiable' ? 'Negotiable' : '',
