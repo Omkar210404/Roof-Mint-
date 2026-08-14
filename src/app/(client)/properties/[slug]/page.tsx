@@ -46,6 +46,26 @@ function getYoutubeEmbedUrl(url: string): string | null {
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 }
 
+// A generic "RERA Approved" label is misleading for a state-run registration
+// scheme — it should name the actual authority. Only maps well-established
+// major cities to their real state RERA body; anything not recognized here
+// falls back to a neutral "RERA No" label rather than guessing.
+const CITY_RERA_AUTHORITY: Record<string, string> = {
+  mumbai: 'MahaRERA', pune: 'MahaRERA', nagpur: 'MahaRERA', nashik: 'MahaRERA',
+  thane: 'MahaRERA', 'navi mumbai': 'MahaRERA', aurangabad: 'MahaRERA', boisar: 'MahaRERA',
+  bangalore: 'K-RERA', bengaluru: 'K-RERA', mysore: 'K-RERA', mysuru: 'K-RERA', mangalore: 'K-RERA',
+  hyderabad: 'TS-RERA', chennai: 'TN-RERA', coimbatore: 'TN-RERA',
+  delhi: 'Delhi RERA', 'new delhi': 'Delhi RERA',
+  gurgaon: 'HARERA', gurugram: 'HARERA', faridabad: 'HARERA',
+  noida: 'UP-RERA', ghaziabad: 'UP-RERA', lucknow: 'UP-RERA',
+  ahmedabad: 'Gujarat RERA', surat: 'Gujarat RERA', vadodara: 'Gujarat RERA',
+};
+
+function getReraAuthorityLabel(city?: string | null): string {
+  const authority = city ? CITY_RERA_AUTHORITY[city.trim().toLowerCase()] : undefined;
+  return authority ? `${authority} No` : 'RERA No';
+}
+
 export default function PropertyDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [property, setProperty] = useState<any>(null);
@@ -436,7 +456,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             </div>
           </div>
           <div className="absolute top-4 md:top-6 left-16 md:left-20 flex items-center gap-1.5 bg-primary/90 backdrop-blur-sm text-white text-[10px] md:text-xs font-semibold px-2.5 py-1 md:px-3 md:py-1.5 rounded-full">
-            <CheckCircle className="w-3 h-3 md:w-4 md:h-4" /> Verified Property
+            <CheckCircle className="w-3 h-3 md:w-4 md:h-4" /> Roofmint Verified
           </div>
           <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 bg-black/60 text-white text-[11px] md:text-sm font-medium px-2.5 py-1 md:px-4 md:py-1.5 rounded-full backdrop-blur-sm">
             {currentImage + 1}/{images.length}
@@ -542,7 +562,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
           </div>
 
           {property.rera_number && (
-            <p className="text-[11px] md:text-xs text-gray-400 dark:text-gray-500 -mt-2">RERA No: <span className="font-medium text-gray-600 dark:text-gray-300">{property.rera_number}</span></p>
+            <p className="text-[11px] md:text-xs text-gray-400 dark:text-gray-500 -mt-2">
+              {getReraAuthorityLabel(property.city)}: <span className="font-medium text-gray-600 dark:text-gray-300">{property.rera_number}</span>
+              <span className="text-gray-300 dark:text-gray-600"> — government registration, separate from Roofmint's own listing verification.</span>
+            </p>
           )}
 
           {/* Highlights */}

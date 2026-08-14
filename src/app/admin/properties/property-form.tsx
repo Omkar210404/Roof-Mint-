@@ -38,8 +38,12 @@ const defaultAmenityOptions = [
   { id: 'cctv', label: 'CCTV', icon: 'shield' },
 ];
 
+// "RERA Approved" was deliberately removed from this list — it was a free-
+// text marketing tag with nothing backing it, indistinguishable from a real
+// registration status. RERA compliance should only ever come from the
+// actual RERA Number field below, which is sourced and verifiable.
 const defaultHighlightOptions = [
-  'Near Metro Station', 'Gated Community', 'RERA Approved', 'Top Builder',
+  'Near Metro Station', 'Gated Community', 'Top Builder',
   'Vastu Compliant', 'Lake View', 'Park Facing', 'Corner Unit',
   'Ready to Move', 'Under Construction', 'Premium Location', 'Investment Hotspot',
 ];

@@ -80,13 +80,17 @@ export default function SignupPage() {
 
     // Ensure profile record exists (a DB trigger also provisions this row on
     // signup so it works even before email confirmation; this is a best-effort
-    // sync in case a session is already active).
+    // sync in case a session is already active). terms_accepted_at is set
+    // here since this form already required checking the terms box above —
+    // Google sign-ins skip this form entirely and get the /accept-terms
+    // gate instead.
     if (data.user) {
       await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: formData.fullName,
         phone: formData.mobile,
         profile_completed: false,
+        terms_accepted_at: new Date().toISOString(),
       });
     }
 

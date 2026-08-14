@@ -46,7 +46,7 @@ export default function OnboardingPage() {
 
           <div className="flex items-center gap-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
             <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-semibold">
-              <CheckCircle className="w-4 h-4 text-primary" /> RERA Approved
+              <CheckCircle className="w-4 h-4 text-primary" /> Verified Listings
             </div>
             <span className="text-gray-300 dark:text-gray-600">•</span>
             <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-semibold">

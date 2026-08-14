@@ -14,11 +14,17 @@ export async function POST() {
 
     const userId = user.id;
 
-    // 2. Delete user data from all tables (cascade will handle most, but be explicit)
+    // 2. Delete the user's own personal data — but NOT their enquiries.
+    // Enquiries are business lead records (an agent may already be
+    // actively following up on one), and every field an agent/admin needs
+    // — name, phone, message, status — is captured directly on the
+    // enquiry row itself, not derived from the profile. The
+    // enquiries_user_id_fkey constraint is ON DELETE SET NULL, so deleting
+    // the profile below automatically unlinks the enquiry from this
+    // account while leaving the lead record intact.
     await supabase.from('notifications').delete().eq('user_id', userId);
     await supabase.from('starred_properties').delete().eq('user_id', userId);
     await supabase.from('saved_searches').delete().eq('user_id', userId);
-    await supabase.from('enquiries').delete().eq('user_id', userId);
     await supabase.from('profiles').delete().eq('id', userId);
 
     // 3. Delete the auth user using service role (if available) or sign out

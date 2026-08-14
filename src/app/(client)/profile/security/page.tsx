@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Shield, Lock, Key, Download, Trash2, CheckCircle2, AlertTriangle, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Key, Download, Trash2, LogOut, CheckCircle2, AlertTriangle, EyeOff, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 export default function SecurityPage() {
   const supabase = createClient();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -176,6 +177,31 @@ export default function SecurityPage() {
           </div>
         </div>
 
+        {/* Session */}
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
+            <LogOut className="w-4 h-4 text-primary" /> Session
+          </h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-navy dark:text-white">Log Out</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Ends your current session on this device. Your account and data stay exactly as they are.</p>
+            </div>
+            <button
+              onClick={async () => {
+                setLoggingOut(true);
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
+              disabled={loggingOut}
+              className="h-9 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-60"
+            >
+              {loggingOut ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5 text-primary" />}
+              Log Out
+            </button>
+          </div>
+        </div>
+
         {/* Data Rights & Export */}
         <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
@@ -225,7 +251,7 @@ export default function SecurityPage() {
             <div className="text-center">
               <h3 className="text-lg font-bold text-navy dark:text-white">Delete Account?</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                This action is permanent. All your saved properties, preferences, and search history will be erased.
+                This action is permanent. Your login, saved properties, preferences, and search history will be erased. Any enquiries you've submitted stay on file so agents can still follow up — they're just no longer linked to an account.
               </p>
             </div>
             <div className="flex gap-3 pt-2">

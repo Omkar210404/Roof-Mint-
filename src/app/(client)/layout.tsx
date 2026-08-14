@@ -53,11 +53,22 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('role, terms_accepted_at').eq('id', data.user.id).single();
       if (profile?.role === 'admin') {
         window.location.href = '/admin';
+        return;
       } else if (profile?.role === 'agent') {
         window.location.href = '/agent';
+        return;
+      }
+      // Every regular user must explicitly accept Terms & Privacy Policy
+      // before using the platform — existing users (whose row predates this
+      // requirement) and anyone who signed up via Google (which never showed
+      // a terms checkbox) will have a null terms_accepted_at and get sent
+      // here once. /accept-terms and /profile/terms are excluded so the
+      // gate itself and the legal text it links to don't loop.
+      if (!profile?.terms_accepted_at && pathname !== '/accept-terms' && pathname !== '/profile/terms') {
+        window.location.href = '/accept-terms';
       }
     });
   }, [pathname]);

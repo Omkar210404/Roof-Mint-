@@ -242,9 +242,9 @@ export default function ComparePage() {
                 ))}
               </div>
 
-              {/* RERA Approval Row */}
+              {/* RERA Registration Row */}
               <div className="grid grid-cols-4 p-4 gap-4 items-center">
-                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">RERA Approved</span>
+                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">RERA Registered</span>
                 {comparedProperties.map(p => (
                   <div key={p.id}>
                     {p.rera_number ? (
