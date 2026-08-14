@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { getActivityLog } from './actions'
 import {
@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ShieldCheck, Briefcase } from 'lucide-react'
+import { Search, ShieldCheck, Briefcase, ChevronDown } from 'lucide-react'
 
 const actionLabels: Record<string, string> = {
   delete_agent: 'Deleted agent',
@@ -47,6 +47,7 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [actorFilter, setActorFilter] = useState('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -117,32 +118,65 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
               <TableHead>When</TableHead>
               <TableHead>Who</TableHead>
               <TableHead>Action</TableHead>
-              <TableHead>Details</TableHead>
+              <TableHead>Summary</TableHead>
+              <TableHead className="text-right">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-sm text-gray-400 dark:text-gray-500">
+                <TableCell colSpan={5} className="text-center py-10 text-sm text-gray-400 dark:text-gray-500">
                   No activity found.
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    {new Date(entry.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${entry.actor?.role === 'admin' ? 'bg-teal-50 dark:bg-teal-950/40 text-primary' : 'bg-purple-50 text-purple-700'}`}>
-                      {entry.actor?.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <Briefcase className="w-3 h-3" />}
-                      {entry.actor?.full_name || 'Unknown'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm font-medium text-navy dark:text-white whitespace-nowrap">{actionLabel(entry.action)}</TableCell>
-                  <TableCell className="text-xs text-gray-500 dark:text-gray-400">{formatDetails(entry.details)}</TableCell>
-                </TableRow>
-              ))
+              filtered.map((entry) => {
+                const isOpen = expandedId === entry.id
+                return (
+                  <Fragment key={entry.id}>
+                    <TableRow className={isOpen ? 'border-b-0' : ''}>
+                      <TableCell className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {new Date(entry.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${entry.actor?.role === 'admin' ? 'bg-teal-50 dark:bg-teal-950/40 text-primary' : 'bg-purple-50 text-purple-700'}`}>
+                          {entry.actor?.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <Briefcase className="w-3 h-3" />}
+                          {entry.actor?.full_name || 'Unknown'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-navy dark:text-white whitespace-nowrap">{actionLabel(entry.action)}</TableCell>
+                      <TableCell className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">{formatDetails(entry.details)}</TableCell>
+                      <TableCell className="text-right">
+                        <button
+                          onClick={() => setExpandedId(isOpen ? null : entry.id)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                        >
+                          Details <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                    {isOpen && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="bg-gray-50 dark:bg-navy-800 border-t-0">
+                          <div className="py-2 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
+                            <div><span className="text-gray-400 dark:text-gray-500">Full timestamp:</span> <span className="text-navy dark:text-white font-medium">{new Date(entry.created_at).toLocaleString('en-IN')}</span></div>
+                            <div><span className="text-gray-400 dark:text-gray-500">Actor role:</span> <span className="text-navy dark:text-white font-medium">{entry.actor?.role || 'unknown'}</span></div>
+                            <div><span className="text-gray-400 dark:text-gray-500">Entity type:</span> <span className="text-navy dark:text-white font-medium">{entry.entity_type || '—'}</span></div>
+                            {entry.entity_id && (
+                              <div className="col-span-2 sm:col-span-1"><span className="text-gray-400 dark:text-gray-500">Entity ID:</span> <span className="text-navy dark:text-white font-mono">{entry.entity_id}</span></div>
+                            )}
+                            {entry.details && typeof entry.details === 'object' && Object.entries(entry.details).map(([k, v]) => (
+                              (v === null || v === undefined || v === '') ? null : (
+                                <div key={k}><span className="text-gray-400 dark:text-gray-500 capitalize">{k.replace(/_/g, ' ')}:</span> <span className="text-navy dark:text-white font-medium">{String(v)}</span></div>
+                              )
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                )
+              })
             )}
           </TableBody>
         </Table>

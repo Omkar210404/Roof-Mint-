@@ -40,6 +40,8 @@ export async function deleteUserProfile(id: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
+  const { data: target } = await supabase.from('profiles').select('full_name').eq('id', id).single()
+
   // Foreign key constraints on delete cascade will handle related records
   const { error } = await supabase.from('profiles').delete().eq('id', id)
 
@@ -48,7 +50,7 @@ export async function deleteUserProfile(id: string) {
     return { error: error.message }
   }
 
-  await logActivity(supabase, user!.id, 'delete_user_profile', 'profile', id)
+  await logActivity(supabase, user!.id, 'delete_user_profile', 'profile', id, { user_name: target?.full_name || 'Unknown' })
 
   return { success: true }
 }
@@ -61,6 +63,8 @@ export async function updateUserRole(id: string, role: string) {
     return { error: 'Invalid role' }
   }
 
+  const { data: target } = await supabase.from('profiles').select('full_name, role').eq('id', id).single()
+
   const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
 
   if (error) {
@@ -68,7 +72,11 @@ export async function updateUserRole(id: string, role: string) {
     return { error: error.message }
   }
 
-  await logActivity(supabase, user!.id, 'update_user_role', 'profile', id, { role })
+  await logActivity(supabase, user!.id, 'update_user_role', 'profile', id, {
+    user_name: target?.full_name || 'Unknown',
+    from: target?.role || 'user',
+    to: role,
+  })
 
   return { success: true }
 }

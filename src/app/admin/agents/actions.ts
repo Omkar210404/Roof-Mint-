@@ -180,7 +180,7 @@ export async function revokeAgentAccess(agentId: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
-  const { data: agent } = await supabase.from('agents').select('user_id').eq('id', agentId).single()
+  const { data: agent } = await supabase.from('agents').select('user_id, name').eq('id', agentId).single()
   if (!agent?.user_id) return { success: true }
 
   await supabase.from('profiles').update({ role: 'user' }).eq('id', agent.user_id)
@@ -188,7 +188,7 @@ export async function revokeAgentAccess(agentId: string) {
 
   if (error) return { error: error.message }
 
-  await logActivity(supabase, user!.id, 'revoke_agent_access', 'agent', agentId)
+  await logActivity(supabase, user!.id, 'revoke_agent_access', 'agent', agentId, { agent_name: agent.name })
 
   revalidatePath('/admin/agents')
   return { success: true }
@@ -202,6 +202,8 @@ export async function setAgentPlan(agentId: string, plan: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
+  const { data: agent } = await supabase.from('agents').select('name').eq('id', agentId).single()
+
   const { error } = await supabase
     .from('agents')
     .update({ plan, plan_started_at: new Date().toISOString() })
@@ -209,7 +211,7 @@ export async function setAgentPlan(agentId: string, plan: string) {
 
   if (error) return { error: error.message }
 
-  await logActivity(supabase, user!.id, 'set_agent_plan', 'agent', agentId, { plan })
+  await logActivity(supabase, user!.id, 'set_agent_plan', 'agent', agentId, { agent_name: agent?.name || 'Unknown', plan })
 
   revalidatePath('/admin/agents')
   return { success: true }

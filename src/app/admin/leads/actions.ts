@@ -119,6 +119,8 @@ export async function setLeadAgentVisibility(id: string, visible: boolean) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
+  const { data: lead } = await supabase.from('enquiries').select('name').eq('id', id).single()
+
   const { error } = await supabase
     .from('enquiries')
     .update({ visible_to_agent: visible })
@@ -129,7 +131,7 @@ export async function setLeadAgentVisibility(id: string, visible: boolean) {
     return { error: error.message }
   }
 
-  await logActivity(supabase, user!.id, 'set_lead_visibility', 'enquiry', id, { visible })
+  await logActivity(supabase, user!.id, 'set_lead_visibility', 'enquiry', id, { lead_name: lead?.name || 'Unknown', visible })
 
   revalidatePath('/admin/leads')
   return { success: true }
@@ -157,6 +159,8 @@ export async function deleteLead(id: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
+  const { data: lead } = await supabase.from('enquiries').select('name').eq('id', id).single()
+
   const { error } = await supabase.from('enquiries').delete().eq('id', id)
 
   if (error) {
@@ -164,7 +168,7 @@ export async function deleteLead(id: string) {
     return { error: error.message }
   }
 
-  await logActivity(supabase, user!.id, 'delete_lead', 'enquiry', id)
+  await logActivity(supabase, user!.id, 'delete_lead', 'enquiry', id, { lead_name: lead?.name || 'Unknown' })
 
   revalidatePath('/admin/leads')
   return { success: true }
