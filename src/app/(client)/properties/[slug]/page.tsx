@@ -177,6 +177,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
+    // Honeypot tripped — pretend success without actually submitting, so
+    // the bot doesn't learn to skip this field next time.
+    if ((fd.get('company_website') as string || '').trim()) {
+      setEnquirySubmitted(true);
+      return;
+    }
+
     const validationError = validateEnquiry(fd);
     if (validationError) {
       setEnquiryError(validationError);
@@ -191,7 +198,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
       setEnquirySubmitted(true);
     } catch (err) {
       console.error(err);
-      setEnquiryError('Something went wrong submitting your enquiry. Please try again.');
+      const msg = err instanceof Error ? err.message : '';
+      setEnquiryError(msg.includes('Too many enquiries') ? msg : 'Something went wrong submitting your enquiry. Please try again.');
     }
     setSubmitting(false);
   };
@@ -320,6 +328,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                   </div>
                 )}
                 <form onSubmit={handleEnquirySubmit} className="space-y-3">
+                  {/* Honeypot — invisible to real visitors, but a generic
+                      bot that auto-fills every field will fill this too.
+                      Off-screen rather than display:none, since some bots
+                      specifically skip display:none fields. */}
+                  <input
+                    type="text"
+                    name="company_website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="absolute -left-[9999px] w-px h-px opacity-0"
+                  />
                   <input name="name" required minLength={2} maxLength={80} defaultValue={enquiryPrefill.name} placeholder="Full Name *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                   <input name="phone" required type="tel" inputMode="numeric" maxLength={13} defaultValue={enquiryPrefill.phone} placeholder="10-digit Mobile Number *" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                   <input name="email" type="email" defaultValue={enquiryPrefill.email} placeholder="Email (optional)" className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />

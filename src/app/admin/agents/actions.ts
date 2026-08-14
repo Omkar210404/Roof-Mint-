@@ -2,6 +2,7 @@
 
 import { requireAdmin } from '@/utils/supabase/admin-guard'
 import { createServiceRoleClient } from '@/utils/supabase/service-admin'
+import { logActivity } from '@/utils/supabase/activity-log'
 import { revalidatePath } from 'next/cache'
 
 export async function createAgent(formData: FormData) {
@@ -44,8 +45,10 @@ export async function getAgents() {
 }
 
 export async function deleteAgent(id: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
+
+  const { data: agent } = await supabase.from('agents').select('name').eq('id', id).single()
 
   // Nullify assigned_agent_id on properties and enquiries first if needed
   await supabase.from('properties').update({ primary_agent_id: null }).eq('primary_agent_id', id)
@@ -58,6 +61,8 @@ export async function deleteAgent(id: string) {
     return { error: error.message }
   }
 
+  await logActivity(supabase, user!.id, 'delete_agent', 'agent', id, { name: agent?.name })
+
   revalidatePath('/admin/agents')
   return { success: true }
 }
@@ -65,7 +70,7 @@ export async function deleteAgent(id: string) {
 // ── Agent portal access (login for agents to view their own leads/listings) ─
 
 export async function grantAgentAccess(agentId: string, email: string, password: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   if (!email || !password || password.length < 6) {
@@ -104,6 +109,8 @@ export async function grantAgentAccess(agentId: string, email: string, password:
     return { error: linkError.message }
   }
 
+  await logActivity(supabase, user!.id, 'grant_agent_access', 'agent', agentId, { email })
+
   revalidatePath('/admin/agents')
   return { success: true }
 }
@@ -129,7 +136,7 @@ export async function resetAgentPassword(agentId: string, password: string) {
 }
 
 export async function revokeAgentAccess(agentId: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const { data: agent } = await supabase.from('agents').select('user_id').eq('id', agentId).single()
@@ -140,6 +147,8 @@ export async function revokeAgentAccess(agentId: string) {
 
   if (error) return { error: error.message }
 
+  await logActivity(supabase, user!.id, 'revoke_agent_access', 'agent', agentId)
+
   revalidatePath('/admin/agents')
   return { success: true }
 }
@@ -149,7 +158,7 @@ export async function revokeAgentAccess(agentId: string) {
 // how an admin records "I just sold/renewed them this plan."
 
 export async function setAgentPlan(agentId: string, plan: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const { error } = await supabase
@@ -158,6 +167,8 @@ export async function setAgentPlan(agentId: string, plan: string) {
     .eq('id', agentId)
 
   if (error) return { error: error.message }
+
+  await logActivity(supabase, user!.id, 'set_agent_plan', 'agent', agentId, { plan })
 
   revalidatePath('/admin/agents')
   return { success: true }

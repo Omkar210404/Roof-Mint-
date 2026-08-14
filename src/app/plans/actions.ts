@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { requireAdmin } from '@/utils/supabase/admin-guard'
+import { logActivity } from '@/utils/supabase/activity-log'
 import { revalidatePath } from 'next/cache'
 import type { AgentPlanTier } from '@/lib/agent-plans'
 
@@ -26,7 +27,7 @@ export async function getPlanTiers(): Promise<AgentPlanTier[]> {
 export type PlanTierUpdate = Partial<Pick<AgentPlanTier, 'label' | 'price' | 'duration_months' | 'property_cap' | 'lead_cap' | 'can_export' | 'tagline'>>
 
 export async function updatePlanTier(id: string, fields: PlanTierUpdate) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const { error } = await supabase
@@ -35,6 +36,8 @@ export async function updatePlanTier(id: string, fields: PlanTierUpdate) {
     .eq('id', id)
 
   if (error) return { error: error.message }
+
+  await logActivity(supabase, user!.id, 'update_plan_tier', 'plan_tier', null, { id, ...fields })
 
   revalidatePath('/admin/agents')
   revalidatePath('/agent/leads')

@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAdmin } from '@/utils/supabase/admin-guard'
+import { logActivity } from '@/utils/supabase/activity-log'
 import { revalidatePath } from 'next/cache'
 
 export async function getLeads() {
@@ -115,7 +116,7 @@ export async function assignLeadAgent(leadId: string, agentId: string) {
 }
 
 export async function setLeadAgentVisibility(id: string, visible: boolean) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const { error } = await supabase
@@ -127,6 +128,8 @@ export async function setLeadAgentVisibility(id: string, visible: boolean) {
     console.error('setLeadAgentVisibility error:', error.message)
     return { error: error.message }
   }
+
+  await logActivity(supabase, user!.id, 'set_lead_visibility', 'enquiry', id, { visible })
 
   revalidatePath('/admin/leads')
   return { success: true }
@@ -151,7 +154,7 @@ export async function setLeadAgentMessage(id: string, agentMessage: string) {
 }
 
 export async function deleteLead(id: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const { error } = await supabase.from('enquiries').delete().eq('id', id)
@@ -160,6 +163,8 @@ export async function deleteLead(id: string) {
     console.error('deleteLead error:', error.message)
     return { error: error.message }
   }
+
+  await logActivity(supabase, user!.id, 'delete_lead', 'enquiry', id)
 
   revalidatePath('/admin/leads')
   return { success: true }

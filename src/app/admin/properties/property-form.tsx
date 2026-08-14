@@ -136,7 +136,8 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const uploadFiles = async (
     files: FileList,
     setUploads: React.Dispatch<React.SetStateAction<UploadItem[]>>,
-    onUrl: (url: string) => void
+    onUrl: (url: string) => void,
+    expectedType: 'image' | 'video'
   ) => {
     const items: UploadItem[] = Array.from(files).map(f => ({ id: crypto.randomUUID(), name: f.name, status: 'uploading' }));
     setUploads(prev => [...prev, ...items]);
@@ -144,7 +145,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
     await Promise.all(Array.from(files).map(async (file, i) => {
       const item = items[i];
       try {
-        const url = await uploadPropertyMedia(file);
+        const url = await uploadPropertyMedia(file, expectedType);
         onUrl(url);
         setUploads(prev => prev.map(u => u.id === item.id ? { ...u, status: 'done' } : u));
       } catch (err) {
@@ -157,7 +158,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const handleImageFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length) {
-      uploadFiles(files, setImageUploads, url => setImageUrls(prev => [...prev, url]));
+      uploadFiles(files, setImageUploads, url => setImageUrls(prev => [...prev, url]), 'image');
     }
     e.target.value = '';
   };
@@ -165,7 +166,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const handleVideoFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length) {
-      uploadFiles(files, setVideoUploads, url => setVideoUrls(prev => [...prev, url]));
+      uploadFiles(files, setVideoUploads, url => setVideoUrls(prev => [...prev, url]), 'video');
     }
     e.target.value = '';
   };

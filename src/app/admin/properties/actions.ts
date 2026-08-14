@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAdmin } from '@/utils/supabase/admin-guard'
+import { logActivity } from '@/utils/supabase/activity-log'
 import { revalidatePath } from 'next/cache'
 
 export async function getProperties() {
@@ -283,8 +284,10 @@ export async function updateProperty(id: string, formData: FormData) {
 }
 
 export async function deleteProperty(id: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
+
+  const { data: property } = await supabase.from('properties').select('title').eq('id', id).single()
 
   // Foreign key constraints with cascade will delete property_media, nearby_places, etc.
   const { error } = await supabase.from('properties').delete().eq('id', id)
@@ -293,6 +296,8 @@ export async function deleteProperty(id: string) {
     console.error('deleteProperty error:', error.message)
     return { error: error.message }
   }
+
+  await logActivity(supabase, user!.id, 'delete_property', 'property', id, { title: property?.title })
 
   revalidatePath('/admin/properties')
   return { success: true }

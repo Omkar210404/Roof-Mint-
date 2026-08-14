@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAdmin } from '@/utils/supabase/admin-guard'
+import { logActivity } from '@/utils/supabase/activity-log'
 
 export async function getUserProfiles() {
   const { authorized, supabase } = await requireAdmin()
@@ -36,7 +37,7 @@ export async function getUserProfiles() {
 }
 
 export async function deleteUserProfile(id: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   // Foreign key constraints on delete cascade will handle related records
@@ -47,11 +48,13 @@ export async function deleteUserProfile(id: string) {
     return { error: error.message }
   }
 
+  await logActivity(supabase, user!.id, 'delete_user_profile', 'profile', id)
+
   return { success: true }
 }
 
 export async function updateUserRole(id: string, role: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   if (role !== 'admin' && role !== 'user') {
@@ -64,6 +67,8 @@ export async function updateUserRole(id: string, role: string) {
     console.error('updateUserRole error:', error.message)
     return { error: error.message }
   }
+
+  await logActivity(supabase, user!.id, 'update_user_role', 'profile', id, { role })
 
   return { success: true }
 }
