@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, User, Phone, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -48,8 +49,9 @@ export default function SignupPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -224,16 +226,17 @@ export default function SignupPage() {
               <Lock className="w-4 h-4" />
             </div>
             <input
-              type={showPassword ? "text" : "password"} name="password" placeholder="Password (min 6 characters)"
+              type={showPassword ? "text" : "password"} name="password" placeholder="Password"
               value={formData.password} onChange={handleChange}
               className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400"
-              required minLength={6}
+              required minLength={8}
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600">
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 -mt-2.5 px-1">{PASSWORD_REQUIREMENTS}</p>
 
           {/* Confirm Password */}
           <div className="relative">

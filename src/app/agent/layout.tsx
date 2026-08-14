@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Building2, Users, LogOut, Crown } from "lucide-react";
+import { Building2, Users, LogOut, Crown, KeyRound } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getMyPlanInfo, getMyAgentProfile } from "./actions";
@@ -52,6 +52,7 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/agent/properties", icon: Building2, label: "My Properties" },
     { href: "/agent/leads", icon: Users, label: "My Leads" },
+    { href: "/agent/security", icon: KeyRound, label: "Security" },
   ];
 
   return (

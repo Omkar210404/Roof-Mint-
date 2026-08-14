@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Key, Download, Trash2, LogOut, CheckCircle2, AlertTriangle, EyeOff, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 
 export default function SecurityPage() {
   const supabase = createClient();
@@ -22,8 +23,9 @@ export default function SecurityPage() {
     e.preventDefault();
     setStatusMsg(null);
 
-    if (newPassword.length < 6) {
-      setStatusMsg({ type: 'error', text: 'New password must be at least 6 characters long.' });
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      setStatusMsg({ type: 'error', text: passwordError });
       return;
     }
 
@@ -127,10 +129,11 @@ export default function SecurityPage() {
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder="New password"
                     className={inputCls}
                   />
                 </div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{PASSWORD_REQUIREMENTS}</p>
               </div>
 
               <div>

@@ -3,6 +3,7 @@
 import { requireAdmin } from '@/utils/supabase/admin-guard'
 import { createServiceRoleClient } from '@/utils/supabase/service-admin'
 import { logActivity } from '@/utils/supabase/activity-log'
+import { validatePassword } from '@/lib/password-policy'
 import { revalidatePath } from 'next/cache'
 
 export async function createAgent(formData: FormData) {
@@ -73,9 +74,9 @@ export async function grantAgentAccess(agentId: string, email: string, password:
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
-  if (!email || !password || password.length < 6) {
-    return { error: 'Email and a password of at least 6 characters are required.' }
-  }
+  if (!email) return { error: 'Email is required.' }
+  const passwordError = validatePassword(password)
+  if (passwordError) return { error: passwordError }
 
   const adminClient = createServiceRoleClient()
   if (!adminClient) return { error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY — cannot create portal logins.' }
@@ -119,9 +120,8 @@ export async function resetAgentPassword(agentId: string, password: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
-  if (!password || password.length < 6) {
-    return { error: 'Password must be at least 6 characters.' }
-  }
+  const passwordError = validatePassword(password)
+  if (passwordError) return { error: passwordError }
 
   const adminClient = createServiceRoleClient()
   if (!adminClient) return { error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' }

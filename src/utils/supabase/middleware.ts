@@ -35,6 +35,16 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Requires the session to actually be at aal2 whenever the account has a
+  // verified TOTP factor enrolled — enforced here (not just in the login
+  // flow) so a stale aal1 session cookie can't reach /admin or /agent by
+  // hitting the URL directly, bypassing the code-entry step client-side.
+  // Accounts with no factor enrolled are unaffected (nextLevel stays aal1).
+  const requireAal2 = async () => {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    return !!aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2'
+  }
+
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
@@ -45,11 +55,17 @@ export async function updateSession(request: NextRequest) {
 
     // Check admin role — gracefully handle missing profile
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    
+
     // If no profile exists yet (new signup), redirect to home — don't crash
     if (!profile || profile.role !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+
+    if (await requireAal2()) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/mfa-verify'
       return NextResponse.redirect(url)
     }
   }
@@ -67,6 +83,12 @@ export async function updateSession(request: NextRequest) {
     if (!profile || profile.role !== 'agent') {
       const url = request.nextUrl.clone()
       url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+
+    if (await requireAal2()) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/mfa-verify'
       return NextResponse.redirect(url)
     }
   }

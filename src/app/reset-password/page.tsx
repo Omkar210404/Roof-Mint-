@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -19,8 +20,9 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (password !== confirmPassword) {
@@ -74,12 +76,12 @@ export default function ResetPasswordPage() {
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="New password (min 6 characters)"
+                placeholder="New password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400"
                 required
-                minLength={6}
+                minLength={8}
               />
               <button
                 type="button"
@@ -89,6 +91,7 @@ export default function ResetPasswordPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 -mt-2 px-1">{PASSWORD_REQUIREMENTS}</p>
 
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">

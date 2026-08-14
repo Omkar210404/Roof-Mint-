@@ -364,7 +364,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                       type="password"
                       value={portalPassword}
                       onChange={e => setPortalPassword(e.target.value)}
-                      placeholder="New password (min 6 chars)"
+                      placeholder="New password (8+ chars, mixed case, number, symbol)"
                       className="w-full h-9 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     />
                     <div className="flex gap-2">
@@ -392,7 +392,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                       type="password"
                       value={portalPassword}
                       onChange={e => setPortalPassword(e.target.value)}
-                      placeholder="Set a password (min 6 chars)"
+                      placeholder="Set a password (8+ chars, mixed case, number, symbol)"
                       className="w-full h-9 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     />
                     <button

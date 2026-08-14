@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { MfaChallenge } from '@/components/mfa-challenge';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
 
   // Read outcome hints from the URL directly (not useSearchParams, which
   // would force this static page into a Suspense boundary for no benefit).
@@ -27,11 +29,36 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Runs once the session is actually at the required assurance level —
+  // either immediately (no 2FA on this account) or right after the TOTP
+  // challenge below succeeds.
+  const completeLogin = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, profile_completed')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role === 'admin') {
+      router.push('/admin');
+    } else if (profile?.role === 'agent') {
+      router.push('/agent');
+    } else if (!profile?.profile_completed) {
+      router.push('/onboarding');
+    } else {
+      router.push('/');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     const supabase = createClient();
 
     // Try Supabase auth first
@@ -46,24 +73,22 @@ export default function LoginPage() {
       return;
     }
 
-    // Check if user is admin or needs to complete profile
     if (data.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, profile_completed')
-        .eq('id', data.user.id)
-        .single();
-
-      if (profile?.role === 'admin') {
-        router.push('/admin');
-      } else if (profile?.role === 'agent') {
-        router.push('/agent');
-      } else if (!profile?.profile_completed) {
-        // Profile not complete → send to onboarding
-        router.push('/onboarding');
-      } else {
-        router.push('/');
+      // Password was correct — but for accounts with 2FA enabled (admin/
+      // agent), the session is still only "aal1" until a TOTP code is also
+      // verified. Show the code-entry step instead of completing login.
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const totpFactor = factorsData?.totp?.find(f => f.status === 'verified');
+        if (totpFactor) {
+          setMfaFactorId(totpFactor.id);
+          setIsLoading(false);
+          return;
+        }
       }
+
+      await completeLogin();
     }
 
     setIsLoading(false);
@@ -151,6 +176,10 @@ export default function LoginPage() {
 
           {/* Login Form Header */}
           <div className="pt-4 md:pt-0">
+          {mfaFactorId ? (
+            <MfaChallenge factorId={mfaFactorId} onVerified={completeLogin} />
+          ) : (
+          <>
             <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white mb-1 md:mb-2">Welcome back!</h1>
             <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mb-6 md:mb-8">Sign in to continue your home search</p>
 
@@ -249,6 +278,8 @@ export default function LoginPage() {
             Sign up
           </Link>
         </p>
+          </>
+          )}
       </div>
 
           {/* Trust Badges */}
