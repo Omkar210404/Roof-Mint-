@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, revokeAgentAccess, setAgentPlan } from './actions';
+import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, resetAgentMfa, revokeAgentAccess, setAgentPlan } from './actions';
 import { computePlanStatus, formatPlanPrice, formatPlanDuration, findTier, type AgentPlanTier } from '@/lib/agent-plans';
 import { PlanManagerModal } from './plan-manager-modal';
 
@@ -198,6 +198,21 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
     }
     setPortalSuccess('Password updated.');
     setPortalPassword('');
+  };
+
+  const handleResetMfa = async () => {
+    if (!editingAgent) return;
+    if (!confirm(`Reset two-factor authentication for "${editingAgent.name}"? They'll be able to log in with just their password until they re-enroll 2FA themselves.`)) return;
+    setPortalError(null);
+    setPortalSuccess(null);
+    setPortalBusy(true);
+    const res = await resetAgentMfa(editingAgent.id);
+    setPortalBusy(false);
+    if (res?.error) {
+      setPortalError(res.error);
+      return;
+    }
+    setPortalSuccess(res.hadFactor ? '2FA removed — they can log in with just their password now.' : 'This agent didn\'t have 2FA enabled.');
   };
 
   const handleRevokeAccess = async () => {
@@ -393,6 +408,15 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                         <ShieldOff className="w-3.5 h-3.5" /> Revoke Access
                       </button>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleResetMfa}
+                      disabled={portalBusy}
+                      className="w-full h-9 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                      title="Removes their authenticator app 2FA — use this if they're locked out, unreachable, or you need emergency access despite them having 2FA on"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" /> Reset Their 2FA
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-2">

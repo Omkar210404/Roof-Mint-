@@ -141,6 +141,41 @@ export async function resetAgentPassword(agentId: string, password: string) {
   return { success: true }
 }
 
+// The companion to resetAgentPassword — a reset password alone isn't a full
+// override if the agent has 2FA on, since they'd still control the code
+// screen. This removes their TOTP factor via the Admin API (something only
+// the service role can do — the regular auth.mfa.* client calls only ever
+// operate on the CURRENT session's own factors, not another user's), so
+// admin can regain full access even if the agent is unreachable, lost their
+// phone, or is being deliberately uncooperative. The agent isn't locked out
+// of 2FA forever — they can just re-enroll from Agent > Security next time
+// they log in.
+export async function resetAgentMfa(agentId: string) {
+  const { authorized, supabase, user } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const adminClient = createServiceRoleClient()
+  if (!adminClient) return { error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' }
+
+  const { data: agent } = await supabase.from('agents').select('user_id, name').eq('id', agentId).single()
+  if (!agent?.user_id) return { error: 'This agent does not have portal access yet.' }
+
+  const { data: factorsData, error: listError } = await adminClient.auth.admin.mfa.listFactors({ userId: agent.user_id })
+  if (listError) return { error: listError.message }
+
+  const factors = factorsData?.factors || []
+  if (factors.length === 0) return { success: true, hadFactor: false }
+
+  for (const factor of factors) {
+    const { error: deleteError } = await adminClient.auth.admin.mfa.deleteFactor({ id: factor.id, userId: agent.user_id })
+    if (deleteError) return { error: deleteError.message }
+  }
+
+  await logActivity(supabase, user!.id, 'reset_agent_2fa', 'agent', agentId, { agent_name: agent.name })
+
+  return { success: true, hadFactor: true }
+}
+
 export async function revokeAgentAccess(agentId: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
