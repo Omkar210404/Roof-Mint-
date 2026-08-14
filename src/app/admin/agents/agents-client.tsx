@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle, Settings, Eye } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -348,7 +349,14 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
             {/* Portal Access — grant/reset/revoke this agent's login to their own read-only dashboard */}
             {editingAgent && (
               <div className="mt-5 pt-5 border-t border-gray-100/60 dark:border-gray-800/60 space-y-3">
-                <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Link
+                  href={`/admin/agents/${editingAgent.id}/preview`}
+                  className="w-full h-9 rounded-lg border border-gray-200/60 dark:border-gray-800/60 text-navy dark:text-white text-xs font-semibold hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Preview Their Portal View
+                </Link>
+
+                <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5 pt-2">
                   <KeyRound className="w-3.5 h-3.5" /> Portal Access
                 </h3>
                 <p className="text-xs text-gray-400 dark:text-gray-500">

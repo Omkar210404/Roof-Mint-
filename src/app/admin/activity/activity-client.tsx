@@ -17,6 +17,7 @@ const actionLabels: Record<string, string> = {
   delete_agent: 'Deleted agent',
   grant_agent_access: 'Granted portal access',
   revoke_agent_access: 'Revoked portal access',
+  reset_agent_password: 'Reset agent password',
   set_agent_plan: 'Changed agent plan',
   set_lead_visibility: 'Changed lead visibility',
   delete_lead: 'Deleted lead',

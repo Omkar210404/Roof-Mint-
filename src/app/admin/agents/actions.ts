@@ -117,7 +117,7 @@ export async function grantAgentAccess(agentId: string, email: string, password:
 }
 
 export async function resetAgentPassword(agentId: string, password: string) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const passwordError = validatePassword(password)
@@ -126,11 +126,17 @@ export async function resetAgentPassword(agentId: string, password: string) {
   const adminClient = createServiceRoleClient()
   if (!adminClient) return { error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY.' }
 
-  const { data: agent } = await supabase.from('agents').select('user_id').eq('id', agentId).single()
+  const { data: agent } = await supabase.from('agents').select('user_id, name').eq('id', agentId).single()
   if (!agent?.user_id) return { error: 'This agent does not have portal access yet.' }
 
   const { error } = await adminClient.auth.admin.updateUserById(agent.user_id, { password })
   if (error) return { error: error.message }
+
+  // The "emergency override" action — admin regains access to an agent's
+  // portal by setting a new password, rather than ever knowing their
+  // current one (which nothing in the system can ever reveal — passwords
+  // are one-way hashed). This is what shows up in Activity Log for it.
+  await logActivity(supabase, user!.id, 'reset_agent_password', 'agent', agentId, { agent_name: agent.name })
 
   return { success: true }
 }
