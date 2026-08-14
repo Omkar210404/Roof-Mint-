@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAgent } from '@/utils/supabase/agent-guard'
+import { logActivity } from '@/utils/supabase/activity-log'
 import { revalidatePath } from 'next/cache'
 import { computePlanStatus, findTier } from '@/lib/agent-plans'
 import { getPlanTiers } from '../plans/actions'
@@ -42,7 +43,7 @@ export async function getMyAgentProfile() {
 }
 
 export async function updateMyLeadStatus(leadId: string, status: string) {
-  const { authorized, supabase, agent } = await requireAgent()
+  const { authorized, supabase, user, agent } = await requireAgent()
   if (!authorized || !agent) return { error: 'Unauthorized' }
 
   // Belt-and-suspenders on top of RLS (enquiries_update_agent) and the
@@ -58,6 +59,11 @@ export async function updateMyLeadStatus(leadId: string, status: string) {
     console.error('updateMyLeadStatus error:', error.message)
     return { error: error.message }
   }
+
+  // This is the only write action an agent has, so it's the one thing
+  // admin actually needs visibility into — logged under the agent's own
+  // account so Admin > Activity Log shows who changed what.
+  await logActivity(supabase, user!.id, 'update_lead_status', 'enquiry', leadId, { status, agent_name: agent.name })
 
   revalidatePath('/agent/leads')
   return { success: true }
