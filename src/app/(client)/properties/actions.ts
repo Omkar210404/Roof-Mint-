@@ -103,7 +103,6 @@ export async function getPropertyBySlug(slug: string) {
 
 export async function submitEnquiry(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
 
   const property_id = formData.get('property_id') as string
   const name = formData.get('name') as string
@@ -112,27 +111,20 @@ export async function submitEnquiry(formData: FormData) {
   const budget_hint = formData.get('budget_hint') as string
   const message = formData.get('message') as string
 
-  let assigned_agent_id: string | null = null
-  if (property_id) {
-    const { data: property } = await supabase
-      .from('properties')
-      .select('primary_agent_id')
-      .eq('id', property_id)
-      .single()
-    assigned_agent_id = property?.primary_agent_id || null
-  }
-
-  const { error } = await supabase.from('enquiries').insert({
-    property_id: property_id || null,
-    user_id: user?.id || null,
-    assigned_agent_id,
-    name,
-    phone,
-    email,
-    budget_hint,
-    message,
-    status: 'new',
-    source: 'form',
+  // Goes through a SECURITY DEFINER RPC rather than a raw table insert —
+  // a direct insert with `with check (true)` would let any caller (logged
+  // in or not) set assigned_agent_id/status/source/visible_to_agent
+  // directly, e.g. to flood a specific agent's lead cap with junk. The RPC
+  // only accepts what a real visitor should control and computes the rest
+  // server-side.
+  const { error } = await supabase.rpc('submit_public_enquiry', {
+    p_property_id: property_id || null,
+    p_name: name,
+    p_phone: phone,
+    p_email: email,
+    p_budget_hint: budget_hint,
+    p_message: message,
+    p_source: 'form',
   })
 
   if (error) {
@@ -165,30 +157,23 @@ export async function logWhatsAppLead(propertyId: string, phoneOverride?: string
     .limit(1)
   if (existing && existing.length > 0) return { skipped: true }
 
-  const [{ data: profile }, { data: property }] = await Promise.all([
-    supabase.from('profiles').select('full_name, phone').eq('id', user.id).single(),
-    supabase.from('properties').select('primary_agent_id').eq('id', propertyId).single(),
-  ])
+  const { data: profile } = await supabase.from('profiles').select('full_name, phone').eq('id', user.id).single()
 
   if (phoneOverride) {
     await supabase.from('profiles').update({ phone: phoneOverride }).eq('id', user.id)
   }
 
-  const { error } = await supabase.from('enquiries').insert({
-    property_id: propertyId,
-    user_id: user.id,
-    assigned_agent_id: property?.primary_agent_id || null,
-    // WhatsApp leads land hidden from the agent by default — admin reviews
-    // and verifies the details first, then flips it visible (or re-enters
-    // a cleaned-up copy manually) rather than the agent seeing raw,
-    // unverified contact info straight away.
-    visible_to_agent: false,
-    name: profile?.full_name || 'Roofmint User',
-    phone: phoneOverride || profile?.phone || '',
-    email: user.email || '',
-    message: 'Contacted via WhatsApp',
-    status: 'new',
-    source: 'whatsapp',
+  // Same RPC as the enquiry form — computes assigned_agent_id server-side
+  // and forces visible_to_agent to false for source='whatsapp' inside the
+  // function itself, so this can't be tampered with via a direct API call.
+  const { error } = await supabase.rpc('submit_public_enquiry', {
+    p_property_id: propertyId,
+    p_name: profile?.full_name || 'Roofmint User',
+    p_phone: phoneOverride || profile?.phone || '',
+    p_email: user.email || '',
+    p_budget_hint: null,
+    p_message: 'Contacted via WhatsApp',
+    p_source: 'whatsapp',
   })
 
   if (error) {
