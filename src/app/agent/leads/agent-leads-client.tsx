@@ -105,7 +105,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
 
     if (debouncedQuery) {
       result = result.filter(l => {
-        const haystack = [l.name, l.phone, l.email, l.message, l.property?.title, l.property?.location_address]
+        const haystack = [l.name, l.phone, l.email, l.agent_message, l.property?.title, l.property?.location_address]
           .filter(Boolean).join(' ').toLowerCase()
         return haystack.includes(debouncedQuery)
       })
@@ -144,7 +144,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
       l.phone,
       l.email || '',
       l.budget_hint || '',
-      l.message || '',
+      l.agent_message || '',
       statusLabel(l.status || 'new'),
     ])
     const escape = (val: unknown) => {
@@ -382,7 +382,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
                         {lead.budget_hint}
                       </span>
                     )}
-                    <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{lead.message || '—'}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{lead.agent_message || '—'}</div>
                   </TableCell>
                   <TableCell>
                     <select

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead, setLeadAgentVisibility } from './actions'
+import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead, setLeadAgentVisibility, setLeadAgentMessage } from './actions'
 import { AddLeadModal } from './add-lead-modal'
 import {
   Table,
@@ -236,6 +236,11 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const handleToggleAgentVisibility = async (id: string, visible: boolean) => {
     setLeads(prev => prev.map(l => l.id === id ? { ...l, visible_to_agent: visible } : l))
     await setLeadAgentVisibility(id, visible)
+  }
+
+  const handleSetAgentMessage = async (id: string, agentMessage: string) => {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, agent_message: agentMessage || null } : l))
+    await setLeadAgentMessage(id, agentMessage)
   }
 
   const bulkSetAgentVisibility = async (visible: boolean) => {
@@ -586,13 +591,25 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lead.phone}</div>
                     <div className="text-xs text-gray-400 dark:text-gray-500">{lead.email}</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="min-w-[200px]">
                     {lead.budget_hint && (
                       <span className="inline-block bg-teal-50 dark:bg-teal-950/40 text-teal-700 font-bold text-[10px] px-2 py-0.5 rounded-md mb-1">
                         {lead.budget_hint}
                       </span>
                     )}
-                    <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{lead.message || '—'}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2" title="Raw message from the visitor — admin only, agent never sees this">{lead.message || '—'}</div>
+                    <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Agent Sees</label>
+                      <input
+                        key={lead.id + (lead.agent_message || '')}
+                        defaultValue={lead.agent_message || ''}
+                        placeholder="Blank = agent sees nothing"
+                        onBlur={(e) => {
+                          if (e.target.value !== (lead.agent_message || '')) handleSetAgentMessage(lead.id, e.target.value)
+                        }}
+                        className="w-full h-7 px-2 mt-0.5 rounded-md border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
                   </TableCell>
                   {/* Agent Assign Select */}
                   <TableCell>

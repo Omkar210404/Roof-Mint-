@@ -132,6 +132,24 @@ export async function setLeadAgentVisibility(id: string, visible: boolean) {
   return { success: true }
 }
 
+export async function setLeadAgentMessage(id: string, agentMessage: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('enquiries')
+    .update({ agent_message: agentMessage.trim() || null })
+    .eq('id', id)
+
+  if (error) {
+    console.error('setLeadAgentMessage error:', error.message)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/leads')
+  return { success: true }
+}
+
 export async function deleteLead(id: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
