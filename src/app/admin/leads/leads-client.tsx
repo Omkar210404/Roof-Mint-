@@ -35,6 +35,8 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [propertyFilter, setPropertyFilter] = useState('all')
+  const [agentFilter, setAgentFilter] = useState('all')
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -68,7 +70,17 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedQuery, statusFilter])
+  }, [debouncedQuery, statusFilter, propertyFilter, agentFilter])
+
+  // Properties available to filter by, derived from the leads actually
+  // present — no separate fetch needed.
+  const uniqueProperties = useMemo(() => {
+    const map = new Map<string, string>()
+    leads.forEach(l => {
+      if (l.property_id && l.property?.title) map.set(l.property_id, l.property.title)
+    })
+    return Array.from(map.entries()).map(([id, title]) => ({ id, title })).sort((a, b) => a.title.localeCompare(b.title))
+  }, [leads])
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
@@ -95,6 +107,18 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
       result = result.filter(l => (l.status || 'new') === statusFilter)
     }
 
+    if (propertyFilter !== 'all') {
+      result = result.filter(l => l.property_id === propertyFilter)
+    }
+
+    if (agentFilter !== 'all') {
+      if (agentFilter === 'unassigned') {
+        result = result.filter(l => !(l.assigned_agent_id || l.assigned_agent?.id))
+      } else {
+        result = result.filter(l => (l.assigned_agent_id || l.assigned_agent?.id) === agentFilter)
+      }
+    }
+
     if (debouncedQuery) {
       result = result.filter(l => {
         const haystack = [l.name, l.phone, l.email, l.message, l.property?.title, l.property?.location_address]
@@ -114,7 +138,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
     })
 
     return sorted
-  }, [leads, statusFilter, debouncedQuery, sortKey, sortDir])
+  }, [leads, statusFilter, propertyFilter, agentFilter, debouncedQuery, sortKey, sortDir])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -289,8 +313,8 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
       </div>
 
       {/* Search + Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -308,6 +332,27 @@ export function LeadsClientWrapper({ initialLeads, agents = [] }: { initialLeads
           <option value="all">All Statuses</option>
           {statusOptions.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <select
+          value={propertyFilter}
+          onChange={(e) => setPropertyFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="all">All Properties</option>
+          {uniqueProperties.map(p => (
+            <option key={p.id} value={p.id}>{p.title}</option>
+          ))}
+        </select>
+        <select
+          value={agentFilter}
+          onChange={(e) => setAgentFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="all">All Agents</option>
+          <option value="unassigned">Unassigned</option>
+          {agents.map((agent: any) => (
+            <option key={agent.id} value={agent.id}>{agent.name}</option>
           ))}
         </select>
       </div>
