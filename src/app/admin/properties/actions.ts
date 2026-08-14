@@ -83,7 +83,7 @@ export async function createProperty(formData: FormData) {
   const highlights = JSON.parse(formData.get('highlights') as string || '[]')
   const image_urls = JSON.parse(formData.get('image_urls') as string || '[]')
   const nearby_places = JSON.parse(formData.get('nearby_places') as string || '[]')
-  const video_url = formData.get('video_url') as string
+  const video_urls = JSON.parse(formData.get('video_urls') as string || '[]')
   const youtube_url = formData.get('youtube_url') as string
 
   // Insert property
@@ -132,15 +132,16 @@ export async function createProperty(formData: FormData) {
     await supabase.from('property_media').insert(mediaRows)
   }
 
-  // Insert video URL if provided
-  if (video_url) {
-    await supabase.from('property_media').insert({
+  // Insert video URLs if provided (bulk-uploaded or pasted)
+  if (video_urls.length > 0) {
+    const videoRows = video_urls.map((url: string, i: number) => ({
       property_id: propertyId,
-      url: video_url,
+      url,
       media_type: 'video',
       is_cover: false,
-      sort_order: 100
-    })
+      sort_order: 100 + i
+    }))
+    await supabase.from('property_media').insert(videoRows)
   }
 
   // Insert YouTube URL if provided
@@ -197,7 +198,7 @@ export async function updateProperty(id: string, formData: FormData) {
   const highlights = JSON.parse(formData.get('highlights') as string || '[]')
   const image_urls = JSON.parse(formData.get('image_urls') as string || '[]')
   const nearby_places = JSON.parse(formData.get('nearby_places') as string || '[]')
-  const video_url = formData.get('video_url') as string
+  const video_urls = JSON.parse(formData.get('video_urls') as string || '[]')
   const youtube_url = formData.get('youtube_url') as string
 
   // Slug is intentionally left untouched on edit — changing it would break
@@ -247,14 +248,15 @@ export async function updateProperty(id: string, formData: FormData) {
     }))
     await supabase.from('property_media').insert(mediaRows)
   }
-  if (video_url) {
-    await supabase.from('property_media').insert({
+  if (video_urls.length > 0) {
+    const videoRows = video_urls.map((url: string, i: number) => ({
       property_id: id,
-      url: video_url,
+      url,
       media_type: 'video',
       is_cover: false,
-      sort_order: 100
-    })
+      sort_order: 100 + i
+    }))
+    await supabase.from('property_media').insert(videoRows)
   }
   if (youtube_url) {
     await supabase.from('property_media').insert({

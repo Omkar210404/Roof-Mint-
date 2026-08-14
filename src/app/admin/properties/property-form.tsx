@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Plus, X, Video, MapPin,
   Car, Wifi, Droplets, Zap, Trees, Dumbbell, ShieldCheck, Building2,
-  Upload, Trash2, Check
+  Upload, Trash2, Check, Loader2, AlertCircle, Image as ImageIcon, Film
 } from 'lucide-react';
 import { createProperty, updateProperty, getAgentsForSelect } from './actions';
+import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
 
 function Youtube({ className }: { className?: string }) {
   return (
@@ -18,7 +19,7 @@ function Youtube({ className }: { className?: string }) {
   );
 }
 
-const amenityOptions = [
+const defaultAmenityOptions = [
   { id: 'covered_parking', label: 'Covered Parking', icon: 'car' },
   { id: 'smart_home', label: 'Smart Home', icon: 'wifi' },
   { id: 'water_supply', label: '24/7 Water', icon: 'droplets' },
@@ -37,7 +38,7 @@ const amenityOptions = [
   { id: 'cctv', label: 'CCTV', icon: 'shield' },
 ];
 
-const highlightOptions = [
+const defaultHighlightOptions = [
   'Near Metro Station', 'Gated Community', 'RERA Approved', 'Top Builder',
   'Vastu Compliant', 'Lake View', 'Park Facing', 'Corner Unit',
   'Ready to Move', 'Under Construction', 'Premium Location', 'Investment Hotspot',
@@ -54,6 +55,8 @@ const textarea = "w-full px-3 py-2 rounded-lg border border-gray-200/60 dark:bor
 const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1";
 const reqDot = " after:content-['*'] after:ml-0.5 after:text-red-400";
 
+type UploadItem = { id: string; name: string; status: 'uploading' | 'done' | 'error'; error?: string };
+
 export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create' | 'edit'; propertyId?: string; initialData?: any }) {
   const router = useRouter();
   const [agents, setAgents] = useState<{ id: string; name: string; company: string }[]>([]);
@@ -66,10 +69,15 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const [newImageUrl, setNewImageUrl] = useState('');
   const [bulkUrls, setBulkUrls] = useState('');
   const [showBulk, setShowBulk] = useState(false);
-  const [videoUrl, setVideoUrl] = useState(() => (initialData?.property_media || []).find((m: any) => m.media_type === 'video')?.url || '');
+  const [videoUrls, setVideoUrls] = useState<string[]>(() =>
+    (initialData?.property_media || []).filter((m: any) => m.media_type === 'video').map((m: any) => m.url)
+  );
+  const [newVideoUrl, setNewVideoUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState(() => (initialData?.property_media || []).find((m: any) => m.media_type === 'video_youtube')?.url || '');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(initialData?.amenities || []);
   const [selectedHighlights, setSelectedHighlights] = useState<string[]>(initialData?.highlights || []);
+  const [customAmenityInput, setCustomAmenityInput] = useState('');
+  const [customHighlightInput, setCustomHighlightInput] = useState('');
   const [nearbyPlaces, setNearbyPlaces] = useState(
     initialData?.nearby_places?.length
       ? initialData.nearby_places.map((p: any) => ({ name: p.name || '', distance: p.distance || '' }))
@@ -77,6 +85,12 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Direct upload state
+  const [imageUploads, setImageUploads] = useState<UploadItem[]>([]);
+  const [videoUploads, setVideoUploads] = useState<UploadItem[]>([]);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch agents from DB on mount
   useEffect(() => {
@@ -91,8 +105,70 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
     const urls = bulkUrls.split('\n').map(u => u.trim()).filter(u => u && !imageUrls.includes(u));
     if (urls.length) { setImageUrls([...imageUrls, ...urls]); setBulkUrls(''); setShowBulk(false); }
   };
+  const addVideoUrl = () => {
+    const url = newVideoUrl.trim();
+    if (url && !videoUrls.includes(url)) { setVideoUrls([...videoUrls, url]); setNewVideoUrl(''); }
+  };
   const toggle = (list: string[], item: string, setter: (v: string[]) => void) =>
     setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item]);
+
+  const addCustomHighlight = () => {
+    const val = customHighlightInput.trim();
+    if (val && !selectedHighlights.includes(val)) setSelectedHighlights([...selectedHighlights, val]);
+    setCustomHighlightInput('');
+  };
+  const addCustomAmenity = () => {
+    const val = customAmenityInput.trim();
+    if (val && !selectedAmenities.includes(val)) setSelectedAmenities([...selectedAmenities, val]);
+    setCustomAmenityInput('');
+  };
+
+  // Merge predefined + any custom-added values not in the predefined list,
+  // so custom entries still render as removable/toggleable chips.
+  const highlightChips = [...defaultHighlightOptions, ...selectedHighlights.filter(h => !defaultHighlightOptions.includes(h))];
+  const amenityChips = [
+    ...defaultAmenityOptions,
+    ...selectedAmenities
+      .filter(a => !defaultAmenityOptions.some(opt => opt.id === a))
+      .map(a => ({ id: a, label: a, icon: 'building' })),
+  ];
+
+  const uploadFiles = async (
+    files: FileList,
+    setUploads: React.Dispatch<React.SetStateAction<UploadItem[]>>,
+    onUrl: (url: string) => void
+  ) => {
+    const items: UploadItem[] = Array.from(files).map(f => ({ id: crypto.randomUUID(), name: f.name, status: 'uploading' }));
+    setUploads(prev => [...prev, ...items]);
+
+    await Promise.all(Array.from(files).map(async (file, i) => {
+      const item = items[i];
+      try {
+        const url = await uploadPropertyMedia(file);
+        onUrl(url);
+        setUploads(prev => prev.map(u => u.id === item.id ? { ...u, status: 'done' } : u));
+      } catch (err) {
+        const message = err instanceof UploadError ? err.message : 'Upload failed';
+        setUploads(prev => prev.map(u => u.id === item.id ? { ...u, status: 'error', error: message } : u));
+      }
+    }));
+  };
+
+  const handleImageFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length) {
+      uploadFiles(files, setImageUploads, url => setImageUrls(prev => [...prev, url]));
+    }
+    e.target.value = '';
+  };
+
+  const handleVideoFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length) {
+      uploadFiles(files, setVideoUploads, url => setVideoUrls(prev => [...prev, url]));
+    }
+    e.target.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,7 +177,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
 
     const fd = new FormData(e.currentTarget);
     fd.append('image_urls', JSON.stringify(imageUrls));
-    fd.append('video_url', videoUrl);
+    fd.append('video_urls', JSON.stringify(videoUrls));
     fd.append('youtube_url', youtubeUrl);
     fd.append('amenities', JSON.stringify(selectedAmenities));
     fd.append('highlights', JSON.stringify(selectedHighlights));
@@ -295,28 +371,45 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
 
         {/* ═══ SECTION 3: MEDIA ═══════════════════════════════════════ */}
         <Card title="Media">
-          {/* Single image URL */}
-          <div className="flex gap-2">
-            <input placeholder="Paste image URL..." value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }}
-              className={input + " flex-1"} />
-            <button type="button" onClick={addImage} className="h-10 px-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-teal-700 shrink-0 flex items-center gap-1">
-              <Plus className="w-4 h-4" /> Add
+          {/* Direct image upload */}
+          <div>
+            <label className={labelCls}><ImageIcon className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />Upload Images</label>
+            <input ref={imageFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageFilesSelected} />
+            <button type="button" onClick={() => imageFileInputRef.current?.click()}
+              className="w-full h-20 rounded-lg border-2 border-dashed border-gray-200/60 dark:border-gray-800/60 hover:border-primary hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors">
+              <Upload className="w-5 h-5" />
+              <span className="text-xs font-medium">Click to choose image file(s), or drop them here</span>
             </button>
+            {imageUploads.length > 0 && (
+              <UploadQueueList items={imageUploads} onClear={() => setImageUploads(prev => prev.filter(u => u.status === 'uploading'))} />
+            )}
           </div>
 
-          <button type="button" onClick={() => setShowBulk(!showBulk)} className="mt-2 text-xs font-semibold text-primary hover:text-teal-700 flex items-center gap-1">
-            <Upload className="w-3.5 h-3.5" /> {showBulk ? 'Hide' : 'Bulk upload (multiple URLs)'}
-          </button>
-
-          {showBulk && (
-            <div className="mt-2 space-y-2">
-              <textarea placeholder={"One URL per line:\nhttps://example.com/img1.jpg\nhttps://example.com/img2.jpg"} value={bulkUrls} onChange={e => setBulkUrls(e.target.value)} className={textarea + " min-h-[80px]"} />
-              <button type="button" onClick={addBulk} className="h-8 px-3 bg-primary text-white rounded-lg text-xs font-medium hover:bg-teal-700 flex items-center gap-1">
-                <Upload className="w-3.5 h-3.5" /> Add All
+          {/* Optional: paste a URL instead */}
+          <div className="mt-3 pt-3 border-t border-gray-100/60 dark:border-gray-800/60">
+            <label className={labelCls}>Or paste an image URL (optional)</label>
+            <div className="flex gap-2">
+              <input placeholder="https://example.com/photo.jpg" value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }}
+                className={input + " flex-1"} />
+              <button type="button" onClick={addImage} className="h-10 px-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-teal-700 shrink-0 flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Add
               </button>
             </div>
-          )}
+
+            <button type="button" onClick={() => setShowBulk(!showBulk)} className="mt-2 text-xs font-semibold text-primary hover:text-teal-700 flex items-center gap-1">
+              <Upload className="w-3.5 h-3.5" /> {showBulk ? 'Hide' : 'Bulk add (multiple URLs)'}
+            </button>
+
+            {showBulk && (
+              <div className="mt-2 space-y-2">
+                <textarea placeholder={"One URL per line:\nhttps://example.com/img1.jpg\nhttps://example.com/img2.jpg"} value={bulkUrls} onChange={e => setBulkUrls(e.target.value)} className={textarea + " min-h-[80px]"} />
+                <button type="button" onClick={addBulk} className="h-8 px-3 bg-primary text-white rounded-lg text-xs font-medium hover:bg-teal-700 flex items-center gap-1">
+                  <Upload className="w-3.5 h-3.5" /> Add All
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Preview grid */}
           {imageUrls.length > 0 && (
@@ -337,16 +430,47 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
             </div>
           )}
 
-          {/* Video & YouTube */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
-            <div>
-              <label className={labelCls}><Video className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />Video URL</label>
-              <input placeholder="https://example.com/walkthrough.mp4" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} className={input} />
+          {/* Direct video upload (bulk) */}
+          <div className="mt-5 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
+            <label className={labelCls}><Film className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />Upload Videos (select multiple for bulk upload, max 50MB each)</label>
+            <input ref={videoFileInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleVideoFilesSelected} />
+            <button type="button" onClick={() => videoFileInputRef.current?.click()}
+              className="w-full h-20 rounded-lg border-2 border-dashed border-gray-200/60 dark:border-gray-800/60 hover:border-primary hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors">
+              <Upload className="w-5 h-5" />
+              <span className="text-xs font-medium">Click to choose video file(s) — walkthroughs, tours, etc.</span>
+            </button>
+            {videoUploads.length > 0 && (
+              <UploadQueueList items={videoUploads} onClear={() => setVideoUploads(prev => prev.filter(u => u.status === 'uploading'))} />
+            )}
+
+            {videoUrls.length > 0 && (
+              <div className="mt-3 space-y-1.5">
+                {videoUrls.map((url, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-navy-800 rounded-lg px-3 h-9">
+                    <Video className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                    <span className="text-xs text-gray-600 dark:text-gray-300 truncate flex-1">{url}</span>
+                    <button type="button" onClick={() => setVideoUrls(videoUrls.filter((_, j) => j !== i))} className="text-red-500 hover:text-red-700 shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-2">
+              <input placeholder="Or paste a video URL..." value={newVideoUrl} onChange={e => setNewVideoUrl(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addVideoUrl(); } }}
+                className={input + " flex-1"} />
+              <button type="button" onClick={addVideoUrl} className="h-10 px-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-teal-700 shrink-0 flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Add
+              </button>
             </div>
-            <div>
-              <label className={labelCls}><Youtube className="w-3.5 h-3.5 inline mr-1 -mt-0.5 text-red-500 dark:text-red-400" />YouTube</label>
-              <input placeholder="https://youtube.com/watch?v=..." value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} className={input} />
-            </div>
+          </div>
+
+          {/* YouTube */}
+          <div className="mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
+            <label className={labelCls}><Youtube className="w-3.5 h-3.5 inline mr-1 -mt-0.5 text-red-500 dark:text-red-400" />YouTube</label>
+            <input placeholder="https://youtube.com/watch?v=..." value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} className={input} />
           </div>
           {youtubeUrl && (() => {
             let vid = '';
@@ -363,7 +487,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
         {/* ═══ SECTION 4: HIGHLIGHTS ══════════════════════════════════ */}
         <Card title="Highlights">
           <div className="flex flex-wrap gap-1.5">
-            {highlightOptions.map(tag => (
+            {highlightChips.map(tag => (
               <button key={tag} type="button" onClick={() => toggle(selectedHighlights, tag, setSelectedHighlights)}
                 className={`h-8 px-3 rounded-lg text-xs font-medium border transition-all ${selectedHighlights.includes(tag)
                   ? 'bg-teal-50 dark:bg-teal-950/40 border-primary text-primary'
@@ -374,12 +498,20 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
               </button>
             ))}
           </div>
+          <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100/60 dark:border-gray-800/60">
+            <input placeholder="Add a custom highlight..." value={customHighlightInput} onChange={e => setCustomHighlightInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomHighlight(); } }}
+              className={input + " flex-1"} />
+            <button type="button" onClick={addCustomHighlight} className="h-10 px-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-teal-700 shrink-0 flex items-center gap-1">
+              <Plus className="w-4 h-4" /> Add
+            </button>
+          </div>
         </Card>
 
         {/* ═══ SECTION 5: AMENITIES ═══════════════════════════════════ */}
         <Card title="Amenities">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {amenityOptions.map(a => {
+            {amenityChips.map(a => {
               const Icon = iconMap[a.icon] || Building2;
               const on = selectedAmenities.includes(a.id);
               return (
@@ -389,14 +521,46 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
                     : 'bg-white dark:bg-navy-900 border-gray-200/60 dark:border-gray-800/60 text-gray-500 dark:text-gray-400 hover:border-gray-300'
                     }`}>
                   <Icon className={`w-4 h-4 shrink-0 ${on ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`} />
-                  {a.label}
+                  <span className="truncate">{a.label}</span>
                 </button>
               );
             })}
           </div>
+          <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100/60 dark:border-gray-800/60">
+            <input placeholder="Add a custom amenity..." value={customAmenityInput} onChange={e => setCustomAmenityInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomAmenity(); } }}
+              className={input + " flex-1"} />
+            <button type="button" onClick={addCustomAmenity} className="h-10 px-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-teal-700 shrink-0 flex items-center gap-1">
+              <Plus className="w-4 h-4" /> Add
+            </button>
+          </div>
         </Card>
 
       </form>
+    </div>
+  );
+}
+
+function UploadQueueList({ items, onClear }: { items: UploadItem[]; onClear: () => void }) {
+  const stillUploading = items.some(i => i.status === 'uploading');
+  return (
+    <div className="mt-2 space-y-1">
+      {items.map(item => (
+        <div key={item.id} className="flex items-center gap-2 text-xs bg-gray-50 dark:bg-navy-800 rounded-lg px-3 h-8">
+          {item.status === 'uploading' && <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />}
+          {item.status === 'done' && <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />}
+          {item.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+          <span className="truncate flex-1 text-gray-600 dark:text-gray-300">{item.name}</span>
+          <span className={`shrink-0 font-medium ${item.status === 'error' ? 'text-red-500' : item.status === 'done' ? 'text-green-600' : 'text-gray-400'}`}>
+            {item.status === 'uploading' ? 'Uploading…' : item.status === 'done' ? 'Done' : item.error || 'Failed'}
+          </span>
+        </div>
+      ))}
+      {!stillUploading && (
+        <button type="button" onClick={onClear} className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          Clear list
+        </button>
+      )}
     </div>
   );
 }
