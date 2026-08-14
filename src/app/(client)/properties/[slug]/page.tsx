@@ -434,7 +434,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                       <a href={video.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center h-full text-white text-sm underline">Watch video</a>
                     )
                   ) : (
-                    <video src={video.url} controls className="w-full h-full object-contain" />
+                    <video
+                      src={video.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-contain"
+                    />
                   )}
                 </div>
               );
