@@ -6,7 +6,7 @@ import { use, useEffect, useState } from 'react';
 import {
   ArrowLeft, Heart, Share2, MapPin, CheckCircle, Sparkles, Phone,
   Building2, Maximize, Layers, Calendar, Tag, UserCheck, Home, Ruler,
-  Car, Trees, Dumbbell, Wifi, Droplets, Zap, ShieldCheck
+  Car, Trees, Dumbbell, Wifi, Droplets, Zap, ShieldCheck, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { getPropertyBySlug, submitEnquiry, logWhatsAppLead } from '../actions';
 import { EMICalculator } from '@/components/emi-calculator';
@@ -51,6 +51,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [showFullAbout, setShowFullAbout] = useState(false);
   const [showEnquiryModal, setShowEnquiryModal] = useState(false);
@@ -309,6 +310,19 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
 
   const images = property.images?.length > 0 ? property.images : ['/images/property1.png'];
 
+  const goToPrevImage = () => setCurrentImage(i => (i - 1 + images.length) % images.length);
+  const goToNextImage = () => setCurrentImage(i => (i + 1) % images.length);
+
+  const handleGalleryTouchStart = (e: React.TouchEvent) => setTouchStartX(e.touches[0].clientX);
+  const handleGalleryTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(deltaX) > 40) {
+      if (deltaX < 0) goToNextImage(); else goToPrevImage();
+    }
+    setTouchStartX(null);
+  };
+
   return (
     <div className="bg-white dark:bg-navy-900 min-h-screen max-w-[480px] md:max-w-none xl:max-w-7xl mx-auto relative pb-32 md:pb-12 md:pt-6">
       {/* Enquiry Modal */}
@@ -379,8 +393,30 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
 
       {/* Gallery Section */}
       <div className="md:px-8 md:grid md:grid-cols-[3fr_1fr] md:gap-4 md:mb-8">
-        <div className="relative h-[280px] md:h-[500px] md:rounded-2xl overflow-hidden bg-gray-100 dark:bg-navy-800 shadow-sm">
+        <div
+          className="relative h-[280px] md:h-[500px] md:rounded-2xl overflow-hidden bg-gray-100 dark:bg-navy-800 shadow-sm group"
+          onTouchStart={handleGalleryTouchStart}
+          onTouchEnd={handleGalleryTouchEnd}
+        >
           <Image src={images[currentImage]} alt={property.title} fill className="object-cover" priority />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={goToPrevImage}
+                aria-label="Previous image"
+                className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-navy-900 items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-105"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-800 dark:text-gray-200" />
+              </button>
+              <button
+                onClick={goToNextImage}
+                aria-label="Next image"
+                className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-navy-900 items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-105"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-800 dark:text-gray-200" />
+              </button>
+            </>
+          )}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-10 md:p-6">
             <Link href="/" className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-white/90 dark:bg-navy-900 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-105 transition-transform">
               <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-800 dark:text-gray-200" />
@@ -405,6 +441,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
           <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 bg-black/60 text-white text-[11px] md:text-sm font-medium px-2.5 py-1 md:px-4 md:py-1.5 rounded-full backdrop-blur-sm">
             {currentImage + 1}/{images.length}
           </div>
+          {images.length > 1 && images.length <= 10 && (
+            <div className="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+              {images.map((_: string, idx: number) => (
+                <span key={idx} className={`h-1.5 rounded-full transition-all ${currentImage === idx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex md:flex-col gap-2 md:gap-4 px-4 md:px-0 py-3 md:py-0 overflow-x-auto md:overflow-y-auto md:h-[500px] no-scrollbar">
           {images.map((img: string, idx: number) => (
