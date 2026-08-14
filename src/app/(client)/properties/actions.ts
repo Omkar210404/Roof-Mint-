@@ -144,7 +144,12 @@ export async function submitEnquiry(formData: FormData) {
 // clicks are gated behind login already, so we always know who it was, and
 // can log it as a real lead the same way the enquiry form does. Deduped so
 // clicking the button repeatedly doesn't spam the inbox.
-export async function logWhatsAppLead(propertyId: string) {
+//
+// phoneOverride is passed when the profile had no usable phone on file (e.g.
+// Google sign-in never collects one) and the visitor was asked for it in a
+// quick popup before being sent to WhatsApp — in that case we also save it
+// to their profile so future visits already have it.
+export async function logWhatsAppLead(propertyId: string, phoneOverride?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { skipped: true }
@@ -165,6 +170,10 @@ export async function logWhatsAppLead(propertyId: string) {
     supabase.from('properties').select('primary_agent_id').eq('id', propertyId).single(),
   ])
 
+  if (phoneOverride) {
+    await supabase.from('profiles').update({ phone: phoneOverride }).eq('id', user.id)
+  }
+
   const { error } = await supabase.from('enquiries').insert({
     property_id: propertyId,
     user_id: user.id,
@@ -175,7 +184,7 @@ export async function logWhatsAppLead(propertyId: string) {
     // unverified contact info straight away.
     visible_to_agent: false,
     name: profile?.full_name || 'Roofmint User',
-    phone: profile?.phone || '',
+    phone: phoneOverride || profile?.phone || '',
     email: user.email || '',
     message: 'Contacted via WhatsApp',
     status: 'new',
