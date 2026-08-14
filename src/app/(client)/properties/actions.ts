@@ -140,8 +140,15 @@ export async function submitEnquiry(formData: FormData) {
 
 // Fired when a logged-in user clicks "WhatsApp Us" on a property — WhatsApp
 // clicks are gated behind login already, so we always know who it was, and
-// can log it as a real lead the same way the enquiry form does. Deduped so
-// clicking the button repeatedly doesn't spam the inbox.
+// can log it as a real lead the same way the enquiry form does. Deduped
+// against only the last couple of minutes — just enough to absorb an
+// accidental double-click/double-tap on the button itself. A 24-hour dedupe
+// used to sit here, which meant a genuine second visit later the same day —
+// exactly the "they're interested again" signal admin wants to see — got
+// silently swallowed with no new lead and no indication anything happened.
+// The RPC's own phone-based throttle (max 3 enquiries in 10 minutes, across
+// all sources) is the real anti-spam backstop; this is only about not
+// double-logging one physical click.
 //
 // phoneOverride is passed when the profile had no usable phone on file (e.g.
 // Google sign-in never collects one) and the visitor was asked for it in a
@@ -152,7 +159,7 @@ export async function logWhatsAppLead(propertyId: string, phoneOverride?: string
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { skipped: true }
 
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const since = new Date(Date.now() - 2 * 60 * 1000).toISOString()
   const { data: existing } = await supabase
     .from('enquiries')
     .select('id')
