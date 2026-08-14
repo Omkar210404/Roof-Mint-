@@ -127,10 +127,38 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
           </button>
         </header>
 
-        <div className="p-6 md:p-8">
+        <div className="p-6 md:p-8 pb-20 md:pb-8">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Nav — the sidebar above is desktop-only, so mobile
+          had no way to reach Properties/Leads/Plans at all before this. */}
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-navy-900 border-t border-gray-100/60 dark:border-gray-800/60 z-40 safe-area-bottom">
+        <div className="flex items-center justify-around h-16">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 flex-1 h-full justify-center ${isActive ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`} />
+                <span className={`text-[10px] font-medium ${isActive ? 'font-semibold' : ''}`}>{item.label.replace('My ', '')}</span>
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setShowPlans(true)}
+            className="flex flex-col items-center gap-0.5 flex-1 h-full justify-center text-gray-400 dark:text-gray-500"
+          >
+            <Crown className="w-5 h-5 stroke-[1.5px]" />
+            <span className="text-[10px] font-medium">Plans</span>
+          </button>
+        </div>
+      </nav>
 
       {showPlans && (
         <PlansModal tiers={planTiers} planStatus={planStatus} onClose={() => setShowPlans(false)} />
