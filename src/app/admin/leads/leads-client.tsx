@@ -188,6 +188,14 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
 
   const pageIds = paginatedLeads.map(l => l.id)
   const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id))
+  const allFilteredSelected = filteredSorted.length > 0 && filteredSorted.every(l => selectedIds.has(l.id))
+
+  // Bulk actions (Show/Hide to Agent, Assign, etc.) only ever touch what's
+  // in selectedIds — so filtering by Agent + Source and using this is what
+  // makes "flip every WhatsApp lead for this agent to visible in one go"
+  // possible, instead of paging through 10 at a time.
+  const selectAllFiltered = () => setSelectedIds(new Set(filteredSorted.map(l => l.id)))
+  const filtersActive = statusFilter !== 'all' || propertyFilter !== 'all' || agentFilter !== 'all' || sourceFilter !== 'all' || dateRangeActive || !!debouncedQuery
 
   const toggleSelectAllOnPage = () => {
     setSelectedIds(prev => {
@@ -469,6 +477,19 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
         </div>
       </div>
 
+      {/* One-click "select everything currently filtered" — e.g. pick Agent
+          + Source = WhatsApp above, then this selects every matching lead
+          across all pages so the bulk bar below can flip them all to
+          visible-to-agent (or reassign, or delete) at once. */}
+      {filtersActive && !allFilteredSelected && filteredSorted.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span>{filteredSorted.length} lead{filteredSorted.length === 1 ? '' : 's'} match the current filters.</span>
+          <button onClick={selectAllFiltered} className="text-primary font-bold underline underline-offset-2">
+            Select all {filteredSorted.length}
+          </button>
+        </div>
+      )}
+
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
         <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl px-4 py-2.5">
@@ -476,6 +497,11 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
           <button onClick={clearSelection} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 flex items-center gap-1">
             <X className="w-3.5 h-3.5" /> Clear
           </button>
+          {!allFilteredSelected && filteredSorted.length > pageIds.length && (
+            <button onClick={selectAllFiltered} className="text-xs text-primary font-bold underline underline-offset-2">
+              Select all {filteredSorted.length} matching the current filters
+            </button>
+          )}
           <div className="flex-1" />
           <select
             defaultValue=""
