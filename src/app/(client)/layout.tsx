@@ -39,6 +39,24 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // An admin/agent whose session is already active (bookmark, reopened tab,
+  // etc. — not just a fresh login through the form) would otherwise land
+  // on the normal client site with no indication anything's off, since
+  // nothing here previously checked role on page load. Bounce them to
+  // their own panel immediately instead of leaving it to chance.
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+      if (profile?.role === 'admin') {
+        window.location.href = '/admin';
+      } else if (profile?.role === 'agent') {
+        window.location.href = '/agent';
+      }
+    });
+  }, []);
+
   // Shown once per browser session (tab/window), not once ever — sessionStorage
   // resets on every fresh visit, unlike localStorage which would only ever fire once.
   useEffect(() => {
