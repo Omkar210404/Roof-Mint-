@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, SlidersHorizontal, X, LocateFixed, Loader2, LogIn } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
+import { NotificationBell } from "@/components/notification-bell";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -211,14 +212,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             >
               <MapPin className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </button>
-            <Link
-              href="/onboarding/ai"
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 transition-colors relative"
-              title="Filter & AI Preferences"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-white dark:ring-navy-900" />
-            </Link>
+            <NotificationBell />
             {isLoggedIn === false && (
               <Link
                 href="/login"
