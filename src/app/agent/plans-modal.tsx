@@ -3,25 +3,22 @@
 import { X, Crown, Check, AlertTriangle, Clock3, Gift } from 'lucide-react';
 import { formatPlanPrice, formatPlanDuration, type AgentPlanTier, type PlanStatus } from '@/lib/agent-plans';
 
-// Presentation-only grouping, tied to the tier's stable id — price/label/
-// caps stay fully admin-editable in plan_tiers, this just decides section
-// headers and the small "Priority" tag.
-const tierMeta: Record<string, { group: string; priority?: boolean }> = {
-  trial_pack: { group: 'Starter' },
-  primary_pack: { group: 'Starter' },
-  month_pack: { group: 'Monthly' },
-  priority_month_pack: { group: 'Monthly', priority: true },
-  three_months_pack: { group: 'Multi-Month' },
-  priority_three_months_pack: { group: 'Multi-Month', priority: true },
-  six_months_pack: { group: 'Multi-Month' },
-  priority_six_months_pack: { group: 'Multi-Month', priority: true },
-  yearly_partnership: { group: 'Yearly' },
-  priority_one_year_pack: { group: 'Yearly', priority: true },
-  customised_pack: { group: 'Custom' },
-  contract_based: { group: 'Custom' },
+// Grouped strictly by duration — every tier that runs 1 month sits together
+// (Trial, Primary, Month, Priority Month all included), then 3 Months, 6
+// Months, 1 Year each get their own section, with Custom pulled out
+// separately regardless of its duration since it's not a fixed-length plan.
+// "Priority" is detected from the label so a newly admin-added tier doesn't
+// need a code change to be tagged correctly.
+function getGroup(tier: AgentPlanTier): string {
+  if (tier.id === 'customised_pack' || tier.id === 'contract_based') return 'Custom'
+  if (tier.duration_months === 1) return '1 Month'
+  if (tier.duration_months === 3) return '3 Months'
+  if (tier.duration_months === 6) return '6 Months'
+  if (tier.duration_months === 12) return '1 Year'
+  return `${tier.duration_months} Months`
 }
 
-const groupOrder = ['Starter', 'Monthly', 'Multi-Month', 'Yearly', 'Custom']
+const groupOrder = ['1 Month', '3 Months', '6 Months', '1 Year', 'Custom']
 
 export function PlansModal({ tiers, planStatus, onClose }: {
   tiers: AgentPlanTier[];
@@ -31,7 +28,7 @@ export function PlansModal({ tiers, planStatus, onClose }: {
   const currentPlanId = planStatus?.tier.id ?? null;
 
   const grouped = groupOrder
-    .map(group => ({ group, items: tiers.filter(t => (tierMeta[t.id]?.group || 'Custom') === group) }))
+    .map(group => ({ group, items: tiers.filter(t => getGroup(t) === group) }))
     .filter(g => g.items.length > 0);
 
   return (
@@ -89,13 +86,13 @@ export function PlansModal({ tiers, planStatus, onClose }: {
                 <div className="divide-y divide-gray-100 dark:divide-gray-800 border-t border-b border-gray-100 dark:border-gray-800">
                   {items.map(tier => {
                     const isCurrent = tier.id === currentPlanId
-                    const meta = tierMeta[tier.id]
+                    const isPriority = tier.label.toLowerCase().includes('priority')
                     return (
                       <div key={tier.id} className={`flex items-start justify-between gap-4 py-3 ${isCurrent ? 'bg-teal-50/40 dark:bg-teal-950/20 -mx-5 px-5' : ''}`}>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-semibold text-navy dark:text-white">{tier.label}</span>
-                            {meta?.priority && (
+                            {isPriority && (
                               <span className="text-[9px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded uppercase tracking-wide">Priority</span>
                             )}
                             {isCurrent && (
