@@ -52,7 +52,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const dateRangeActive = !!(startDate && endDate)
-  const [includeSource, setIncludeSource] = useState(true)
+  const [includeSource, setIncludeSource] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
