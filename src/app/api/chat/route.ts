@@ -2,11 +2,19 @@ import { google } from '@ai-sdk/google'
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
 import { createClient } from '@/utils/supabase/server'
+import { isRateLimited, getClientIp, isSameOrigin } from '@/lib/rate-limit'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30
 
 export async function POST(req: Request) {
+  if (!isSameOrigin(req)) {
+    return new Response('Forbidden', { status: 403 })
+  }
+  if (isRateLimited(`chat:${getClientIp(req)}`, 20, 10 * 60 * 1000)) {
+    return new Response('Too many requests — please try again in a few minutes.', { status: 429 })
+  }
+
   const { messages } = await req.json()
 
   const result = await streamText({
@@ -44,8 +52,12 @@ export async function POST(req: Request) {
           if (budget_min) query = query.gte('price', budget_min)
           if (budget_max) query = query.lte('price', budget_max)
           if (location) {
-            const loc = location.trim()
-            query = query.or(`location_address.ilike.%${loc}%,locality.ilike.%${loc}%,city.ilike.%${loc}%`)
+            // PostgREST's .or() takes a filter string where "," separates
+            // conditions and "()" groups them — strip those so the AI-
+            // extracted location text can't break out of the intended
+            // single ilike clause and smuggle in extra filter conditions.
+            const loc = location.trim().replace(/[,()]/g, '')
+            if (loc) query = query.or(`location_address.ilike.%${loc}%,locality.ilike.%${loc}%,city.ilike.%${loc}%`)
           }
           if (bhk) query = query.eq('bhk', bhk)
           if (property_type) query = query.eq('property_type', property_type)

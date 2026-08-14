@@ -1,10 +1,18 @@
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
+import { isRateLimited, getClientIp, isSameOrigin } from '@/lib/rate-limit';
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  if (isRateLimited(`predict:${getClientIp(req)}`, 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests — please try again in a few minutes.' }, { status: 429 });
+  }
+
   const { title, location_address, locality, city, price, property_type, bhk } = await req.json();
 
   try {
