@@ -49,6 +49,8 @@ export async function updateMyLeadStatus(leadId: string, status: string) {
   // Belt-and-suspenders on top of RLS (enquiries_update_agent) and the
   // restrict_agent_enquiry_update trigger, which already pin this to
   // status-only changes on the agent's own rows.
+  const { data: lead } = await supabase.from('enquiries').select('name').eq('id', leadId).single()
+
   const { error } = await supabase
     .from('enquiries')
     .update({ status })
@@ -63,7 +65,7 @@ export async function updateMyLeadStatus(leadId: string, status: string) {
   // This is the only write action an agent has, so it's the one thing
   // admin actually needs visibility into — logged under the agent's own
   // account so Admin > Activity Log shows who changed what.
-  await logActivity(supabase, user!.id, 'update_lead_status', 'enquiry', leadId, { status, agent_name: agent.name })
+  await logActivity(supabase, user!.id, 'update_lead_status', 'enquiry', leadId, { lead_name: lead?.name, status })
 
   revalidatePath('/agent/leads')
   return { success: true }

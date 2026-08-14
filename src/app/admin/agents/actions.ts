@@ -62,7 +62,7 @@ export async function deleteAgent(id: string) {
     return { error: error.message }
   }
 
-  await logActivity(supabase, user!.id, 'delete_agent', 'agent', id, { name: agent?.name })
+  await logActivity(supabase, user!.id, 'delete_agent', 'agent', id, { agent_name: agent?.name })
 
   revalidatePath('/admin/agents')
   return { success: true }
@@ -110,7 +110,7 @@ export async function grantAgentAccess(agentId: string, email: string, password:
     return { error: linkError.message }
   }
 
-  await logActivity(supabase, user!.id, 'grant_agent_access', 'agent', agentId, { email })
+  await logActivity(supabase, user!.id, 'grant_agent_access', 'agent', agentId, { agent_name: agent?.name, email })
 
   revalidatePath('/admin/agents')
   return { success: true }
