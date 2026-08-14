@@ -34,6 +34,13 @@ export async function getMyPlanInfo() {
   return computePlanStatus(findTier(tiers, agent.plan), agent.plan_started_at)
 }
 
+export async function getMyAgentProfile() {
+  const { authorized, agent } = await requireAgent()
+  if (!authorized || !agent) return null
+
+  return { name: agent.name as string, company: (agent.company as string) || null }
+}
+
 export async function updateMyLeadStatus(leadId: string, status: string) {
   const { authorized, supabase, agent } = await requireAgent()
   if (!authorized || !agent) return { error: 'Unauthorized' }

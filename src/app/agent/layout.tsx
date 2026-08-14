@@ -7,7 +7,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Building2, Users, LogOut, Crown } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getMyPlanInfo } from "./actions";
+import { getMyPlanInfo, getMyAgentProfile } from "./actions";
 import { getPlanTiers } from "../plans/actions";
 import { PlansModal } from "./plans-modal";
 import type { AgentPlanTier, PlanStatus } from "@/lib/agent-plans";
@@ -17,10 +17,12 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
   const [showPlans, setShowPlans] = useState(false);
   const [planTiers, setPlanTiers] = useState<AgentPlanTier[]>([]);
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
+  const [profile, setProfile] = useState<{ name: string; company: string | null } | null>(null);
 
   useEffect(() => {
     getPlanTiers().then(setPlanTiers);
     getMyPlanInfo().then(setPlanStatus);
+    getMyAgentProfile().then(setProfile);
   }, []);
 
   // Auto sign-out after 20 minutes of inactivity, same policy as admin/client.
@@ -65,6 +67,27 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
             className="h-12 w-auto"
           />
         </div>
+
+        {/* Profile chip — agent identity + plan, same idea as how Claude or
+            Google show your name with your plan tag next to it. */}
+        {profile && (
+          <button
+            onClick={() => setShowPlans(true)}
+            className="flex items-center gap-2.5 mx-3 mt-3 p-2.5 rounded-xl border border-gray-100/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors text-left"
+          >
+            <div className="w-9 h-9 rounded-full bg-navy dark:bg-teal-700 text-white flex items-center justify-center text-sm font-bold shrink-0">
+              {profile.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-navy dark:text-white truncate">{profile.name}</p>
+              {planStatus?.started && (
+                <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded ${planStatus.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-primary bg-teal-50 dark:bg-teal-950/40'}`}>
+                  {planStatus.expired ? 'Plan Expired' : planStatus.tier.label}
+                </span>
+              )}
+            </div>
+          </button>
+        )}
 
         <nav className="flex-1 flex flex-col gap-1 p-3">
           <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-3 mt-2">Menu</div>
