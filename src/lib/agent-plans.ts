@@ -43,19 +43,24 @@ export interface PlanStatus {
   endsAt: string | null
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+// A "month" here is always exactly 30 days, not calendar-month arithmetic
+// (which would otherwise silently vary between 28 and 31 days depending on
+// the start date) — so every plan period is predictable and identical
+// regardless of when it was granted.
 export function computePlanStatus(tier: AgentPlanTier | null | undefined, startedAt: string | null | undefined): PlanStatus {
   const resolvedTier = tier || FALLBACK_TIER
   if (!startedAt) {
     return { tier: resolvedTier, started: false, expired: false, daysLeft: null, endsAt: null }
   }
-  const end = new Date(startedAt)
-  end.setMonth(end.getMonth() + resolvedTier.duration_months)
+  const end = new Date(new Date(startedAt).getTime() + resolvedTier.duration_months * 30 * MS_PER_DAY)
   const msLeft = end.getTime() - Date.now()
   return {
     tier: resolvedTier,
     started: true,
     expired: msLeft <= 0,
-    daysLeft: Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24))),
+    daysLeft: Math.max(0, Math.ceil(msLeft / MS_PER_DAY)),
     endsAt: end.toISOString(),
   }
 }

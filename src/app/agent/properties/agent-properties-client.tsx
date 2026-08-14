@@ -97,9 +97,12 @@ export function AgentPropertiesClient({ initialProperties, plan }: { initialProp
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">My Properties</h1>
         <div className="flex items-center gap-2">
           {plan && (
-            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${plan.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-green-700 bg-green-50 dark:bg-green-950/40'}`}>
+            <span
+              className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${plan.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-green-700 bg-green-50 dark:bg-green-950/40'}`}
+              title="See exact days remaining under Plans in the sidebar"
+            >
               {plan.expired ? <AlertTriangle className="w-3.5 h-3.5" /> : <Crown className="w-3.5 h-3.5" />}
-              {plan.tier.label}{plan.expired ? ' · Expired' : plan.daysLeft != null ? ` · ${plan.daysLeft}d left` : ''}
+              {plan.tier.label}{plan.expired ? ' · Expired' : ''}
             </span>
           )}
           <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{properties.length} total</span>

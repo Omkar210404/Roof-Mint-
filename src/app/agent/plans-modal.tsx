@@ -1,13 +1,14 @@
 'use client';
 
-import { X, Crown, Check } from 'lucide-react';
-import { formatPlanPrice, type AgentPlanTier } from '@/lib/agent-plans';
+import { X, Crown, Check, AlertTriangle, Clock3 } from 'lucide-react';
+import { formatPlanPrice, type AgentPlanTier, type PlanStatus } from '@/lib/agent-plans';
 
-export function PlansModal({ tiers, currentPlanId, onClose }: {
+export function PlansModal({ tiers, planStatus, onClose }: {
   tiers: AgentPlanTier[];
-  currentPlanId?: string | null;
+  planStatus?: PlanStatus | null;
   onClose: () => void;
 }) {
+  const currentPlanId = planStatus?.tier.id ?? null;
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div
@@ -45,6 +46,14 @@ export function PlansModal({ tiers, currentPlanId, onClose }: {
                         </span>
                       )}
                     </div>
+                    {isCurrent && planStatus?.started && (
+                      <div className={`inline-flex items-center gap-1 text-xs font-semibold mt-1.5 px-2 py-0.5 rounded-full ${planStatus.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-amber-700 bg-amber-50 dark:bg-amber-950/40'}`}>
+                        {planStatus.expired ? <AlertTriangle className="w-3 h-3" /> : <Clock3 className="w-3 h-3" />}
+                        {planStatus.expired
+                          ? 'Expired'
+                          : `${planStatus.daysLeft} day${planStatus.daysLeft === 1 ? '' : 's'} left — ends ${planStatus.endsAt ? new Date(planStatus.endsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}`}
+                      </div>
+                    )}
                     {tier.tagline && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{tier.tagline}</p>}
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                       {tier.property_cap ? `${tier.property_cap} propert${tier.property_cap === 1 ? 'y' : 'ies'}` : 'Unlimited properties'}

@@ -10,17 +10,17 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { getMyPlanInfo } from "./actions";
 import { getPlanTiers } from "../plans/actions";
 import { PlansModal } from "./plans-modal";
-import type { AgentPlanTier } from "@/lib/agent-plans";
+import type { AgentPlanTier, PlanStatus } from "@/lib/agent-plans";
 
 export default function AgentLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [showPlans, setShowPlans] = useState(false);
   const [planTiers, setPlanTiers] = useState<AgentPlanTier[]>([]);
-  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
 
   useEffect(() => {
     getPlanTiers().then(setPlanTiers);
-    getMyPlanInfo().then(info => setCurrentPlanId(info?.tier.id ?? null));
+    getMyPlanInfo().then(setPlanStatus);
   }, []);
 
   // Auto sign-out after 20 minutes of inactivity, same policy as admin/client.
@@ -133,7 +133,7 @@ export default function AgentLayout({ children }: { children: ReactNode }) {
       </main>
 
       {showPlans && (
-        <PlansModal tiers={planTiers} currentPlanId={currentPlanId} onClose={() => setShowPlans(false)} />
+        <PlansModal tiers={planTiers} planStatus={planStatus} onClose={() => setShowPlans(false)} />
       )}
     </div>
   );
