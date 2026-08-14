@@ -1,6 +1,7 @@
 'use client';
 
-import { X, Crown, Check, AlertTriangle, Clock3, Gift } from 'lucide-react';
+import { useState } from 'react';
+import { X, Crown, Check, AlertTriangle, Clock3, Gift, ChevronDown } from 'lucide-react';
 import { formatPlanPrice, formatPlanDuration, type AgentPlanTier, type PlanStatus } from '@/lib/agent-plans';
 
 // Grouped strictly by duration — every tier that runs 1 month sits together
@@ -30,6 +31,14 @@ export function PlansModal({ tiers, planStatus, onClose }: {
   const grouped = groupOrder
     .map(group => ({ group, items: tiers.filter(t => getGroup(t) === group) }))
     .filter(g => g.items.length > 0);
+
+  // Open the section the agent's current plan lives in by default; the rest
+  // start collapsed so the list reads as a set of tappable buttons, not one
+  // long scroll.
+  const defaultGroup = currentPlanId
+    ? grouped.find(g => g.items.some(t => t.id === currentPlanId))?.group
+    : grouped[0]?.group;
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(defaultGroup ?? null);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
@@ -79,46 +88,66 @@ export function PlansModal({ tiers, planStatus, onClose }: {
             </div>
           )}
 
-          <div className="px-5 pb-5">
-            {grouped.map(({ group, items }, gi) => (
-              <div key={group} className={gi > 0 ? 'mt-5' : ''}>
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">{group}</p>
-                <div className="divide-y divide-gray-100 dark:divide-gray-800 border-t border-b border-gray-100 dark:border-gray-800">
-                  {items.map(tier => {
-                    const isCurrent = tier.id === currentPlanId
-                    const isPriority = tier.label.toLowerCase().includes('priority')
-                    return (
-                      <div key={tier.id} className={`flex items-start justify-between gap-4 py-3 ${isCurrent ? 'bg-teal-50/40 dark:bg-teal-950/20 -mx-5 px-5' : ''}`}>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-semibold text-navy dark:text-white">{tier.label}</span>
-                            {isPriority && (
-                              <span className="text-[9px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded uppercase tracking-wide">Priority</span>
-                            )}
-                            {isCurrent && (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-primary bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                                <Check className="w-2.5 h-2.5" /> Current
-                              </span>
-                            )}
+          <div className="px-5 pb-5 space-y-2">
+            {grouped.map(({ group, items }) => {
+              const isOpen = expandedGroup === group
+              const hasCurrent = items.some(t => t.id === currentPlanId)
+              return (
+                <div key={group} className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setExpandedGroup(isOpen ? null : group)}
+                    className="w-full flex items-center justify-between gap-3 px-4 h-11 bg-gray-50 dark:bg-navy-800 hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 text-xs font-bold text-navy dark:text-white uppercase tracking-wider">
+                      {group}
+                      {hasCurrent && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-primary bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 rounded normal-case tracking-normal">
+                          <Check className="w-2.5 h-2.5" /> Your plan is here
+                        </span>
+                      )}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isOpen && (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800 border-t border-gray-100 dark:border-gray-800">
+                      {items.map(tier => {
+                        const isCurrent = tier.id === currentPlanId
+                        const isPriority = tier.label.toLowerCase().includes('priority')
+                        return (
+                          <div key={tier.id} className={`flex items-start justify-between gap-4 p-4 ${isCurrent ? 'bg-teal-50/40 dark:bg-teal-950/20' : ''}`}>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-semibold text-navy dark:text-white">{tier.label}</span>
+                                {isPriority && (
+                                  <span className="text-[9px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded uppercase tracking-wide">Priority</span>
+                                )}
+                                {isCurrent && (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-primary bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                    <Check className="w-2.5 h-2.5" /> Current
+                                  </span>
+                                )}
+                              </div>
+                              {tier.tagline && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tier.tagline}</p>}
+                              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                                {tier.property_cap ? `${tier.property_cap} propert${tier.property_cap === 1 ? 'y' : 'ies'}` : 'Unlimited properties'}
+                                {' · '}
+                                {tier.lead_cap ? `Up to ${tier.lead_cap} leads` : 'Unlimited leads'}
+                                {' · '}
+                                {tier.can_export ? 'Export' : 'No export'}
+                                {' · '}
+                                {formatPlanDuration(tier.duration_months)}
+                              </p>
+                            </div>
+                            <span className="text-sm font-bold text-navy dark:text-white whitespace-nowrap shrink-0 pt-0.5">{formatPlanPrice(tier.price)}</span>
                           </div>
-                          {tier.tagline && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tier.tagline}</p>}
-                          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                            {tier.property_cap ? `${tier.property_cap} propert${tier.property_cap === 1 ? 'y' : 'ies'}` : 'Unlimited properties'}
-                            {' · '}
-                            {tier.lead_cap ? `Up to ${tier.lead_cap} leads` : 'Unlimited leads'}
-                            {' · '}
-                            {tier.can_export ? 'Export' : 'No export'}
-                            {' · '}
-                            {formatPlanDuration(tier.duration_months)}
-                          </p>
-                        </div>
-                        <span className="text-sm font-bold text-navy dark:text-white whitespace-nowrap shrink-0 pt-0.5">{formatPlanPrice(tier.price)}</span>
-                      </div>
-                    )
-                  })}
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           <p className="text-xs text-gray-400 dark:text-gray-500 text-center px-5 pb-5">
