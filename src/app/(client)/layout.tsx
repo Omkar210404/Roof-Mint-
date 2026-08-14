@@ -73,10 +73,30 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     });
   }, [pathname]);
 
+  // First-visit location prompt — if we don't already have a cached
+  // location, proactively open the same location picker used by the header
+  // button (auto-detect or search manually, with its own close button) once
+  // per session, instead of silently guessing in the background.
+  useEffect(() => {
+    let seen = false;
+    try { seen = sessionStorage.getItem('roofmint_location_prompt_seen') === 'true'; } catch {}
+    let hasCachedLocation = false;
+    try { hasCachedLocation = !!localStorage.getItem('roofmint_user_location'); } catch {}
+    if (seen || hasCachedLocation) return;
+    const timer = setTimeout(() => {
+      setShowLocationModal(true);
+      try { sessionStorage.setItem('roofmint_location_prompt_seen', 'true'); } catch {}
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Shown once per browser session (tab/window), not once ever — sessionStorage
   // resets on every fresh visit, unlike localStorage which would only ever fire once.
+  // Waits for the location modal to close first (if it auto-opened above) so
+  // the two prompts don't stack on top of each other.
   useEffect(() => {
     if (isLoggedIn !== false) return;
+    if (showLocationModal) return;
     let seen = false;
     try { seen = sessionStorage.getItem('roofmint_login_prompt_seen') === 'true'; } catch {}
     if (seen) return;
@@ -85,7 +105,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       try { sessionStorage.setItem('roofmint_login_prompt_seen', 'true'); } catch {}
     }, 1500);
     return () => clearTimeout(timer);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, showLocationModal]);
 
   // Auto sign-out after 20 minutes with no mouse/keyboard/touch/scroll activity.
   useEffect(() => {
@@ -214,25 +234,25 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col bg-background max-w-[480px] md:max-w-none mx-auto relative">
       {/* Top App Bar */}
       <header className="sticky top-0 z-40 w-full bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 md:w-[calc(100%-4rem)] md:ml-16">
-        <div className="flex items-center justify-between px-4 md:px-8 h-14 md:h-16">
+        <div className="flex items-center justify-between gap-2 px-4 md:px-8 min-h-14 md:min-h-16 py-2">
           <button
             onClick={() => setShowLocationModal(true)}
-            className="flex items-center gap-2 text-left hover:opacity-75 transition-opacity"
+            className="flex items-center gap-2 text-left hover:opacity-75 transition-opacity min-w-0"
           >
-            <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-            <div>
+            <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
+            <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <span className={`text-sm md:text-base font-semibold text-navy dark:text-white ${locationLoading ? 'animate-pulse' : ''}`}>
+                <span className={`text-sm md:text-base font-semibold text-navy dark:text-white truncate max-w-[130px] sm:max-w-[220px] md:max-w-none ${locationLoading ? 'animate-pulse' : ''}`}>
                   {displayLocation}
                 </span>
-                <svg className="w-3 h-3 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <span className="text-[10px] md:text-xs text-gray-400 dark:text-gray-500">{displaySubtext}</span>
+              <span className="text-[10px] md:text-xs text-gray-400 dark:text-gray-500 truncate block">{displaySubtext}</span>
             </div>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             <Link
               href="/search"
               className="hidden md:flex items-center gap-1.5 h-9 px-3.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-bold rounded-lg transition-colors"
@@ -241,7 +261,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             </Link>
             <button
               onClick={() => detectLocation(true)}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              className="hidden md:flex w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 items-center justify-center hover:bg-gray-100 transition-colors"
               title="Re-detect location"
             >
               <MapPin className="w-4 h-4 text-gray-600 dark:text-gray-300" />
