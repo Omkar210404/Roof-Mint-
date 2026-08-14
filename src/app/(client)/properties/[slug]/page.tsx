@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
 import {
   ArrowLeft, Heart, Share2, MapPin, CheckCircle, Sparkles, Phone,
-  Building2, Maximize, Layers, Calendar, Tag, UserCheck,
+  Building2, Maximize, Layers, Calendar, Tag, UserCheck, Home, Ruler,
   Car, Trees, Dumbbell, Wifi, Droplets, Zap, ShieldCheck
 } from 'lucide-react';
 import { getPropertyBySlug, submitEnquiry, logWhatsAppLead } from '../actions';
@@ -455,6 +455,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               <span className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1">
                 <UserCheck className="w-3.5 h-3.5" /> {property.ownershipLabel || '1st Owner'}
               </span>
+              {property.demand_tag === 'high' && (
+                <span className="px-2.5 py-1 rounded-md bg-orange-50 text-orange-700 text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1">
+                  🔥 High Demand
+                </span>
+              )}
             </div>
             <h1 className="text-xl md:text-4xl font-bold text-navy dark:text-white">{property.title}</h1>
             <div className="flex items-baseline gap-2 mt-1 md:hidden">
@@ -476,6 +481,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               { icon: UserCheck, label: 'Ownership', value: property.ownershipLabel || '1st Owner' },
               { icon: Layers, label: 'Floor', value: property.floor || '—' },
               { icon: Calendar, label: 'Possession', value: property.possession || '—' },
+              { icon: Home, label: 'Furnishing', value: property.furnishing || '—' },
+              { icon: Ruler, label: 'Carpet Area', value: property.carpet_area ? `${Number(property.carpet_area).toLocaleString()} sq.ft.` : '—' },
             ].map((spec) => (
               <div key={spec.label} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-2.5 md:p-3 text-center shadow-sm border border-gray-100/60 dark:border-gray-800/60">
                 <spec.icon className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1 md:mb-1.5" />
@@ -485,14 +492,21 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             ))}
           </div>
 
-          {/* Highlight Tags */}
+          {property.rera_number && (
+            <p className="text-[11px] md:text-xs text-gray-400 dark:text-gray-500 -mt-2">RERA No: <span className="font-medium text-gray-600 dark:text-gray-300">{property.rera_number}</span></p>
+          )}
+
+          {/* Highlights */}
           {property.highlights?.length > 0 && (
-            <div className="flex flex-wrap gap-2 md:gap-3">
-              {property.highlights.map((tag: string) => (
-                <span key={tag} className="inline-flex items-center gap-1 md:gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-700 text-[10px] md:text-xs font-semibold">
-                  {tag}
-                </span>
-              ))}
+            <div>
+              <h2 className="text-sm md:text-lg font-bold text-navy dark:text-white mb-2">Highlights</h2>
+              <div className="flex flex-wrap gap-2 md:gap-3">
+                {property.highlights.map((tag: string) => (
+                  <span key={tag} className="inline-flex items-center gap-1 md:gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-700 text-[10px] md:text-xs font-semibold">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -511,12 +525,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             </div>
           )}
 
-          {/* Top Highlights (Amenities) Grid */}
+          {/* Amenities Grid */}
           {property.amenities?.length > 0 && (
             <>
               <hr className="border-gray-100/60 dark:border-gray-800/60 md:hidden" />
               <div>
-                <h2 className="text-base md:text-xl font-bold text-navy dark:text-white mb-3 md:mb-4">Top Highlights</h2>
+                <h2 className="text-base md:text-xl font-bold text-navy dark:text-white mb-3 md:mb-4">Amenities</h2>
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
                   {property.amenities.map((amenityId: string) => {
                     const amenity = resolveAmenity(amenityId);
