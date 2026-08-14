@@ -236,7 +236,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : '';
-      setEnquiryError(msg.includes('Too many enquiries') ? msg : 'Something went wrong submitting your enquiry. Please try again.');
+      const isKnownMessage = msg.includes('Too many enquiries') || msg.includes('no longer available');
+      setEnquiryError(isKnownMessage ? msg : 'Something went wrong submitting your enquiry. Please try again.');
     }
     setSubmitting(false);
   };
