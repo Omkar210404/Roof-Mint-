@@ -35,6 +35,12 @@ export function formatPlanPrice(price: number | null) {
   return price == null ? 'As Required' : `₹${price.toLocaleString('en-IN')}`
 }
 
+export function formatPlanDuration(months: number) {
+  if (months === 12) return '1 year'
+  if (months === 1) return '1 month'
+  return `${months} months`
+}
+
 export interface PlanStatus {
   tier: AgentPlanTier
   started: boolean

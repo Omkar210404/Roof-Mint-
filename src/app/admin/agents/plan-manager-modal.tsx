@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X, Edit, Check, Loader2 } from 'lucide-react';
 import { updatePlanTier } from '../../plans/actions';
-import { formatPlanPrice, type AgentPlanTier } from '@/lib/agent-plans';
+import { formatPlanPrice, formatPlanDuration, type AgentPlanTier } from '@/lib/agent-plans';
 
 const fieldCls = "w-full h-9 px-2.5 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
 
@@ -134,7 +134,7 @@ export function PlanManagerModal({ tiers, onClose, onSaved }: {
                       {' · '}
                       {tier.can_export ? 'Export allowed' : 'No export'}
                       {' · '}
-                      {tier.duration_months === 12 ? '1 year' : '1 month'}
+                      {formatPlanDuration(tier.duration_months)}
                     </p>
                   </div>
                   <button

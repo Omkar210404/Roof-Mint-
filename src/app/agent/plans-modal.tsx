@@ -1,7 +1,7 @@
 'use client';
 
-import { X, Crown, Check, AlertTriangle, Clock3 } from 'lucide-react';
-import { formatPlanPrice, type AgentPlanTier, type PlanStatus } from '@/lib/agent-plans';
+import { X, Crown, Check, AlertTriangle, Clock3, Gift } from 'lucide-react';
+import { formatPlanPrice, formatPlanDuration, type AgentPlanTier, type PlanStatus } from '@/lib/agent-plans';
 
 export function PlansModal({ tiers, planStatus, onClose }: {
   tiers: AgentPlanTier[];
@@ -25,7 +25,15 @@ export function PlansModal({ tiers, planStatus, onClose }: {
         </div>
 
         <div className="overflow-y-auto p-5 space-y-3">
-          <p className="text-xs text-gray-400 dark:text-gray-500 -mt-1 mb-2">
+          <div className="flex items-start gap-2.5 bg-teal-50 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-900 rounded-xl p-3">
+            <Gift className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-navy dark:text-white uppercase tracking-wide">Complimentary Partner Onboarding</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your first property is listed free as a welcome benefit.</p>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
             To renew or move to a different plan, contact Roofmint — an admin sets this on your account.
           </p>
 
@@ -62,7 +70,7 @@ export function PlansModal({ tiers, planStatus, onClose }: {
                       {' · '}
                       {tier.can_export ? 'CSV/PDF export' : 'No CSV/PDF export'}
                       {' · '}
-                      {tier.duration_months === 12 ? '1 year' : '1 month'}
+                      {formatPlanDuration(tier.duration_months)}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-primary whitespace-nowrap shrink-0">{formatPlanPrice(tier.price)}</span>

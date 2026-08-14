@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, revokeAgentAccess, setAgentPlan } from './actions';
-import { computePlanStatus, formatPlanPrice, findTier, type AgentPlanTier } from '@/lib/agent-plans';
+import { computePlanStatus, formatPlanPrice, formatPlanDuration, findTier, type AgentPlanTier } from '@/lib/agent-plans';
 import { PlanManagerModal } from './plan-manager-modal';
 
 type SortKey = 'date' | 'name';
@@ -151,7 +151,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
   const handleSetPlan = async () => {
     if (!editingAgent) return;
     const tier = findTier(planTiers, selectedPlan);
-    if (!confirm(`Set "${editingAgent.name}" to ${tier.label} (${formatPlanPrice(tier.price)})? This starts a fresh ${tier.duration_months === 12 ? '1-year' : '1-month'} period from today.`)) return;
+    if (!confirm(`Set "${editingAgent.name}" to ${tier.label} (${formatPlanPrice(tier.price)})? This starts a fresh ${formatPlanDuration(tier.duration_months)} period from today.`)) return;
     setPlanError(null);
     setPlanBusy(true);
     const res = await setAgentPlan(editingAgent.id, selectedPlan);
@@ -429,7 +429,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                   }`}>
                     {status.expired ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock3 className="w-3.5 h-3.5" />}
                     {status.tier.label}
-                    {status.expired ? ' — expired' : status.daysLeft != null ? ` — ${status.daysLeft}d left` : ''}
+                    {status.expired ? ' — expired' : status.daysLeft != null ? ` — ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left` : ''}
                   </div>
 
                   <select
@@ -451,7 +451,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                       {' · '}
                       {selectedTier.can_export ? 'CSV/PDF export' : 'No CSV/PDF export'}
                       {' · '}
-                      {selectedTier.duration_months === 12 ? '1 year' : '1 month'}
+                      {formatPlanDuration(selectedTier.duration_months)}
                     </p>
                   </div>
 
@@ -573,7 +573,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                         return (
                           <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${status.expired ? 'text-red-600 bg-red-50 dark:bg-red-950/40' : 'text-green-700 bg-green-50 dark:bg-green-950/40'}`}>
                             {status.expired ? <AlertTriangle className="w-3 h-3" /> : <Crown className="w-3 h-3" />}
-                            {status.tier.label}{status.expired ? ' · Expired' : status.daysLeft != null ? ` · ${status.daysLeft}d` : ''}
+                            {status.tier.label}{status.expired ? ' · Expired' : status.daysLeft != null ? ` · ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left` : ''}
                           </span>
                         );
                       })()}
