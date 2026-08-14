@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,30 +11,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Admin gets a longer leash than the client/agent portals (20 min) —
-  // 2 hours of inactivity before auto sign-out, not "never."
-  useEffect(() => {
-    const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000;
-    const supabase = createClient();
-    let idleTimer: ReturnType<typeof setTimeout>;
-
-    const resetTimer = () => {
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(async () => {
-        await supabase.auth.signOut();
-        window.location.href = '/login?reason=session_expired';
-      }, IDLE_LIMIT_MS);
-    };
-
-    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
-    activityEvents.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
-    resetTimer();
-
-    return () => {
-      clearTimeout(idleTimer);
-      activityEvents.forEach((evt) => window.removeEventListener(evt, resetTimer));
-    };
-  }, []);
+  // No idle-timeout auto sign-out — an admin with multiple tabs/windows
+  // open (easy to end up with, e.g. an old forgotten tab) would have each
+  // one running its own independent timer, and Supabase's signOut() is
+  // global by default: whichever tab's timer fired first killed the
+  // session everywhere, including the tab actually being used. 2FA now
+  // covers the account at login time, and the manual Logout button in the
+  // sidebar/header still ends a session on demand.
 
   const navItems = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
