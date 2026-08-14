@@ -131,12 +131,58 @@ export async function submitEnquiry(formData: FormData) {
     email,
     budget_hint,
     message,
-    status: 'new'
+    status: 'new',
+    source: 'form',
   })
 
   if (error) {
     throw new Error(error.message)
   }
+}
+
+// Fired when a logged-in user clicks "WhatsApp Us" on a property — WhatsApp
+// clicks are gated behind login already, so we always know who it was, and
+// can log it as a real lead the same way the enquiry form does. Deduped so
+// clicking the button repeatedly doesn't spam the inbox.
+export async function logWhatsAppLead(propertyId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { skipped: true }
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { data: existing } = await supabase
+    .from('enquiries')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('property_id', propertyId)
+    .eq('source', 'whatsapp')
+    .gte('created_at', since)
+    .limit(1)
+  if (existing && existing.length > 0) return { skipped: true }
+
+  const [{ data: profile }, { data: property }] = await Promise.all([
+    supabase.from('profiles').select('full_name, phone').eq('id', user.id).single(),
+    supabase.from('properties').select('primary_agent_id').eq('id', propertyId).single(),
+  ])
+
+  const { error } = await supabase.from('enquiries').insert({
+    property_id: propertyId,
+    user_id: user.id,
+    assigned_agent_id: property?.primary_agent_id || null,
+    name: profile?.full_name || 'Roofmint User',
+    phone: profile?.phone || '',
+    email: user.email || '',
+    message: 'Contacted via WhatsApp',
+    status: 'new',
+    source: 'whatsapp',
+  })
+
+  if (error) {
+    console.warn('logWhatsAppLead error:', error.message)
+    return { error: error.message }
+  }
+
+  return { success: true }
 }
 
 export async function getUserEnquiries() {

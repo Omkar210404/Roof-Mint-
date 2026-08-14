@@ -70,6 +70,7 @@ export async function createManualLead(formData: FormData) {
     status,
     assigned_agent_id: assigned_agent_id || null,
     user_id: null,
+    source: 'manual',
   })
 
   if (error) {
@@ -111,6 +112,24 @@ export async function assignLeadAgent(leadId: string, agentId: string) {
   }
 
   revalidatePath('/admin/leads')
+}
+
+export async function setLeadAgentVisibility(id: string, visible: boolean) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('enquiries')
+    .update({ visible_to_agent: visible })
+    .eq('id', id)
+
+  if (error) {
+    console.error('setLeadAgentVisibility error:', error.message)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/leads')
+  return { success: true }
 }
 
 export async function deleteLead(id: string) {

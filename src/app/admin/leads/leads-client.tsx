@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead } from './actions'
+import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead, setLeadAgentVisibility } from './actions'
 import { AddLeadModal } from './add-lead-modal'
 import {
   Table,
@@ -12,7 +12,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Loader2, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Eye, EyeOff, MessageCircle, FileEdit, Globe } from 'lucide-react'
+
+const sourceMeta: Record<string, { label: string; icon: any; style: string }> = {
+  whatsapp: { label: 'WhatsApp', icon: MessageCircle, style: 'text-green-700 bg-green-50 dark:bg-green-950/40' },
+  manual: { label: 'Manual', icon: FileEdit, style: 'text-purple-700 bg-purple-50 dark:bg-purple-950/40' },
+  form: { label: 'Website', icon: Globe, style: 'text-blue-700 bg-blue-50 dark:bg-blue-950/40' },
+}
+function getSourceMeta(source: string) {
+  return sourceMeta[source] || sourceMeta.form
+}
 
 const statusOptions = [
   { value: 'new', label: 'New', style: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' },
@@ -39,6 +48,9 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const [statusFilter, setStatusFilter] = useState('all')
   const [propertyFilter, setPropertyFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const dateRangeActive = !!(startDate && endDate)
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -72,7 +84,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedQuery, statusFilter, propertyFilter, agentFilter])
+  }, [debouncedQuery, statusFilter, propertyFilter, agentFilter, startDate, endDate])
 
   // Properties available to filter by, derived from the leads actually
   // present — no separate fetch needed.
@@ -126,6 +138,15 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
       }
     }
 
+    if (dateRangeActive) {
+      const rangeStart = new Date(startDate + 'T00:00:00').getTime()
+      const rangeEnd = new Date(endDate + 'T23:59:59.999').getTime()
+      result = result.filter(l => {
+        const created = new Date(l.created_at).getTime()
+        return created >= rangeStart && created <= rangeEnd
+      })
+    }
+
     if (debouncedQuery) {
       result = result.filter(l => {
         const haystack = [l.name, l.phone, l.email, l.message, l.property?.title, l.property?.location_address]
@@ -145,7 +166,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     })
 
     return sorted
-  }, [leads, statusFilter, propertyFilter, agentFilter, debouncedQuery, sortKey, sortDir])
+  }, [leads, statusFilter, propertyFilter, agentFilter, dateRangeActive, startDate, endDate, debouncedQuery, sortKey, sortDir])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -206,6 +227,20 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     setBulkBusy(false)
   }
 
+  const handleToggleAgentVisibility = async (id: string, visible: boolean) => {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, visible_to_agent: visible } : l))
+    await setLeadAgentVisibility(id, visible)
+  }
+
+  const bulkSetAgentVisibility = async (visible: boolean) => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setBulkBusy(true)
+    setLeads(prev => prev.map(l => selectedIds.has(l.id) ? { ...l, visible_to_agent: visible } : l))
+    await Promise.all(ids.map(id => setLeadAgentVisibility(id, visible)))
+    setBulkBusy(false)
+  }
+
   const bulkAssignAgent = async (agentId: string) => {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
@@ -221,7 +256,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   // Exports whatever is currently filtered/searched — not the full
   // unfiltered inbox — so the download matches what's on screen.
   const exportCSV = () => {
-    const header = ['Date', 'Property', 'Location', 'Name', 'Phone', 'Email', 'Budget', 'Message', 'Assigned Agent', 'Status']
+    const header = ['Date', 'Property', 'Location', 'Name', 'Phone', 'Email', 'Budget', 'Message', 'Source', 'Assigned Agent', 'Status']
     const rows = filteredSorted.map(l => [
       new Date(l.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       l.property?.title || 'General Enquiry',
@@ -231,6 +266,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
       l.email || '',
       l.budget_hint || '',
       l.message || '',
+      getSourceMeta(l.source || 'form').label,
       l.assigned_agent?.name || 'Unassigned',
       statusLabel(l.status || 'new'),
     ])
@@ -368,6 +404,32 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
             <option key={agent.id} value={agent.id}>{agent.name}</option>
           ))}
         </select>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            max={endDate || undefined}
+            className="h-10 px-2.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium text-navy dark:text-white"
+          />
+          <span className="text-gray-400 dark:text-gray-500 text-xs">→</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            min={startDate || undefined}
+            className="h-10 px-2.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium text-navy dark:text-white"
+          />
+          {dateRangeActive && (
+            <button
+              onClick={() => { setStartDate(''); setEndDate('') }}
+              title="Clear date range"
+              className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 dark:hover:bg-navy-700 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bulk Action Bar */}
@@ -402,6 +464,20 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
             ))}
           </select>
           <button
+            onClick={() => bulkSetAgentVisibility(true)}
+            disabled={bulkBusy}
+            className="h-8 px-3 bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 text-navy dark:text-white hover:bg-gray-50 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <Eye className="w-3.5 h-3.5" /> Show to Agent
+          </button>
+          <button
+            onClick={() => bulkSetAgentVisibility(false)}
+            disabled={bulkBusy}
+            className="h-8 px-3 bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 text-navy dark:text-white hover:bg-gray-50 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <EyeOff className="w-3.5 h-3.5" /> Hide from Agent
+          </button>
+          <button
             onClick={bulkDelete}
             disabled={bulkBusy}
             className="h-8 px-3 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
@@ -434,13 +510,14 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Message / Budget</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Assigned Agent</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Agent Visibility</TableHead>
                 <TableHead className="text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedLeads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-400 dark:text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-400 dark:text-gray-500">
                     {leads.length === 0 ? 'No leads found' : 'No leads match your search/filter'}
                   </TableCell>
                 </TableRow>
@@ -462,7 +539,18 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lead.property?.location_address}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium text-navy dark:text-white text-sm">{lead.name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-navy dark:text-white text-sm">{lead.name}</span>
+                      {(() => {
+                        const meta = getSourceMeta(lead.source || 'form')
+                        const SourceIcon = meta.icon
+                        return (
+                          <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded ${meta.style}`}>
+                            <SourceIcon className="w-2.5 h-2.5" /> {meta.label}
+                          </span>
+                        )
+                      })()}
+                    </div>
                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lead.phone}</div>
                     <div className="text-xs text-gray-400 dark:text-gray-500">{lead.email}</div>
                   </TableCell>
@@ -507,6 +595,20 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                         since {new Date(lead.status_updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => handleToggleAgentVisibility(lead.id, !(lead.visible_to_agent ?? true))}
+                      className={`h-8 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                        (lead.visible_to_agent ?? true)
+                          ? 'bg-green-50 dark:bg-green-950/40 text-green-700'
+                          : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'
+                      }`}
+                      title={(lead.visible_to_agent ?? true) ? 'Visible to assigned agent — click to hide' : 'Hidden from assigned agent — click to show'}
+                    >
+                      {(lead.visible_to_agent ?? true) ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      {(lead.visible_to_agent ?? true) ? 'Visible' : 'Hidden'}
+                    </button>
                   </TableCell>
                   <TableCell className="text-right">
                     <button
