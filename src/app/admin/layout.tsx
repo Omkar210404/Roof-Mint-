@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -43,6 +43,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/users", icon: UserCheck, label: "User Data" },
     { href: "/admin/notifications", icon: Bell, label: "Send Notifications" },
     { href: "/admin/agents", icon: Briefcase, label: "Agents" },
+    { href: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
   ];
 
   return (

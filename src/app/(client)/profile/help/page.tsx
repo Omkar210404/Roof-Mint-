@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, HelpCircle, ChevronDown, MessageSquare, Phone, Mail, Clock, CheckCircle2, Send, Loader2 } from 'lucide-react';
-import { submitEnquiry } from '@/app/(client)/properties/actions';
+import { submitFeedback } from './actions';
 
 interface FAQ {
   question: string;
@@ -55,6 +55,15 @@ export default function HelpPage() {
 
   const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Honeypot — invisible to real visitors, filled only by bots that
+    // auto-fill every field. Silently "succeed" without submitting.
+    const honeypot = (e.currentTarget as HTMLFormElement).elements.namedItem('company_website') as HTMLInputElement | null;
+    if (honeypot?.value.trim()) {
+      setSubmitted(true);
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -62,11 +71,11 @@ export default function HelpPage() {
     fd.append('name', name);
     fd.append('phone', phone);
     fd.append('email', email);
-    fd.append('budget_hint', `[Support Ticket: ${category}]`);
+    fd.append('category', category);
     fd.append('message', message);
 
     try {
-      await submitEnquiry(fd);
+      await submitFeedback(fd);
       setSubmitted(true);
       setName('');
       setPhone('');
@@ -191,6 +200,14 @@ export default function HelpPage() {
             </div>
           ) : (
             <form onSubmit={handleSupportSubmit} className="space-y-4">
+              <input
+                type="text"
+                name="company_website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute -left-[9999px] w-px h-px opacity-0"
+              />
               {error && <div className="p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs rounded-xl border border-red-200 dark:border-red-900">{error}</div>}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
