@@ -52,6 +52,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const dateRangeActive = !!(startDate && endDate)
+  const [includeSource, setIncludeSource] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -258,10 +259,16 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
 
   const statusLabel = (status: string) => statusOptions.find(s => s.value === status)?.label || status
 
+  // The auto-generated WhatsApp message ("Contacted via WhatsApp") is the
+  // only field besides the Source column that reveals the channel — scrub
+  // it too when exporting without sources, so a broker CSV/PDF reads like
+  // any other lead list.
+  const exportMessage = (l: any) => (!includeSource && l.source === 'whatsapp') ? '' : (l.message || '')
+
   // Exports whatever is currently filtered/searched — not the full
   // unfiltered inbox — so the download matches what's on screen.
   const exportCSV = () => {
-    const header = ['Date', 'Property', 'Location', 'Name', 'Phone', 'Email', 'Budget', 'Message', 'Source', 'Assigned Agent', 'Status']
+    const header = ['Date', 'Property', 'Location', 'Name', 'Phone', 'Email', 'Budget', 'Message', ...(includeSource ? ['Source'] : []), 'Assigned Agent', 'Status']
     const rows = filteredSorted.map(l => [
       new Date(l.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       l.property?.title || 'General Enquiry',
@@ -270,8 +277,8 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
       l.phone,
       l.email || '',
       l.budget_hint || '',
-      l.message || '',
-      getSourceMeta(l.source || 'form').label,
+      exportMessage(l),
+      ...(includeSource ? [getSourceMeta(l.source || 'form').label] : []),
       l.assigned_agent?.name || 'Unassigned',
       statusLabel(l.status || 'new'),
     ])
@@ -305,7 +312,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
 
     autoTable(doc, {
       startY: 28,
-      head: [['Date', 'Property', 'Name', 'Phone', 'Email', 'Budget', 'Agent', 'Status']],
+      head: [['Date', 'Property', 'Name', 'Phone', 'Email', 'Budget', ...(includeSource ? ['Source'] : []), 'Agent', 'Status']],
       body: filteredSorted.map(l => [
         new Date(l.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
         l.property?.title || 'General Enquiry',
@@ -313,6 +320,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
         l.phone,
         l.email || '',
         l.budget_hint || '',
+        ...(includeSource ? [getSourceMeta(l.source || 'form').label] : []),
         l.assigned_agent?.name || 'Unassigned',
         statusLabel(l.status || 'new'),
       ]),
@@ -348,6 +356,15 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
           >
             <Plus className="w-3.5 h-3.5" /> Add Lead
           </button>
+          <label className="h-9 px-2.5 rounded-lg bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 cursor-pointer select-none" title="Uncheck before sending an export to an agent/broker — hides which channel each lead came from">
+            <input
+              type="checkbox"
+              checked={includeSource}
+              onChange={(e) => setIncludeSource(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary/30"
+            />
+            Include Source
+          </label>
           <button
             onClick={exportCSV}
             disabled={filteredSorted.length === 0}
