@@ -1,8 +1,8 @@
-import { getProperties } from './actions'
+import { getProperties, getAgentsForSelect } from './actions'
 import { PropertiesClientWrapper } from './properties-client'
 
 export default async function AdminPropertiesPage() {
-  const dbProperties = await getProperties()
+  const [dbProperties, agents] = await Promise.all([getProperties(), getAgentsForSelect()])
 
-  return <PropertiesClientWrapper initialProperties={dbProperties} />
+  return <PropertiesClientWrapper initialProperties={dbProperties} agents={agents} />
 }

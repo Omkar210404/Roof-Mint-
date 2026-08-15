@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle, Settings, Eye } from 'lucide-react';
+import { Trash2, Edit, Plus, X, Check, Loader2, Search, ArrowUpDown, ArrowUp, ArrowDown, KeyRound, ShieldCheck, ShieldOff, Crown, Clock3, AlertTriangle, Settings, Eye, FileSpreadsheet, FileText } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -93,6 +93,64 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
     clearSelection();
     setBulkBusy(false);
   };
+
+  const exportCSV = () => {
+    const header = ['Name', 'Company', 'Phone', 'Email', 'Portal Access', 'Last Active', 'Plan']
+    const rows = filteredSorted.map(a => [
+      a.name,
+      a.company || '',
+      a.phone || '',
+      a.email || '',
+      a.user_id ? 'Active' : 'None',
+      a.last_sign_in_at ? formatLastActive(a.last_sign_in_at) : 'Never signed in',
+      findTier(planTiers, a.plan).label,
+    ])
+    const escape = (val: unknown) => {
+      const s = String(val ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const csv = [header, ...rows].map(r => r.map(escape).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `roofmint-agents-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const doc = new jsPDF({ orientation: 'landscape' })
+
+    doc.setFontSize(16)
+    doc.text('Roofmint — Agents', 14, 16)
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(
+      `Generated ${new Date().toLocaleString('en-IN')} · ${filteredSorted.length} agent${filteredSorted.length === 1 ? '' : 's'}`,
+      14, 22
+    )
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Name', 'Company', 'Phone', 'Email', 'Portal Access', 'Last Active', 'Plan']],
+      body: filteredSorted.map(a => [
+        a.name,
+        a.company || '',
+        a.phone || '',
+        a.email || '',
+        a.user_id ? 'Active' : 'None',
+        a.last_sign_in_at ? formatLastActive(a.last_sign_in_at) : 'Never signed in',
+        findTier(planTiers, a.plan).label,
+      ]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [13, 148, 136] },
+    })
+
+    doc.save(`roofmint-agents-${new Date().toISOString().slice(0, 10)}.pdf`)
+  }
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
@@ -275,6 +333,20 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
             className="h-9 px-3.5 rounded-lg bg-navy dark:bg-teal-700 text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-1.5"
           >
             <Settings className="w-3.5 h-3.5" /> Manage Plans
+          </button>
+          <button
+            onClick={exportCSV}
+            disabled={filteredSorted.length === 0}
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" /> Export CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={filteredSorted.length === 0}
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+          >
+            <FileText className="w-3.5 h-3.5" /> Export PDF
           </button>
           <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{agents.length} total</span>
         </div>

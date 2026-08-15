@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ShieldCheck, Briefcase, ChevronDown } from 'lucide-react'
+import { Search, ShieldCheck, Briefcase, ChevronDown, X } from 'lucide-react'
 
 const actionLabels: Record<string, string> = {
   delete_agent: 'Deleted agent',
@@ -104,6 +104,9 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [actorFilter, setActorFilter] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const dateRangeActive = !!(startDate && endDate)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const supabase = createClient()
 
@@ -126,6 +129,14 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
   const filtered = useMemo(() => {
     let result = log
     if (actorFilter !== 'all') result = result.filter(l => l.actor?.role === actorFilter)
+    if (dateRangeActive) {
+      const rangeStart = new Date(startDate + 'T00:00:00').getTime()
+      const rangeEnd = new Date(endDate + 'T23:59:59.999').getTime()
+      result = result.filter(l => {
+        const created = new Date(l.created_at).getTime()
+        return created >= rangeStart && created <= rangeEnd
+      })
+    }
     if (debouncedQuery) {
       result = result.filter(l => {
         const haystack = [l.actor?.full_name, actionLabel(l.action), l.entity_type, formatDetails(l.details), describeActivity(l)]
@@ -134,7 +145,7 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
       })
     }
     return result
-  }, [log, actorFilter, debouncedQuery])
+  }, [log, actorFilter, dateRangeActive, startDate, endDate, debouncedQuery])
 
   return (
     <div className="space-y-6">
@@ -166,6 +177,32 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
           <option value="admin">Admins only</option>
           <option value="agent">Agents only</option>
         </select>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            max={endDate || undefined}
+            className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <span className="text-xs text-gray-400 dark:text-gray-500">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            min={startDate || undefined}
+            className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          {dateRangeActive && (
+            <button
+              onClick={() => { setStartDate(''); setEndDate('') }}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              title="Clear date range"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">

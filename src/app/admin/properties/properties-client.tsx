@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { getProperties, deleteProperty, updatePropertyStatus } from './actions'
+import { getProperties, deleteProperty, updatePropertyStatus, assignPropertyAgent } from './actions'
 
 const statusStyles: Record<string, string> = {
   available: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700',
@@ -33,7 +33,7 @@ const statusOptions = [
 type SortKey = 'date' | 'title' | 'price'
 type SortDir = 'asc' | 'desc'
 
-export function PropertiesClientWrapper({ initialProperties }: { initialProperties: any[] }) {
+export function PropertiesClientWrapper({ initialProperties, agents = [] }: { initialProperties: any[]; agents?: any[] }) {
   const [properties, setProperties] = useState<any[]>(initialProperties)
   const [currentPage, setCurrentPage] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -128,6 +128,10 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
 
   const pageIds = paginatedProperties.map(p => p.id)
   const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id))
+  const allFilteredSelected = filteredSorted.length > 0 && filteredSorted.every(p => selectedIds.has(p.id))
+  const filtersActive = statusFilter !== 'all' || !!debouncedQuery
+
+  const selectAllFiltered = () => setSelectedIds(new Set(filteredSorted.map(p => p.id)))
 
   const toggleSelectAllOnPage = () => {
     setSelectedIds(prev => {
@@ -167,6 +171,16 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
     setBulkBusy(true)
     setProperties(prev => prev.map(p => selectedIds.has(p.id) ? { ...p, status } : p))
     await Promise.all(ids.map(id => updatePropertyStatus(id, status)))
+    setBulkBusy(false)
+  }
+
+  const bulkAssignAgent = async (agentId: string) => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    const selectedAgent = agents.find((a: any) => a.id === agentId)
+    setBulkBusy(true)
+    setProperties(prev => prev.map(p => selectedIds.has(p.id) ? { ...p, primary_agent_id: agentId || null, primary_agent: selectedAgent || null } : p))
+    await Promise.all(ids.map(id => assignPropertyAgent(id, agentId)))
     setBulkBusy(false)
   }
 
@@ -220,6 +234,18 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
         </select>
       </div>
 
+      {/* One-click "select everything currently filtered" — filter by
+          status/search above, then this selects across every page, not
+          just the 10 on screen. */}
+      {filtersActive && !allFilteredSelected && filteredSorted.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span>{filteredSorted.length} propert{filteredSorted.length === 1 ? 'y' : 'ies'} match the current filters.</span>
+          <button onClick={selectAllFiltered} className="text-primary font-bold underline underline-offset-2">
+            Select all {filteredSorted.length}
+          </button>
+        </div>
+      )}
+
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
         <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl px-4 py-2.5">
@@ -227,6 +253,11 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
           <button onClick={clearSelection} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 flex items-center gap-1">
             <X className="w-3.5 h-3.5" /> Clear
           </button>
+          {!allFilteredSelected && filteredSorted.length > pageIds.length && (
+            <button onClick={selectAllFiltered} className="text-xs text-primary font-bold underline underline-offset-2">
+              Select all {filteredSorted.length} matching
+            </button>
+          )}
           <div className="flex-1" />
           <select
             defaultValue=""
@@ -237,6 +268,18 @@ export function PropertiesClientWrapper({ initialProperties }: { initialProperti
             <option value="" disabled>Set Status...</option>
             {statusOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <select
+            defaultValue=""
+            disabled={bulkBusy}
+            onChange={(e) => { bulkAssignAgent(e.target.value); e.target.value = '' }}
+            className="h-8 text-xs font-medium bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 rounded-lg px-2 text-navy dark:text-white focus:outline-none disabled:opacity-50"
+          >
+            <option value="" disabled>Assign Agent...</option>
+            <option value="">Unassigned</option>
+            {agents.map((agent: any) => (
+              <option key={agent.id} value={agent.id}>{agent.name} ({agent.company || 'Agent'})</option>
             ))}
           </select>
           <button

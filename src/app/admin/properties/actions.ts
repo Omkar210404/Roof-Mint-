@@ -317,3 +317,18 @@ export async function updatePropertyStatus(id: string, status: string) {
   revalidatePath('/admin/properties')
   return { success: true }
 }
+
+export async function assignPropertyAgent(id: string, agentId: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { error } = await supabase.from('properties').update({ primary_agent_id: agentId || null }).eq('id', id)
+
+  if (error) {
+    console.error('assignPropertyAgent error:', error.message)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/properties')
+  return { success: true }
+}
