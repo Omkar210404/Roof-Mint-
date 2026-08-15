@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Send, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
-import { saveOnboardingPreferences } from '../actions';
+import { useEffect, useState } from 'react';
+import { saveOnboardingPreferences, getLiveMatchCount } from '../actions';
 
 const questions = [
   {
@@ -103,9 +103,37 @@ export default function AIQuestionnairePage() {
   const [budgetManual, setBudgetManual] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [matchCount, setMatchCount] = useState<number | null>(null);
+  const [matchCountLoading, setMatchCountLoading] = useState(false);
 
   const question = questions[currentStep];
   const progress = ((currentStep + 1) / questions.length) * 100;
+
+  // Live match counter — only kicks in once they've answered a few
+  // questions (from step 4 onward, i.e. budget/BHK/location already given)
+  // so it feels like a real signal, not "247 properties" before they've
+  // said anything. Debounced so dragging the slider doesn't fire per pixel.
+  useEffect(() => {
+    if (currentStep < 3) {
+      setMatchCount(null);
+      return;
+    }
+    setMatchCountLoading(true);
+    const timer = setTimeout(async () => {
+      const count = await getLiveMatchCount({
+        budgetMin,
+        budgetMax: budgetMax >= BUDGET_SLIDER_MAX ? null : budgetMax,
+        bhk: answers.pref_bhk ? parseInt(answers.pref_bhk as string) : null,
+        propertyType: (answers.pref_property_type as string) || null,
+        listingType: (answers.pref_listing_type as string) || null,
+        ownership: (answers.pref_ownership as string) || null,
+        furnishing: (answers.pref_furnishing as string) || null,
+      });
+      setMatchCount(count);
+      setMatchCountLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [currentStep, budgetMin, budgetMax, answers.pref_bhk, answers.pref_property_type, answers.pref_listing_type, answers.pref_ownership, answers.pref_furnishing]);
 
   const handleSelect = (option: string) => {
     if (question.type === 'multi') {
@@ -261,6 +289,17 @@ export default function AIQuestionnairePage() {
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">{question.subtitle}</p>
               </div>
             </div>
+
+            {matchCount !== null && (
+              <div className="flex items-center gap-2 mb-6 -mt-3 px-1 text-xs md:text-sm font-semibold text-primary">
+                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                {matchCountLoading ? (
+                  <span className="text-gray-400 dark:text-gray-500 font-medium">Updating matches...</span>
+                ) : (
+                  <span>{matchCount} matching {matchCount === 1 ? 'property' : 'properties'} so far</span>
+                )}
+              </div>
+            )}
 
             {error && (
               <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-xl border border-red-200 dark:border-red-900">

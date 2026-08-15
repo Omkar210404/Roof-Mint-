@@ -24,6 +24,44 @@ export async function checkProfileComplete() {
   }
 }
 
+// Powers the live "N matching properties" counter shown partway through the
+// questionnaire — a fast COUNT-only query against whatever filters have
+// been answered so far, no row data returned. Public/available listings
+// only, same as the real results page. Location and amenities are left out
+// here (fuzzy keyword/array matching, not worth it for a debounced live
+// count) — this is meant as an engaging signal, not the final match set.
+export async function getLiveMatchCount(filters: {
+  budgetMin?: number | null
+  budgetMax?: number | null
+  bhk?: number | null
+  propertyType?: string | null
+  listingType?: string | null
+  ownership?: string | null
+  furnishing?: string | null
+}) {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('properties')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'available')
+
+  if (filters.budgetMin) query = query.gte('price', filters.budgetMin)
+  if (filters.budgetMax) query = query.lte('price', filters.budgetMax)
+  if (filters.bhk) query = query.eq('bhk', filters.bhk)
+  if (filters.propertyType) query = query.eq('property_type', filters.propertyType)
+  if (filters.listingType && filters.listingType !== 'Any') query = query.eq('listing_type', filters.listingType)
+  if (filters.ownership && filters.ownership !== 'No Preference') query = query.eq('ownership', filters.ownership)
+  if (filters.furnishing && filters.furnishing !== 'No Preference') query = query.eq('furnishing', filters.furnishing)
+
+  const { count, error } = await query
+  if (error) {
+    console.warn('getLiveMatchCount error:', error.message)
+    return 0
+  }
+  return count || 0
+}
+
 export async function saveOnboardingPreferences(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
