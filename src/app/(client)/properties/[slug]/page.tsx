@@ -416,7 +416,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
                   <textarea name="message" maxLength={500} placeholder="Any specific requirements..." rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => { setShowEnquiryModal(false); setEnquiryError(null); }}
-                      className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50">Cancel</button>
+                      className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800">Cancel</button>
                     <button type="submit" disabled={submitting}
                       className="flex-1 h-12 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
                       {submitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Phone className="w-4 h-4" />}
@@ -756,7 +756,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
               />
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowWhatsAppPhoneModal(false)}
-                  className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50">Cancel</button>
+                  className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800">Cancel</button>
                 <button type="submit" disabled={whatsappSubmitting}
                   className="flex-1 h-12 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
                   {whatsappSubmitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}

@@ -197,7 +197,7 @@ export default function SearchPage() {
                   <div className="space-y-1">
                     {recentSearches.map(term => (
                       <button key={term} onClick={() => { setQuery(term); doSearch(term); }}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700 dark:text-gray-300 font-medium flex items-center justify-between transition-colors">
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-navy-800 text-sm text-gray-700 dark:text-gray-300 font-medium flex items-center justify-between transition-colors">
                         <span className="flex items-center gap-2">
                           <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
                           {term}

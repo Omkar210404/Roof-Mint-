@@ -96,7 +96,7 @@ export default function HelpPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>

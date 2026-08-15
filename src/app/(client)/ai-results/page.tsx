@@ -95,7 +95,7 @@ export default async function AIResultsPage() {
 
             {/* Switch to normal */}
             <Link href="/"
-              className="block w-full py-3.5 bg-white dark:bg-navy-900 border-2 border-gray-200/60 dark:border-gray-800/60 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-center hover:bg-gray-50 transition-colors text-sm">
+              className="block w-full py-3.5 bg-white dark:bg-navy-900 border-2 border-gray-200/60 dark:border-gray-800/60 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-center hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors text-sm">
               <span className="flex items-center justify-center gap-2">
                 <LayoutGrid className="w-4 h-4" />
                 Switch to Normal Browsing

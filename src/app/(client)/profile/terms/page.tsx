@@ -16,7 +16,7 @@ export default function TermsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-start sm:items-center gap-3 min-w-0">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0 mt-0.5 sm:mt-0">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors shrink-0 mt-0.5 sm:mt-0">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div className="min-w-0">
@@ -27,7 +27,7 @@ export default function TermsPage() {
 
         <button
           onClick={handlePrint}
-          className="h-9 px-3.5 bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 text-navy dark:text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto shadow-xs"
+          className="h-9 px-3.5 bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto shadow-xs"
         >
           <Printer className="w-3.5 h-3.5 text-primary" />
           Print / Save PDF

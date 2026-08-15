@@ -251,7 +251,7 @@ export default function ProfilePage() {
                   <button
                     key={item.label}
                     onClick={() => setShowRateModal(true)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
                       <item.icon className="w-4 h-4 text-amber-500" />
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                   </button>
                 ) : (
                   <Link key={item.label} href={item.href}>
-                    <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors">
                       <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-navy-800 flex items-center justify-center">
                         <item.icon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                       </div>
@@ -352,7 +352,7 @@ export default function ProfilePage() {
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setShowRateModal(false)}
-                    className="flex-1 h-10 border border-gray-200/60 dark:border-gray-800/60 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50"
+                    className="flex-1 h-10 border border-gray-200/60 dark:border-gray-800/60 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50 dark:hover:bg-navy-800"
                   >
                     Cancel
                   </button>

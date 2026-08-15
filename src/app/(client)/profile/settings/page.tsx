@@ -109,7 +109,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>
@@ -260,7 +260,7 @@ export default function SettingsPage() {
 
         {/* Submit */}
         <div className="flex justify-end gap-3 pt-2">
-          <Link href="/profile" className="h-11 px-5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 flex items-center transition-colors">
+          <Link href="/profile" className="h-11 px-5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800 flex items-center transition-colors">
             Cancel
           </Link>
           <button

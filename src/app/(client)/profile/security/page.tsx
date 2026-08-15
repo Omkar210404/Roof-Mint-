@@ -92,7 +92,7 @@ export default function SecurityPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 transition-colors">
+          <Link href="/profile" className="w-9 h-9 rounded-xl bg-white dark:bg-navy-900 border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Link>
           <div>
@@ -197,7 +197,7 @@ export default function SecurityPage() {
                 window.location.href = '/login';
               }}
               disabled={loggingOut}
-              className="h-9 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-60"
+              className="h-9 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-60"
             >
               {loggingOut ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5 text-primary" />}
               Log Out
@@ -220,7 +220,7 @@ export default function SecurityPage() {
               <button
                 onClick={handleDownloadData}
                 disabled={downloading}
-                className="h-9 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5"
+                className="h-9 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5"
               >
                 {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-primary" />}
                 Download JSON
@@ -260,7 +260,7 @@ export default function SecurityPage() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 h-10 border border-gray-200/60 dark:border-gray-800/60 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50"
+                className="flex-1 h-10 border border-gray-200/60 dark:border-gray-800/60 text-gray-600 dark:text-gray-300 font-bold text-xs rounded-xl hover:bg-gray-50 dark:hover:bg-navy-800"
               >
                 Keep My Account
               </button>

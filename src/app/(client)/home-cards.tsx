@@ -151,7 +151,7 @@ export function HomePropertyCards({ properties }: { properties: any[] }) {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-navy-800"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -159,7 +159,7 @@ export function HomePropertyCards({ properties }: { properties: any[] }) {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 flex items-center justify-center text-gray-600 dark:text-gray-300 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-navy-800"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
