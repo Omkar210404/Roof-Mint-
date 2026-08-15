@@ -196,7 +196,7 @@ export function FeedbackClientWrapper({ initialFeedback }: { initialFeedback: an
                       className={`text-xs font-bold px-2 py-1 rounded-lg border ${getStatusStyle(item.status || 'new')}`}
                     >
                       {statusOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value} className="bg-white text-gray-900">{opt.label}</option>
                       ))}
                     </select>
                   </TableCell>

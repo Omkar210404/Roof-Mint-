@@ -356,7 +356,7 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
                       className={`h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200/60 dark:border-gray-800/60 focus:outline-none focus:ring-2 focus:ring-primary/20 ${statusStyles[property.status] || 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
                     >
                       {statusOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value} className="bg-white text-gray-900">{opt.label}</option>
                       ))}
                     </select>
                   </TableCell>

@@ -394,7 +394,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
                       className={`h-8 text-xs font-semibold rounded-lg px-2 border focus:outline-none focus:ring-2 focus:ring-primary/20 ${getStatusStyle(lead.status || 'new')}`}
                     >
                       {statusOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value} className="bg-white text-gray-900">{opt.label}</option>
                       ))}
                     </select>
                   </TableCell>
