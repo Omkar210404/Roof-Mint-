@@ -226,14 +226,14 @@ export function FeedbackClientWrapper({ initialFeedback }: { initialFeedback: an
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-navy-800"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-navy-800"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

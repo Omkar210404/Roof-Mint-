@@ -18,6 +18,11 @@ import { PlanManagerModal } from './plan-manager-modal';
 type SortKey = 'date' | 'name';
 type SortDir = 'asc' | 'desc';
 
+function formatLastActive(dateStr: string | null) {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initialAgents: any[]; initialPlanTiers: AgentPlanTier[] }) {
   const [agents, setAgents] = useState<any[]>(initialAgents);
   const [planTiers, setPlanTiers] = useState<AgentPlanTier[]>(initialPlanTiers);
@@ -558,6 +563,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Phone</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Email</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Portal</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Last Active</TableHead>
                   <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Plan</TableHead>
                   <TableHead className="text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</TableHead>
                 </TableRow>
@@ -565,7 +571,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
               <TableBody>
                 {filteredSorted.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-400 dark:text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-400 dark:text-gray-500">
                       {agents.length === 0 ? 'No agents found' : 'No agents match your search'}
                     </TableCell>
                   </TableRow>
@@ -596,6 +602,9 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                       ) : (
                         <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">None</span>
                       )}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {formatLastActive(agent.last_sign_in_at) || <span className="italic text-gray-400 dark:text-gray-500">Never signed in</span>}
                     </TableCell>
                     <TableCell>
                       {!agent.user_id ? (

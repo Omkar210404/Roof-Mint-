@@ -415,6 +415,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
                 </TableHead>
                 <TableHead><SortHeader label="User Info" sortKeyVal="name" /></TableHead>
                 <TableHead><SortHeader label="Joined Date" sortKeyVal="date" /></TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Last Active</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preferred Area</TableHead>
@@ -427,13 +428,13 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-12 text-gray-400 dark:text-gray-500">
+                  <TableCell colSpan={11} className="text-center py-12 text-gray-400 dark:text-gray-500">
                     No user data matching the selected criteria.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
-                  <TableRow key={user.id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.has(user.id) ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}`}>
+                  <TableRow key={user.id} className={`hover:bg-gray-50/50 dark:hover:bg-navy-800/50 transition-colors ${selectedIds.has(user.id) ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}`}>
                     <TableCell>
                       <input
                         type="checkbox"
@@ -453,6 +454,13 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
                     {/* Joined Date */}
                     <TableCell className="text-xs text-gray-600 dark:text-gray-300 font-medium">
                       {formatDate(user.created_at)}
+                    </TableCell>
+
+                    {/* Last Active — from auth.users.last_sign_in_at, the
+                        activity data the Privacy Policy already says is
+                        kept "to operate the platform securely" */}
+                    <TableCell className="text-xs text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
+                      {user.last_sign_in_at ? formatDate(user.last_sign_in_at) : <span className="text-gray-400 dark:text-gray-500 italic">Never signed in</span>}
                     </TableCell>
 
                     {/* Status */}

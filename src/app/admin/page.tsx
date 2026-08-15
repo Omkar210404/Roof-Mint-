@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
                   <td colSpan={5} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">No enquiries found</td>
                 </tr>
               ) : enquiries.map((enquiry) => (
-                <tr key={enquiry.id} className="hover:bg-gray-50/50 transition-colors">
+                <tr key={enquiry.id} className="hover:bg-gray-50/50 dark:hover:bg-navy-800/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-navy dark:text-white">{enquiry.name}</td>
                   <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{enquiry.property}</td>
                   <td className="px-6 py-4">

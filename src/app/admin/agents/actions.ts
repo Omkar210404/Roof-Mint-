@@ -36,13 +36,18 @@ export async function getAgents() {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return []
   const { data, error } = await supabase.from('agents').select('*').order('created_at', { ascending: false })
-  
+
   if (error) {
     console.warn('getAgents error (table may not exist yet):', error.message)
     return []
   }
 
-  return data || []
+  // last_sign_in_at lives in auth.users, not agents — merged in via a
+  // SECURITY DEFINER RPC since that schema isn't otherwise queryable.
+  const { data: activity } = await supabase.rpc('admin_list_auth_activity')
+  const activityById = new Map((activity || []).map((a: any) => [a.id, a.last_sign_in_at]))
+
+  return (data || []).map(a => ({ ...a, last_sign_in_at: a.user_id ? activityById.get(a.user_id) || null : null }))
 }
 
 export async function deleteAgent(id: string) {

@@ -213,7 +213,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
           <h1 className="text-xl font-bold text-navy dark:text-white">{mode === 'edit' ? 'Edit Property' : 'Add Property'}</h1>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/properties" className="h-9 px-4 rounded-lg border border-gray-200/60 dark:border-gray-800/60 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 transition-colors inline-flex items-center">Cancel</Link>
+          <Link href="/admin/properties" className="h-9 px-4 rounded-lg border border-gray-200/60 dark:border-gray-800/60 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors inline-flex items-center">Cancel</Link>
           <button form="property-form" type="submit" disabled={isSubmitting}
             className="h-9 px-5 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-all disabled:opacity-60 inline-flex items-center gap-1.5">
             {isSubmitting ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-4 h-4" />}

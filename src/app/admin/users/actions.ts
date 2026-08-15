@@ -33,7 +33,12 @@ export async function getUserProfiles() {
     return []
   }
 
-  return data || []
+  // last_sign_in_at lives in auth.users, not profiles — merged in via a
+  // SECURITY DEFINER RPC since that schema isn't otherwise queryable.
+  const { data: activity } = await supabase.rpc('admin_list_auth_activity')
+  const activityById = new Map((activity || []).map((a: any) => [a.id, a.last_sign_in_at]))
+
+  return (data || []).map(u => ({ ...u, last_sign_in_at: activityById.get(u.id) || null }))
 }
 
 export async function deleteUserProfile(id: string) {
