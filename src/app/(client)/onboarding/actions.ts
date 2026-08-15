@@ -41,22 +41,10 @@ export async function saveOnboardingPreferences(formData: FormData) {
   const pref_timeline = formData.get('pref_timeline') as string
   const pref_notes = formData.get('pref_notes') as string
 
-  // Parse budget
-  const budgetStr = formData.get('pref_budget') as string
-  let pref_budget_min: number | null = null
-  let pref_budget_max: number | null = null
-  const budgetMap: Record<string, [number, number]> = {
-    '30-50L': [3000000, 5000000],
-    '50-75L': [5000000, 7500000],
-    '75L-1Cr': [7500000, 10000000],
-    '1-1.5Cr': [10000000, 15000000],
-    '1.5-2Cr': [15000000, 20000000],
-    '2-3Cr': [20000000, 30000000],
-    '3Cr+': [30000000, 999999999],
-  }
-  if (budgetStr && budgetMap[budgetStr]) {
-    [pref_budget_min, pref_budget_max] = budgetMap[budgetStr]
-  }
+  // Budget now comes straight off the slider/manual-entry inputs as raw
+  // rupee amounts, rather than a preset bucket key.
+  const pref_budget_min = parseInt(formData.get('pref_budget_min') as string) || null
+  const pref_budget_max = parseInt(formData.get('pref_budget_max') as string) || null
 
   // Parse amenities
   const amenitiesStr = formData.get('pref_amenities') as string

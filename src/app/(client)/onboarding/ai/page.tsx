@@ -10,10 +10,8 @@ const questions = [
   {
     id: 'pref_budget',
     question: "What's your budget range?",
-    subtitle: "Select the range that fits your budget",
-    type: 'grid',
-    options: ['30-50L', '50-75L', '75L-1Cr', '1-1.5Cr', '1.5-2Cr', '2-3Cr', '3Cr+'],
-    labels: ['₹30L - ₹50L', '₹50L - ₹75L', '₹75L - ₹1Cr', '₹1Cr - ₹1.5Cr', '₹1.5Cr - ₹2Cr', '₹2Cr - ₹3Cr', '₹3Cr+'],
+    subtitle: "Drag to set a range, or enter an exact amount",
+    type: 'range',
   },
   {
     id: 'pref_bhk',
@@ -86,10 +84,23 @@ const questions = [
   },
 ];
 
+const BUDGET_SLIDER_MIN = 1000000; // 10L
+const BUDGET_SLIDER_MAX = 50000000; // 5Cr — the top of the slider means "5Cr or more"
+const BUDGET_STEP = 500000; // 5L
+
+function formatINR(v: number): string {
+  if (v >= 10000000) return `₹${(v / 10000000).toFixed(v % 10000000 === 0 ? 0 : 1)}Cr`;
+  if (v >= 100000) return `₹${(v / 100000).toFixed(v % 100000 === 0 ? 0 : 1)}L`;
+  return `₹${v.toLocaleString('en-IN')}`;
+}
+
 export default function AIQuestionnairePage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [budgetMin, setBudgetMin] = useState(3000000); // 30L
+  const [budgetMax, setBudgetMax] = useState(10000000); // 1Cr
+  const [budgetManual, setBudgetManual] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -118,6 +129,7 @@ export default function AIQuestionnairePage() {
   const canProceed = () => {
     if (question.type === 'textarea') return true;
     if (question.type === 'text_input') return true;
+    if (question.type === 'range') return budgetMax > budgetMin;
     const answer = answers[question.id];
     if (Array.isArray(answer)) return answer.length > 0;
     return !!answer;
@@ -130,6 +142,9 @@ export default function AIQuestionnairePage() {
     const fd = new FormData();
     fd.append('full_name', '');
     fd.append('phone', '');
+    fd.append('pref_budget_min', String(budgetMin));
+    // Slider maxes out at 5Cr meaning "5Cr or more" — no upper cap in that case.
+    fd.append('pref_budget_max', budgetMax >= BUDGET_SLIDER_MAX ? '' : String(budgetMax));
 
     Object.entries(answers).forEach(([key, val]) => {
       if (key === 'pref_amenities') {
@@ -153,8 +168,8 @@ export default function AIQuestionnairePage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] bg-white dark:bg-navy-900 md:bg-gray-50/50 flex items-center justify-center p-0 md:p-6 overflow-hidden">
-      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 md:rounded-2xl md:border md:border-gray-100/60 md:shadow-sm overflow-hidden flex flex-col md:flex-row h-full md:max-h-[540px]">
+    <div className="min-h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] bg-white dark:bg-navy-900 md:bg-gray-50/50 flex items-start md:items-center justify-center p-0 md:p-6 md:overflow-hidden">
+      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 md:rounded-2xl md:border md:border-gray-100/60 md:shadow-sm overflow-hidden flex flex-col md:flex-row md:h-full md:max-h-[540px]">
         {/* Left Side (Desktop Progress & Assistant Info) */}
         <div className="hidden md:flex w-1/3 bg-teal-50/40 dark:bg-teal-950/40 p-8 text-navy dark:text-white flex-col justify-between relative overflow-hidden border-r border-gray-100/60 dark:border-gray-800/60">
           <div>
@@ -275,6 +290,79 @@ export default function AIQuestionnairePage() {
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-2.5 px-1">
                     💡 Tip: Type exact area names (e.g. Whitefield, HSR Layout, Sarjapur) for accurate location matching.
                   </p>
+                </div>
+              ) : question.type === 'range' ? (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-lg md:text-xl font-extrabold text-navy dark:text-white">
+                      {formatINR(budgetMin)} – {budgetMax >= BUDGET_SLIDER_MAX ? `${formatINR(BUDGET_SLIDER_MAX)}+` : formatINR(budgetMax)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setBudgetManual(!budgetManual)}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      {budgetManual ? 'Use slider instead' : 'Enter exact amount'}
+                    </button>
+                  </div>
+
+                  {budgetManual ? (
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 block">Min (₹)</label>
+                        <input
+                          type="number"
+                          value={budgetMin}
+                          min={0}
+                          onChange={(e) => setBudgetMin(Math.max(0, Number(e.target.value) || 0))}
+                          className="w-full h-12 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 block">Max (₹)</label>
+                        <input
+                          type="number"
+                          value={budgetMax}
+                          min={0}
+                          onChange={(e) => setBudgetMax(Math.max(0, Number(e.target.value) || 0))}
+                          className="w-full h-12 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative h-2 mt-8 mb-2">
+                      <div className="absolute inset-0 rounded-full bg-gray-200 dark:bg-navy-800" />
+                      <div
+                        className="absolute h-full rounded-full bg-primary"
+                        style={{
+                          left: `${((budgetMin - BUDGET_SLIDER_MIN) / (BUDGET_SLIDER_MAX - BUDGET_SLIDER_MIN)) * 100}%`,
+                          right: `${100 - ((budgetMax - BUDGET_SLIDER_MIN) / (BUDGET_SLIDER_MAX - BUDGET_SLIDER_MIN)) * 100}%`,
+                        }}
+                      />
+                      <input
+                        type="range"
+                        min={BUDGET_SLIDER_MIN}
+                        max={BUDGET_SLIDER_MAX}
+                        step={BUDGET_STEP}
+                        value={budgetMin}
+                        onChange={(e) => setBudgetMin(Math.min(Number(e.target.value), budgetMax - BUDGET_STEP))}
+                        className="range-thumb absolute w-full top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none"
+                      />
+                      <input
+                        type="range"
+                        min={BUDGET_SLIDER_MIN}
+                        max={BUDGET_SLIDER_MAX}
+                        step={BUDGET_STEP}
+                        value={budgetMax}
+                        onChange={(e) => setBudgetMax(Math.max(Number(e.target.value), budgetMin + BUDGET_STEP))}
+                        className="range-thumb absolute w-full top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none"
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500 mt-3">
+                    <span>{formatINR(BUDGET_SLIDER_MIN)}</span>
+                    <span>{formatINR(BUDGET_SLIDER_MAX)}+</span>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
