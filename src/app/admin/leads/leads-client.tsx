@@ -586,7 +586,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                 </TableRow>
               ) : paginatedLeads.map((lead: any) => (
                 <TableRow key={lead.id} className={selectedIds.has(lead.id) ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}>
-                  <TableCell>
+                  <TableCell className="align-top py-3">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(lead.id)}
@@ -594,14 +594,14 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                       className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
                     />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs font-medium">
+                  <TableCell className="align-top py-3 whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs font-medium">
                     {new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top py-3">
                     <div className="font-medium text-navy dark:text-white text-sm">{lead.property?.title || 'General Enquiry'}</div>
                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lead.property?.location_address}</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top py-3">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium text-navy dark:text-white text-sm">{lead.name}</span>
                       {(() => {
@@ -617,28 +617,32 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lead.phone}</div>
                     <div className="text-xs text-gray-400 dark:text-gray-500">{lead.email}</div>
                   </TableCell>
-                  <TableCell className="min-w-[200px]">
-                    {lead.budget_hint && (
-                      <span className="inline-block bg-teal-50 dark:bg-teal-950/40 text-teal-700 font-bold text-[10px] px-2 py-0.5 rounded-md mb-1">
-                        {lead.budget_hint}
-                      </span>
-                    )}
-                    <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2" title="Raw message from the visitor — admin only, agent never sees this">{lead.message || '—'}</div>
-                    <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
-                      <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Agent Sees</label>
-                      <input
-                        key={lead.id + (lead.agent_message || '')}
-                        defaultValue={lead.agent_message || ''}
-                        placeholder="Blank = agent sees nothing"
-                        onBlur={(e) => {
-                          if (e.target.value !== (lead.agent_message || '')) handleSetAgentMessage(lead.id, e.target.value)
-                        }}
-                        className="w-full h-7 px-2 mt-0.5 rounded-md border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      />
+                  <TableCell className="align-top py-3 min-w-[220px]">
+                    <div className="space-y-1.5">
+                      {lead.budget_hint && (
+                        <span className="inline-block bg-teal-50 dark:bg-teal-950/40 text-teal-700 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                          {lead.budget_hint}
+                        </span>
+                      )}
+                      <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2" title="Raw message from the visitor — admin only, agent never sees this">
+                        {lead.message || <span className="text-gray-300 dark:text-gray-600 italic">No message</span>}
+                      </p>
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Agent Sees</label>
+                        <input
+                          key={lead.id + (lead.agent_message || '')}
+                          defaultValue={lead.agent_message || ''}
+                          placeholder="Blank = agent sees nothing"
+                          onBlur={(e) => {
+                            if (e.target.value !== (lead.agent_message || '')) handleSetAgentMessage(lead.id, e.target.value)
+                          }}
+                          className="w-full h-7 px-2 mt-0.5 rounded-md border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
                     </div>
                   </TableCell>
                   {/* Agent Assign Select */}
-                  <TableCell>
+                  <TableCell className="align-top py-3">
                     <select
                       value={lead.assigned_agent_id || lead.assigned_agent?.id || ''}
                       onChange={(e) => handleAgentAssign(lead.id, e.target.value)}
@@ -653,7 +657,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                     </select>
                   </TableCell>
                   {/* Status Select */}
-                  <TableCell>
+                  <TableCell className="align-top py-3">
                     <select
                       value={lead.status || 'new'}
                       onChange={(e) => handleStatusChange(lead.id, e.target.value)}
@@ -671,7 +675,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top py-3">
                     <button
                       onClick={() => handleToggleAgentVisibility(lead.id, !(lead.visible_to_agent ?? true))}
                       className={`h-8 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
@@ -685,7 +689,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                       {(lead.visible_to_agent ?? true) ? 'Visible' : 'Hidden'}
                     </button>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="align-top py-3 text-right">
                     <button
                       onClick={() => handleDeleteLead(lead.id, lead.name)}
                       className="text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 h-8 px-2.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1"

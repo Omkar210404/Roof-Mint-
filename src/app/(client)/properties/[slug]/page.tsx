@@ -83,6 +83,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLoginGate, setShowLoginGate] = useState(false);
   const [enquiryPrefill, setEnquiryPrefill] = useState({ name: '', phone: '', email: '' });
+  // Defaults to true (the existing "skip the form, auto-submit" behavior)
+  // so there's no race if someone clicks Enquire before this resolves —
+  // only flips to false once we've confirmed this account has zero prior
+  // enquiries anywhere, which is what actually unlocks showing the form.
+  const [hasPriorEnquiry, setHasPriorEnquiry] = useState(true);
   const [showWhatsAppPhoneModal, setShowWhatsAppPhoneModal] = useState(false);
   const [whatsappPhoneInput, setWhatsappPhoneInput] = useState('');
   const [whatsappPhoneError, setWhatsappPhoneError] = useState<string | null>(null);
@@ -105,6 +110,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
         phone: profile?.phone || '',
         email: data.user.email || '',
       });
+
+      const { count } = await supabase
+        .from('enquiries')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', data.user.id);
+      setHasPriorEnquiry(!!count && count > 0);
     });
   }, []);
 
@@ -233,6 +244,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     try {
       await submitEnquiry(fd);
       setEnquirySubmitted(true);
+      setHasPriorEnquiry(true);
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : '';
@@ -242,8 +254,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     setSubmitting(false);
   };
 
-  // Once we already have valid saved contact details for this user, skip
-  // asking again on every property — submit straight away using them.
+  // Once we already have valid saved contact details AND this account has
+  // submitted at least one enquiry before, skip asking again on every
+  // property — submit straight away using them. A brand-new signup already
+  // has name+phone from the signup form, so without the prior-enquiry
+  // check this would auto-submit with no message/budget on someone's
+  // very first enquiry ever, before they'd had any chance to see the form.
   const openEnquiry = async () => {
     if (requireLogin()) return;
 
@@ -252,8 +268,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
     fd.append('phone', enquiryPrefill.phone);
     fd.append('email', enquiryPrefill.email);
 
-    if (validateEnquiry(fd)) {
-      // No usable saved details yet (first time, or an incomplete profile) — ask once.
+    if (validateEnquiry(fd) || !hasPriorEnquiry) {
+      // No usable saved details yet (first time, or an incomplete profile),
+      // or this is genuinely this account's first-ever enquiry — show the
+      // form instead of silently auto-submitting with nothing in it.
       setShowEnquiryModal(true);
       return;
     }
