@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Send, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { saveOnboardingPreferences, getLiveMatchCount } from '../actions';
+import { createClient } from '@/utils/supabase/client';
 
 const questions = [
   {
@@ -105,6 +106,11 @@ export default function AIQuestionnairePage() {
   const [error, setError] = useState<string | null>(null);
   const [matchCount, setMatchCount] = useState<number | null>(null);
   const [matchCountLoading, setMatchCountLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user));
+  }, []);
 
   const question = questions[currentStep];
   const progress = ((currentStep + 1) / questions.length) * 100;
@@ -167,32 +173,53 @@ export default function AIQuestionnairePage() {
     setIsSubmitting(true);
     setError(null);
 
-    const fd = new FormData();
-    fd.append('full_name', '');
-    fd.append('phone', '');
-    fd.append('pref_budget_min', String(budgetMin));
     // Slider maxes out at 5Cr meaning "5Cr or more" — no upper cap in that case.
-    fd.append('pref_budget_max', budgetMax >= BUDGET_SLIDER_MAX ? '' : String(budgetMax));
+    const budgetMaxVal = budgetMax >= BUDGET_SLIDER_MAX ? null : budgetMax;
 
-    Object.entries(answers).forEach(([key, val]) => {
-      if (key === 'pref_amenities') {
-        fd.append(key, JSON.stringify(val));
-      } else if (Array.isArray(val)) {
-        fd.append(key, val.join(','));
-      } else {
-        fd.append(key, val);
+    // Signed-in: save to their profile as before, then show results.
+    if (isLoggedIn) {
+      const fd = new FormData();
+      fd.append('full_name', '');
+      fd.append('phone', '');
+      fd.append('pref_budget_min', String(budgetMin));
+      fd.append('pref_budget_max', budgetMaxVal ? String(budgetMaxVal) : '');
+
+      Object.entries(answers).forEach(([key, val]) => {
+        if (key === 'pref_amenities') {
+          fd.append(key, JSON.stringify(val));
+        } else if (Array.isArray(val)) {
+          fd.append(key, val.join(','));
+        } else {
+          fd.append(key, val);
+        }
+      });
+
+      const result = await saveOnboardingPreferences(fd);
+
+      if (result?.error) {
+        setError(result.error);
+        setIsSubmitting(false);
+        return;
       }
-    });
 
-    const result = await saveOnboardingPreferences(fd);
-
-    if (result?.error) {
-      setError(result.error);
-      setIsSubmitting(false);
+      router.push('/ai-results');
       return;
     }
 
-    router.push('/ai-results');
+    // Not signed in — rather than a dead-end "not logged in" error after
+    // 10 questions, show results computed straight from these answers.
+    // Nothing gets saved; they're only asked to sign in if they later try
+    // to save a property or send an enquiry.
+    const params = new URLSearchParams({ guest: '1', budget_min: String(budgetMin) });
+    if (budgetMaxVal) params.set('budget_max', String(budgetMaxVal));
+    if (answers.pref_bhk) params.set('bhk', String(answers.pref_bhk));
+    if (answers.pref_property_type) params.set('property_type', String(answers.pref_property_type));
+    if (answers.pref_listing_type) params.set('listing_type', String(answers.pref_listing_type));
+    if (answers.pref_location) params.set('location', String(answers.pref_location));
+    if (answers.pref_ownership) params.set('ownership', String(answers.pref_ownership));
+    if (answers.pref_furnishing) params.set('furnishing', String(answers.pref_furnishing));
+
+    router.push(`/ai-results?${params.toString()}`);
   };
 
   return (

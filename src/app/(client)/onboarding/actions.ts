@@ -119,18 +119,39 @@ export async function saveOnboardingPreferences(formData: FormData) {
   return { success: true }
 }
 
-export async function getAIFilteredProperties() {
+type AIPreferenceFilters = {
+  pref_budget_min: number | null
+  pref_budget_max: number | null
+  pref_location: string | null
+  pref_bhk: number | null
+  pref_property_type: string | null
+  pref_listing_type: string | null
+  pref_ownership: string | null
+  pref_furnishing: string | null
+}
+
+// guestFilters lets a signed-out visitor see AI results computed straight
+// from their in-memory questionnaire answers, with nothing saved to a
+// profile — they only need an account once they actually want to save
+// preferences or contact an agent, not just to see what matches. When
+// omitted, falls back to the signed-in user's saved profile as before.
+export async function getAIFilteredProperties(guestFilters?: AIPreferenceFilters) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) return { properties: [], filters: null }
+  let profile: AIPreferenceFilters | null = guestFilters || null
 
-  // Get user preferences
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('pref_budget_min, pref_budget_max, pref_location, pref_bhk, pref_property_type, pref_listing_type, pref_ownership, pref_furnishing')
-    .eq('id', user.id)
-    .single()
+  if (!profile) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { properties: [], filters: null }
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('pref_budget_min, pref_budget_max, pref_location, pref_bhk, pref_property_type, pref_listing_type, pref_ownership, pref_furnishing')
+      .eq('id', user.id)
+      .single()
+
+    profile = data
+  }
 
   if (!profile) return { properties: [], filters: null }
 

@@ -1,10 +1,27 @@
-import { Info, ArrowLeft, ArrowRight, SearchX, LayoutGrid } from 'lucide-react';
+import { Info, ArrowLeft, ArrowRight, SearchX, LayoutGrid, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { getAIFilteredProperties } from '../onboarding/actions';
 import { HomePropertyCards } from '../home-cards';
 
-export default async function AIResultsPage() {
-  const { properties, filters } = await getAIFilteredProperties();
+export default async function AIResultsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const params = await searchParams;
+
+  // A signed-out visitor's answers arrive as URL params (nothing saved to a
+  // profile since there isn't one yet) rather than being read back off a
+  // saved profile — see the "guest" flag set by handleFinish() in the
+  // questionnaire when there's no logged-in user at submit time.
+  const guestFilters = params.guest === '1' ? {
+    pref_budget_min: params.budget_min ? Number(params.budget_min) : null,
+    pref_budget_max: params.budget_max ? Number(params.budget_max) : null,
+    pref_location: params.location || null,
+    pref_bhk: params.bhk ? Number(params.bhk) : null,
+    pref_property_type: params.property_type || null,
+    pref_listing_type: params.listing_type || null,
+    pref_ownership: params.ownership || null,
+    pref_furnishing: params.furnishing || null,
+  } : undefined;
+
+  const { properties, filters } = await getAIFilteredProperties(guestFilters);
 
   const hasFilters = !!filters;
   const filterSummary = filters ? [
@@ -33,6 +50,23 @@ export default async function AIResultsPage() {
           </div>
         </div>
       </div>
+
+      {/* Guest notice — results shown without saving anything, since
+          they weren't signed in when they finished the questionnaire */}
+      {guestFilters && (
+        <div className="px-4 pt-3">
+          <Link
+            href="/login"
+            className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2.5 hover:bg-amber-100 dark:hover:bg-amber-950/60 transition-colors"
+          >
+            <LogIn className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span className="flex-1 text-xs text-amber-800 dark:text-amber-300 font-medium">
+              These matches aren't saved yet — sign in to keep your preferences and enquire about a property.
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+          </Link>
+        </div>
+      )}
 
       {/* Applied Filters */}
       {filterSummary.length > 0 && (
