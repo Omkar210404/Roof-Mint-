@@ -20,7 +20,7 @@ type SortDir = 'asc' | 'desc';
 
 function formatLastActive(dateStr: string | null) {
   if (!dateStr) return null;
-  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(dateStr).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initialAgents: any[]; initialPlanTiers: AgentPlanTier[] }) {

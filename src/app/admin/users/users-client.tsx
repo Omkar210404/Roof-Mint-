@@ -26,6 +26,12 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatDateTime(dateStr: string) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
 function getMonthKey(dateStr: string) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -460,7 +466,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
                         activity data the Privacy Policy already says is
                         kept "to operate the platform securely" */}
                     <TableCell className="text-xs text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
-                      {user.last_sign_in_at ? formatDate(user.last_sign_in_at) : <span className="text-gray-400 dark:text-gray-500 italic">Never signed in</span>}
+                      {user.last_sign_in_at ? formatDateTime(user.last_sign_in_at) : <span className="text-gray-400 dark:text-gray-500 italic">Never signed in</span>}
                     </TableCell>
 
                     {/* Status */}
