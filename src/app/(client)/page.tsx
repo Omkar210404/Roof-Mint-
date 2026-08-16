@@ -4,45 +4,54 @@ import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { getPublicProperties } from './properties/actions';
 import { HomePropertyCards } from './home-cards';
 import { FloatingAIButton } from '@/components/floating-ai-button';
+import { checkProfileComplete } from './onboarding/actions';
 
 export default async function HomePage() {
-  const properties = await getPublicProperties(12);
+  const [properties, profileStatus] = await Promise.all([
+    getPublicProperties(12),
+    checkProfileComplete(),
+  ]);
+  const hasCompletedAiMatch = profileStatus.loggedIn && profileStatus.complete;
 
   return (
     <div className="bg-background min-h-screen relative">
-      {/* 🌟 TOP AI Search Hero Banner (Prominently placed at the top) */}
-      <div className="px-4 pt-4 pb-2 md:px-8 md:pt-6 md:pb-4">
-        <div className="bg-gradient-to-r from-navy via-slate-900 to-teal-950 text-white rounded-2xl p-4 md:p-6 shadow-md border border-teal-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
-          {/* Subtle background glow */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* 🌟 TOP AI Search Hero Banner — only for people who haven't already
+          set their AI preferences, so it doesn't keep pitching the same
+          thing to someone who's already done it. */}
+      {!hasCompletedAiMatch && (
+        <div className="px-4 pt-4 pb-2 md:px-8 md:pt-6 md:pb-4">
+          <div className="bg-gradient-to-r from-navy via-slate-900 to-teal-950 text-white rounded-2xl p-4 md:p-6 shadow-md border border-teal-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+            {/* Subtle background glow */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="flex items-start sm:items-center gap-3 md:gap-3.5 relative z-10 w-full md:w-auto">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center flex-shrink-0 shadow-inner mt-0.5 sm:mt-0">
-              <Image src="/images/roofmintai.png" alt="AI" width={36} height={36} className="w-8 h-8 md:w-10 md:h-10 rounded-full" priority />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h2 className="text-sm md:text-xl font-extrabold text-white leading-tight">Find Your Dream Home with AI</h2>
-                <span className="inline-flex items-center text-[10px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shrink-0">
-                  AI Finder ✨
-                </span>
+            <div className="flex items-start sm:items-center gap-3 md:gap-3.5 relative z-10 w-full md:w-auto">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center flex-shrink-0 shadow-inner mt-0.5 sm:mt-0">
+                <Image src="/images/roofmintai.png" alt="AI" width={36} height={36} className="w-8 h-8 md:w-10 md:h-10 rounded-full" priority />
               </div>
-              <p className="text-xs md:text-sm text-slate-300 leading-normal">
-                Answer 3 quick questions and get 100% personalized property matches
-              </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 className="text-sm md:text-xl font-extrabold text-white leading-tight">Find Your Dream Home with AI</h2>
+                  <span className="inline-flex items-center text-[10px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shrink-0">
+                    AI Finder ✨
+                  </span>
+                </div>
+                <p className="text-xs md:text-sm text-slate-300 leading-normal">
+                  Answer 3 quick questions and get 100% personalized property matches
+                </p>
+              </div>
             </div>
-          </div>
 
-          <Link
-            href="/onboarding/ai"
-            className="h-11 px-5 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-md hover:shadow-teal-500/25 flex items-center gap-2 shrink-0 active:scale-[0.98] relative z-10 w-full md:w-auto justify-center"
-          >
-            <Sparkles className="w-4 h-4 text-teal-200" />
-            Launch AI Matchmaker
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+            <Link
+              href="/onboarding/ai"
+              className="h-11 px-5 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-md hover:shadow-teal-500/25 flex items-center gap-2 shrink-0 active:scale-[0.98] relative z-10 w-full md:w-auto justify-center"
+            >
+              <Sparkles className="w-4 h-4 text-teal-200" />
+              Launch AI Matchmaker
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Section Header */}
       <div className="px-4 pt-2 pb-2 md:px-8 md:pt-4 md:pb-3">
