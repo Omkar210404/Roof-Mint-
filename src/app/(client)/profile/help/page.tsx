@@ -212,9 +212,12 @@ export default function HelpPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Your Name</label>
+                  <label htmlFor="help-name" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Your Name</label>
                   <input
+                    id="help-name"
+                    name="name"
                     type="text"
+                    autoComplete="name"
                     required
                     value={name}
                     onChange={e => setName(e.target.value)}
@@ -224,9 +227,12 @@ export default function HelpPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Phone Number</label>
+                  <label htmlFor="help-phone" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Phone Number</label>
                   <input
+                    id="help-phone"
+                    name="phone"
                     type="tel"
+                    autoComplete="tel"
                     required
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
@@ -236,9 +242,12 @@ export default function HelpPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Email Address</label>
+                  <label htmlFor="help-email" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Email Address</label>
                   <input
+                    id="help-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="rohit@example.com"

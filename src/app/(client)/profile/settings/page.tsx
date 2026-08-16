@@ -148,11 +148,14 @@ export default function SettingsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Your Full Name</label>
+              <label htmlFor="settings-full-name" className={labelCls}>Your Full Name</label>
               <div className="relative">
                 <User className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
+                  id="settings-full-name"
+                  name="fullName"
                   type="text"
+                  autoComplete="name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Rohit Sharma"
@@ -162,11 +165,14 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className={labelCls}>Phone Number (For Site Visit Concierge)</label>
+              <label htmlFor="settings-phone" className={labelCls}>Phone Number (For Site Visit Concierge)</label>
               <div className="relative">
                 <Phone className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
+                  id="settings-phone"
+                  name="phone"
                   type="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
@@ -176,10 +182,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className={labelCls}>Email Address (Account Login)</label>
+              <label htmlFor="settings-email" className={labelCls}>Email Address (Account Login)</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
+                  id="settings-email"
+                  name="email"
                   type="email"
                   disabled
                   value={email}
@@ -213,10 +221,12 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className={labelCls}>Preferred Locality / Area</label>
+              <label htmlFor="settings-location" className={labelCls}>Preferred Locality / Area</label>
               <div className="relative">
                 <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
+                  id="settings-location"
+                  name="location"
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}

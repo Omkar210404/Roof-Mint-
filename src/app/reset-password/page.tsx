@@ -75,7 +75,10 @@ export default function ResetPasswordPage() {
                 <Lock className="w-4 h-4" />
               </div>
               <input
+                id="reset-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 placeholder="New password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -98,7 +101,10 @@ export default function ResetPasswordPage() {
                 <Lock className="w-4 h-4" />
               </div>
               <input
+                id="reset-confirm-password"
+                name="confirmPassword"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

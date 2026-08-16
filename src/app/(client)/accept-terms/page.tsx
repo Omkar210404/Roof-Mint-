@@ -90,6 +90,8 @@ export default function AcceptTermsPage() {
 
       <label className="flex items-start gap-2.5 cursor-pointer w-full mb-6 p-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800">
         <input
+          id="accept-terms-checkbox"
+          name="acceptTerms"
           type="checkbox"
           checked={checked}
           onChange={(e) => setChecked(e.target.checked)}

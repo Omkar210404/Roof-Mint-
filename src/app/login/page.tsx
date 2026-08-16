@@ -180,7 +180,10 @@ export default function LoginPage() {
               <Mail className="w-4 h-4" />
             </div>
             <input
+              id="login-email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -195,7 +198,10 @@ export default function LoginPage() {
               <Lock className="w-4 h-4" />
             </div>
             <input
+              id="login-password"
+              name="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

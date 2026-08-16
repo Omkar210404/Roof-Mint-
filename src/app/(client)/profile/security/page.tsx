@@ -136,11 +136,14 @@ export default function SecurityPage() {
           <form onSubmit={handlePasswordUpdate} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>New Password</label>
+                <label htmlFor="security-new-password" className={labelCls}>New Password</label>
                 <div className="relative">
                   <Key className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
+                    id="security-new-password"
+                    name="newPassword"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -152,11 +155,14 @@ export default function SecurityPage() {
               </div>
 
               <div>
-                <label className={labelCls}>Confirm New Password</label>
+                <label htmlFor="security-confirm-password" className={labelCls}>Confirm New Password</label>
                 <div className="relative">
                   <Key className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
+                    id="security-confirm-password"
+                    name="confirmPassword"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

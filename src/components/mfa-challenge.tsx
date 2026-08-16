@@ -62,8 +62,11 @@ export function MfaChallenge({ factorId, onVerified }: { factorId: string; onVer
       )}
 
       <input
+        id="mfa-challenge-code"
+        name="otp"
         type="text"
         inputMode="numeric"
+        autoComplete="one-time-code"
         maxLength={6}
         autoFocus
         value={code}

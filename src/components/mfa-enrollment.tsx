@@ -192,10 +192,13 @@ export function MfaEnrollment() {
             </p>
           )}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">6-digit code</label>
+            <label htmlFor="mfa-enroll-code" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">6-digit code</label>
             <input
+              id="mfa-enroll-code"
+              name="otp"
               type="text"
               inputMode="numeric"
+              autoComplete="one-time-code"
               maxLength={6}
               value={verifyCode}
               onChange={e => setVerifyCode(e.target.value.replace(/\D/g, ''))}

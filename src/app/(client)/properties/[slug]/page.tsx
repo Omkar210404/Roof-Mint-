@@ -746,9 +746,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
             )}
             <form onSubmit={handleWhatsAppPhoneSubmit} className="space-y-3">
               <input
+                id="whatsapp-phone"
+                name="phone"
                 autoFocus
                 type="tel"
                 inputMode="numeric"
+                autoComplete="tel"
                 maxLength={13}
                 value={whatsappPhoneInput}
                 onChange={(e) => setWhatsappPhoneInput(e.target.value)}
