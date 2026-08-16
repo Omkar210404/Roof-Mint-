@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MfaChallenge } from '@/components/mfa-challenge';
 import { RoofmintLogo } from '@/components/roofmint-logo';
+import { ThemeImage } from '@/components/theme-image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -121,14 +121,7 @@ export default function LoginPage() {
           <Link href="/">
             <RoofmintLogo width={240} height={64} className="mb-12 h-16 w-auto" priority />
           </Link>
-          <Image
-            src="/images/home1.png"
-            alt="Find your perfect home"
-            width={500}
-            height={400}
-            className="w-full max-w-lg h-auto mb-8 drop-shadow-sm"
-            priority
-          />
+          <ThemeImage lightSrc="/images/home1.png" darkSrc="/images/home1-dark.png" alt="Find your perfect home" width={500} height={400} className="w-full max-w-lg h-auto mb-8 drop-shadow-sm" priority />
           <h2 className="text-3xl font-bold text-navy dark:text-white text-center mb-4">Discover Your Dream Home</h2>
           <p className="text-gray-600 dark:text-gray-300 text-center max-w-md text-lg">AI finds. You decide. Join thousands of users finding their perfect home match.</p>
         </div>
@@ -151,14 +144,7 @@ export default function LoginPage() {
           </div>
 
           <div className="md:hidden flex justify-center px-8 py-2">
-            <Image
-              src="/images/home1.png"
-              alt="Find your perfect home"
-              width={320}
-              height={180}
-              className="w-full max-w-[280px] h-auto"
-              priority
-            />
+            <ThemeImage lightSrc="/images/home1.png" darkSrc="/images/home1-dark.png" alt="Find your perfect home" width={320} height={180} className="w-full max-w-[280px] h-auto" priority />
           </div>
 
           {/* Login Form Header */}
