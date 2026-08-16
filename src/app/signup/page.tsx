@@ -24,6 +24,10 @@ function validateSignupForm(data: { fullName: string; email: string; mobile: str
   const name = data.fullName.trim();
   if (name.length < 2) return 'Please enter your full name.';
   if (!/[A-Za-z]/.test(name)) return 'Name must contain letters, not just numbers or symbols.';
+  // Requires at least a first and last name (each with real letters), not
+  // just a single word — "Full Name" should mean full name.
+  const nameParts = name.split(/\s+/).filter(part => /[A-Za-z]/.test(part));
+  if (nameParts.length < 2) return 'Please enter your first and last name.';
 
   if (!EMAIL_PATTERN.test(data.email.trim())) return 'Please enter a valid email address.';
 
