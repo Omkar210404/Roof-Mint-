@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { MfaChallenge } from '@/components/mfa-challenge';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 // Landing point when proxy.ts finds a valid aal1 session on an account
 // that has 2FA enabled, trying to reach a protected admin/agent route —
@@ -68,7 +68,7 @@ export default function MfaVerifyPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col items-center justify-center px-6 max-w-[480px] mx-auto">
       <Link href="/" className="mb-8">
-        <Image src="/images/logo.png" alt="Roofmint" width={160} height={42} className="h-10 w-auto" priority />
+        <RoofmintLogo width={160} height={42} className="h-10 w-auto" priority />
       </Link>
       <div className="w-full">
         {factorId && <MfaChallenge factorId={factorId} onVerified={routeByRole} />}

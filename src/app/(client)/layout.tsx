@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
 import { NotificationBell } from "@/components/notification-bell";
+import { RoofmintLogo } from "@/components/roofmint-logo";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -305,9 +306,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
                 className="absolute inset-0 object-contain h-7 w-7 opacity-100 md:group-hover:opacity-0 transition-opacity duration-75"
                 priority
               />
-              <Image
-                src="/images/logo.png"
-                alt="Roofmint"
+              <RoofmintLogo
                 width={130}
                 height={36}
                 className="absolute left-0 top-1/2 -translate-y-1/2 object-contain h-10 w-auto opacity-0 md:group-hover:opacity-100 transition-opacity duration-100"

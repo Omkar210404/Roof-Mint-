@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Sparkles, LayoutGrid, CheckCircle, ArrowRight, Shield, Award, Check } from 'lucide-react';
 import { useState } from 'react';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 export default function OnboardingPage() {
   const [selectedMode, setSelectedMode] = useState<'ai' | 'browse' | null>('ai');
@@ -14,14 +15,7 @@ export default function OnboardingPage() {
         {/* Left Side (Desktop Hero - Clean White Theme) */}
         <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 p-10 flex-col justify-between border-b md:border-b-0 md:border-r border-gray-100/60 dark:border-gray-800/60 relative">
           <div>
-            <Image
-              src="/images/logo.png"
-              alt="Roofmint"
-              width={160}
-              height={44}
-              className="h-10 w-auto mb-6 object-contain"
-              priority
-            />
+            <RoofmintLogo width={160} height={44} className="h-10 w-auto mb-6 object-contain" priority />
             <div className="inline-flex items-center gap-1.5 bg-teal-50 dark:bg-teal-950/40 text-primary border border-teal-100 dark:border-teal-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
               <Shield className="w-3.5 h-3.5" />
               Complete your profile to continue
@@ -57,14 +51,7 @@ export default function OnboardingPage() {
 
         {/* Mobile Header (Mobile Only) */}
         <div className="md:hidden px-6 pt-6 text-center bg-white dark:bg-navy-900">
-          <Image
-            src="/images/logo.png"
-            alt="Roofmint"
-            width={140}
-            height={38}
-            className="h-9 w-auto mx-auto mb-4 object-contain"
-            priority
-          />
+          <RoofmintLogo width={140} height={38} className="h-9 w-auto mx-auto mb-4 object-contain" priority />
           <div className="inline-flex items-center gap-1.5 bg-teal-50 dark:bg-teal-950/40 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-3">
             <Shield className="w-3.5 h-3.5" />
             Complete your profile to continue

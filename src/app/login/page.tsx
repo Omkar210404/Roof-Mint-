@@ -8,6 +8,7 @@ import { Mail, Lock, Eye, EyeOff, Shield, Sparkles, CheckCircle, X } from 'lucid
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MfaChallenge } from '@/components/mfa-challenge';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -118,14 +119,7 @@ export default function LoginPage() {
       <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 flex-col items-center justify-start pt-4 lg:pt-8 px-8 lg:px-16 pb-12">
         <div className="flex flex-col items-center w-full max-w-lg">
           <Link href="/">
-            <Image
-              src="/images/logo.png"
-              alt="Roofmint"
-              width={240}
-              height={64}
-              className="mb-12 h-16 w-auto"
-              priority
-            />
+            <RoofmintLogo width={240} height={64} className="mb-12 h-16 w-auto" priority />
           </Link>
           <Image
             src="/images/home1.png"
@@ -150,14 +144,7 @@ export default function LoginPage() {
           <div className="md:hidden text-center pb-4">
             <div className="flex justify-center mb-1">
               <Link href="/">
-                <Image
-                  src="/images/logo.png"
-                  alt="Roofmint"
-                  width={180}
-                  height={48}
-                  className="h-12 w-auto"
-                  priority
-                />
+                <RoofmintLogo width={180} height={48} className="h-12 w-auto" priority />
               </Link>
             </div>
             <p className="text-sm font-medium text-primary">AI finds. You decide. Perfect Home.</p>

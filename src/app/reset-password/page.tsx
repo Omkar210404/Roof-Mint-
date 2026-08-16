@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col max-w-[480px] mx-auto w-full px-6 py-8 justify-center">
       <div className="flex justify-center mb-8">
-        <Image src="/images/logo.png" alt="Roofmint" width={160} height={42} className="h-10 w-auto" priority />
+        <RoofmintLogo width={160} height={42} className="h-10 w-auto" priority />
       </div>
 
       {success ? (

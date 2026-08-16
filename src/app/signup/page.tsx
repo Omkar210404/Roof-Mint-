@@ -8,6 +8,7 @@ import { Mail, Lock, Eye, EyeOff, User, Phone, Shield, Sparkles, CheckCircle, X 
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -131,14 +132,7 @@ export default function SignupPage() {
       <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 flex-col items-center justify-start pt-4 lg:pt-8 px-8 lg:px-16 pb-12">
         <div className="flex flex-col items-center w-full max-w-lg">
           <Link href="/">
-            <Image
-              src="/images/logo.png"
-              alt="Roofmint"
-              width={240}
-              height={64}
-              className="mb-12 h-16 w-auto"
-              priority
-            />
+            <RoofmintLogo width={240} height={64} className="mb-12 h-16 w-auto" priority />
           </Link>
           <Image
             src="/images/home2.png"
@@ -163,7 +157,7 @@ export default function SignupPage() {
           <div className="md:hidden text-center pb-4">
             <div className="flex justify-center mb-1">
               <Link href="/">
-                <Image src="/images/logo.png" alt="Roofmint" width={160} height={42} className="h-10 w-auto" style={{ width: 'auto' }} priority />
+                <RoofmintLogo width={160} height={42} className="h-10 w-auto" priority />
               </Link>
             </div>
             <p className="text-xs font-medium text-primary">AI finds. You decide. Perfect Home.</p>

@@ -1,12 +1,12 @@
 'use client';
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History, Menu, X } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RoofmintLogo } from "@/components/roofmint-logo";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -44,13 +44,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <aside className="w-56 bg-white dark:bg-navy-900 border-r border-gray-100/60 dark:border-gray-800/60 hidden md:flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-gray-100/60 dark:border-gray-800/60">
           <Link href="/admin">
-            <Image
-              src="/images/logo.png"
-              alt="Roofmint"
-              width={140}
-              height={40}
-              className="h-12 w-auto"
-            />
+            <RoofmintLogo width={140} height={40} className="h-12 w-auto" />
           </Link>
         </div>
 
@@ -92,7 +86,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 overflow-y-auto">
         <header className="md:hidden sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 p-4 flex items-center justify-between">
           <Link href="/admin">
-            <Image src="/images/logo.png" alt="Roofmint" width={100} height={28} className="h-6 w-auto" />
+            <RoofmintLogo width={100} height={28} className="h-6 w-auto" />
           </Link>
           <button
             onClick={() => setMobileNavOpen(true)}
@@ -115,7 +109,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setMobileNavOpen(false)} />
           <div className="relative w-72 max-w-[80%] h-full bg-white dark:bg-navy-900 shadow-2xl flex flex-col">
             <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100/60 dark:border-gray-800/60 shrink-0">
-              <Image src="/images/logo.png" alt="Roofmint" width={120} height={32} className="h-8 w-auto" />
+              <RoofmintLogo width={120} height={32} className="h-8 w-auto" />
               <button
                 onClick={() => setMobileNavOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors"

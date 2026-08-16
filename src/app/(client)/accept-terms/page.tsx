@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { acceptTerms } from './actions';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 export default function AcceptTermsPage() {
   const router = useRouter();
@@ -70,7 +70,7 @@ export default function AcceptTermsPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col items-center justify-center px-6 max-w-[480px] mx-auto">
       <Link href="/" className="mb-6">
-        <Image src="/images/logo.png" alt="Roofmint" width={160} height={42} className="h-10 w-auto" priority />
+        <RoofmintLogo width={160} height={42} className="h-10 w-auto" priority />
       </Link>
 
       <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center mb-4">

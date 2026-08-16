@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { RoofmintLogo } from '@/components/roofmint-logo';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col max-w-[480px] mx-auto w-full px-6 py-8 justify-center">
       <div className="flex justify-center mb-8">
-        <Image src="/images/logo.png" alt="Roofmint" width={160} height={42} className="h-10 w-auto" priority />
+        <RoofmintLogo width={160} height={42} className="h-10 w-auto" priority />
       </div>
 
       {sent ? (
