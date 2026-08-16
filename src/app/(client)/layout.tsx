@@ -240,7 +240,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center justify-between gap-2 px-4 md:px-8 min-h-14 md:min-h-16 py-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <Link href="/" className="md:hidden shrink-0">
-              <ThemeImage lightSrc="/images/monogram.png" darkSrc="/images/monogram-dark.png" alt="Roofmint" width={30} height={30} className="h-7 w-7 object-contain" priority />
+              <ThemeImage lightSrc="/images/monogram.png" darkSrc="/images/monogram-dark.png" alt="Roofmint" width={40} height={40} className="h-10 w-10 object-contain" priority />
             </Link>
             <button
               onClick={() => setShowLocationModal(true)}
@@ -299,14 +299,14 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         <div className="flex md:flex-col items-center md:items-stretch justify-around md:justify-start px-2 md:px-3 h-16 md:h-full md:py-4 md:gap-1 md:w-16 md:group-hover:w-56 transition-[width] duration-100 ease-out">
           {/* Logo for Desktop — mini mark at rest, crossfades to the full wordmark on hover-expand */}
           <div className="hidden md:flex h-14 items-center justify-center md:group-hover:justify-start px-3 mb-2 border-b border-gray-100/60 dark:border-gray-800/60 shrink-0 overflow-hidden">
-            <Link href="/" className="relative shrink-0 w-7 h-7 md:group-hover:w-[130px] transition-[width] duration-100">
+            <Link href="/" className="relative shrink-0 w-9 h-9 md:group-hover:w-[130px] transition-[width] duration-100">
               <ThemeImage
                 lightSrc="/images/monogram.png"
                 darkSrc="/images/monogram-dark.png"
                 alt="Roofmint"
-                width={28}
-                height={28}
-                className="absolute inset-0 object-contain h-7 w-7 opacity-100 md:group-hover:opacity-0 transition-opacity duration-75"
+                width={36}
+                height={36}
+                className="absolute inset-0 object-contain h-9 w-9 opacity-100 md:group-hover:opacity-0 transition-opacity duration-75"
                 priority
               />
               <RoofmintLogo

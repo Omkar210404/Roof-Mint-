@@ -2,24 +2,17 @@
 
 import { useEffect, useState } from 'react';
 
-const DISPLAY_MS = 1600;
-const FADE_MS = 300;
+const DISPLAY_MS = 2800;
+const FADE_MS = 400;
 
-// Shown once per browser session (not once ever, not on every navigation) —
-// sessionStorage resets on a fresh tab/window, matching the same pattern
-// used for the first-visit location/login prompts in the client layout.
+// Shows on every full page load/reload (this component lives in a layout,
+// which only remounts on a hard navigation — moving between pages via
+// in-app links does not retrigger it).
 export function SplashScreen() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    let seen = false;
-    try { seen = sessionStorage.getItem('roofmint_splash_seen') === 'true'; } catch {}
-    if (seen) return;
-
-    setVisible(true);
-    try { sessionStorage.setItem('roofmint_splash_seen', 'true'); } catch {}
-
     const fadeTimer = setTimeout(() => setFading(true), DISPLAY_MS);
     const hideTimer = setTimeout(() => setVisible(false), DISPLAY_MS + FADE_MS);
     return () => {
