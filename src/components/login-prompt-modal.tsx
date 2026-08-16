@@ -8,13 +8,19 @@ export function LoginPromptModal({
   onClose,
   title = 'Login to Continue',
   message = 'Create a free account or log in to enquire, save properties, and get personalized AI matches.',
+  returnTo,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   message?: string;
+  // Path to return to after login (e.g. the property page that triggered
+  // this prompt), so logging in doesn't strand the user back on Home.
+  returnTo?: string;
 }) {
   if (!open) return null;
+
+  const loginHref = returnTo ? `/login?next=${encodeURIComponent(returnTo)}` : '/login';
 
   return (
     <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4">
@@ -38,7 +44,7 @@ export function LoginPromptModal({
 
         <div className="flex flex-col gap-2 pt-2">
           <Link
-            href="/login"
+            href={loginHref}
             onClick={onClose}
             className="w-full h-11 flex items-center justify-center bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-colors"
           >

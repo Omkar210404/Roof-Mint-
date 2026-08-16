@@ -728,6 +728,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ slug:
         onClose={() => setShowLoginGate(false)}
         title="Login to Enquire"
         message="So our agents can follow up with you directly, please login or create a free account before contacting them about this property."
+        returnTo={`/properties/${slug}`}
       />
 
       {/* One-field phone capture — shown only when the profile has no usable

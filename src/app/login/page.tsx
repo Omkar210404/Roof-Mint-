@@ -18,6 +18,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  // Where to send the user after a successful login instead of Home —
+  // e.g. the property page they were on when a login prompt interrupted
+  // them. Only relative in-app paths are honored, never a full URL, so
+  // this can't be turned into an open redirect.
+  const [nextPath, setNextPath] = useState<string | null>(null);
 
   // Read outcome hints from the URL directly (not useSearchParams, which
   // would force this static page into a Suspense boundary for no benefit).
@@ -27,6 +32,10 @@ export default function LoginPage() {
       setError('Your session expired after 20 minutes of inactivity. Please log in again.');
     } else if (params.get('error') === 'auth_failed') {
       setError('That login link failed or expired. Please try again.');
+    }
+    const next = params.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//')) {
+      setNextPath(next);
     }
   }, []);
 
@@ -51,7 +60,7 @@ export default function LoginPage() {
     } else if (!profile?.profile_completed) {
       router.push('/onboarding');
     } else {
-      router.push('/');
+      router.push(nextPath || '/');
     }
   };
 
@@ -97,10 +106,12 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     const supabase = createClient();
+    const callbackUrl = new URL('/auth/callback', window.location.origin);
+    if (nextPath) callbackUrl.searchParams.set('next', nextPath);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
       },
     });
   };

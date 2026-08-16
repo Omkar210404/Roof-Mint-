@@ -1,7 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn } from "lucide-react";
@@ -10,6 +9,7 @@ import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
 import { NotificationBell } from "@/components/notification-bell";
 import { RoofmintLogo } from "@/components/roofmint-logo";
+import { ThemeImage } from "@/components/theme-image";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -238,7 +238,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center justify-between gap-2 px-4 md:px-8 min-h-14 md:min-h-16 py-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <Link href="/" className="md:hidden shrink-0">
-              <Image src="/images/logo-icon.png" alt="Roofmint" width={30} height={30} className="h-7 w-7 object-contain" priority />
+              <ThemeImage lightSrc="/images/monogram.png" darkSrc="/images/monogram-dark.png" alt="Roofmint" width={30} height={30} className="h-7 w-7 object-contain" priority />
             </Link>
             <button
               onClick={() => setShowLocationModal(true)}
@@ -298,8 +298,9 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
           {/* Logo for Desktop — mini mark at rest, crossfades to the full wordmark on hover-expand */}
           <div className="hidden md:flex h-14 items-center justify-center md:group-hover:justify-start px-3 mb-2 border-b border-gray-100/60 dark:border-gray-800/60 shrink-0 overflow-hidden">
             <Link href="/" className="relative shrink-0 w-7 h-7 md:group-hover:w-[130px] transition-[width] duration-100">
-              <Image
-                src="/images/logo-icon.png"
+              <ThemeImage
+                lightSrc="/images/monogram.png"
+                darkSrc="/images/monogram-dark.png"
                 alt="Roofmint"
                 width={28}
                 height={28}

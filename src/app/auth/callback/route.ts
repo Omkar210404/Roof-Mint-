@@ -11,8 +11,11 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Explicit destinations (e.g. the password-reset flow) are honored as-is.
-      if (next) {
+      // Explicit destinations (e.g. the password-reset flow, or a property
+      // page a signed-out visitor was on) are honored as-is — but only
+      // relative in-app paths, never a full URL, so this can't become an
+      // open redirect.
+      if (next && next.startsWith('/') && !next.startsWith('//')) {
         return NextResponse.redirect(`${origin}${next}`)
       }
 
