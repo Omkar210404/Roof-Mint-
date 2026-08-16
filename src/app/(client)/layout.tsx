@@ -10,6 +10,7 @@ import { LoginPromptModal } from "@/components/login-prompt-modal";
 import { NotificationBell } from "@/components/notification-bell";
 import { RoofmintLogo } from "@/components/roofmint-logo";
 import { ThemeImage } from "@/components/theme-image";
+import { SplashScreen } from "@/components/splash-screen";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -233,6 +234,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background max-w-[480px] md:max-w-none mx-auto relative">
+      <SplashScreen />
       {/* Top App Bar */}
       <header className="sticky top-0 z-40 w-full bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 md:w-[calc(100%-4rem)] md:ml-16">
         <div className="flex items-center justify-between gap-2 px-4 md:px-8 min-h-14 md:min-h-16 py-2">
