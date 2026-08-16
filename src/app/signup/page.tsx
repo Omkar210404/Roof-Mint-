@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, User, Phone, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 import { RoofmintLogo } from '@/components/roofmint-logo';
+import { HomeSearchIllustration } from '@/components/home-search-illustration';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -134,14 +134,7 @@ export default function SignupPage() {
           <Link href="/">
             <RoofmintLogo width={240} height={64} className="mb-12 h-16 w-auto" priority />
           </Link>
-          <Image
-            src="/images/home2.png"
-            alt="Find your perfect home"
-            width={500}
-            height={400}
-            className="w-full max-w-lg h-auto mb-8 drop-shadow-sm"
-            priority
-          />
+          <HomeSearchIllustration width={500} height={400} className="w-full max-w-lg h-auto mb-8 drop-shadow-sm" priority />
           <h2 className="text-3xl font-bold text-navy dark:text-white text-center mb-4">Start Your Journey</h2>
           <p className="text-gray-600 dark:text-gray-300 text-center max-w-md text-lg">Create an account to save favorite properties, get personalized AI recommendations, and connect with top builders.</p>
         </div>

@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { Sparkles, LayoutGrid, CheckCircle, ArrowRight, Shield, Award, Check } from 'lucide-react';
 import { useState } from 'react';
 import { RoofmintLogo } from '@/components/roofmint-logo';
+import { HomeSearchIllustration } from '@/components/home-search-illustration';
 
 export default function OnboardingPage() {
   const [selectedMode, setSelectedMode] = useState<'ai' | 'browse' | null>('ai');
@@ -29,13 +29,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="my-6 flex justify-center">
-            <Image
-              src="/images/home2.png"
-              alt="AI Home Search"
-              width={260}
-              height={160}
-              className="w-full max-w-[240px] h-auto object-contain"
-            />
+            <HomeSearchIllustration width={260} height={160} className="w-full max-w-[240px] h-auto object-contain" />
           </div>
 
           <div className="flex items-center gap-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
@@ -60,13 +54,7 @@ export default function OnboardingPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400">Tell us your preferences so we can show you the best matches</p>
 
           <div className="flex justify-center py-4">
-            <Image
-              src="/images/home2.png"
-              alt="AI Home Search"
-              width={220}
-              height={140}
-              className="w-full max-w-[180px] h-auto object-contain"
-            />
+            <HomeSearchIllustration width={220} height={140} className="w-full max-w-[180px] h-auto object-contain" />
           </div>
         </div>
 
