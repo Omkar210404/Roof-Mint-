@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
@@ -5,6 +6,16 @@ import { getPublicProperties } from './properties/actions';
 import { HomePropertyCards } from './home-cards';
 import { FloatingAIButton } from '@/components/floating-ai-button';
 import { checkProfileComplete } from './onboarding/actions';
+
+export const metadata: Metadata = {
+  title: 'Roofmint — AI-Powered Property Search in India',
+  description: 'Discover verified apartments, villas, and plots with AI-personalized matches. Browse RERA-checked listings, get instant price-appreciation predictions, and connect directly with agents on Roofmint.',
+  openGraph: {
+    title: 'Roofmint — AI-Powered Property Search in India',
+    description: 'Discover verified apartments, villas, and plots with AI-personalized matches on Roofmint.',
+    type: 'website',
+  },
+};
 
 export default async function HomePage() {
   const [properties, profileStatus] = await Promise.all([
