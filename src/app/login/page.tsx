@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { MfaChallenge } from '@/components/mfa-challenge';
 import { RoofmintLogo } from '@/components/roofmint-logo';
 import { ThemeImage } from '@/components/theme-image';
+import { checkLoginRateLimit } from './rate-limit-actions';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,6 +69,13 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+
+    const { limited } = await checkLoginRateLimit();
+    if (limited) {
+      setError('Too many login attempts from this network. Please wait a few minutes and try again.');
+      setIsLoading(false);
+      return;
+    }
 
     const supabase = createClient();
 

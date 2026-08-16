@@ -229,7 +229,13 @@ export async function getUserEnquiries() {
 
 export async function searchProperties(query: string) {
   const supabase = await createClient()
-  
+
+  // Strip characters that carry meaning in PostgREST's .or() filter syntax
+  // (comma separates conditions, parens can group them) before interpolating
+  // raw visitor input into the filter string — same fix applied to the AI
+  // chat's location search.
+  const safeQuery = query.replace(/[,()]/g, '')
+
   const { data } = await supabase
     .from('properties')
     .select(`
@@ -237,7 +243,7 @@ export async function searchProperties(query: string) {
       media:property_media(url, is_cover)
     `)
     .eq('status', 'available')
-    .or(`title.ilike.%${query}%,locality.ilike.%${query}%,city.ilike.%${query}%,location_address.ilike.%${query}%,listing_type.ilike.%${query}%,ownership.ilike.%${query}%`)
+    .or(`title.ilike.%${safeQuery}%,locality.ilike.%${safeQuery}%,city.ilike.%${safeQuery}%,location_address.ilike.%${safeQuery}%,listing_type.ilike.%${safeQuery}%,ownership.ilike.%${safeQuery}%`)
     .limit(20)
 
   return (data || []).map((p: any) => ({

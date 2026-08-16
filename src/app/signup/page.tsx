@@ -9,6 +9,29 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 import { RoofmintLogo } from '@/components/roofmint-logo';
 import { HomeSearchIllustration } from '@/components/home-search-illustration';
+import { checkSignupRateLimit } from '../login/rate-limit-actions';
+
+// Deliberately stricter than the browser's bare type="email" check, which
+// waves through things like "a@b" — this requires a real-looking domain
+// with a dot (e.g. "a@b.co"), catching obvious typos/garbage before it ever
+// reaches Supabase. It cannot detect a fake-but-well-formed address or a
+// disposable-mail domain — that's what Supabase's confirmation email is
+// for (see the comment further down where signUp() is called).
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+const PHONE_PATTERN = /^(\+?91)?[6-9]\d{9}$/;
+
+function validateSignupForm(data: { fullName: string; email: string; mobile: string }): string | null {
+  const name = data.fullName.trim();
+  if (name.length < 2) return 'Please enter your full name.';
+  if (!/[A-Za-z]/.test(name)) return 'Name must contain letters, not just numbers or symbols.';
+
+  if (!EMAIL_PATTERN.test(data.email.trim())) return 'Please enter a valid email address.';
+
+  const phoneDigits = data.mobile.replace(/[\s-]/g, '');
+  if (!PHONE_PATTERN.test(phoneDigits)) return 'Please enter a valid 10-digit mobile number.';
+
+  return null;
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -45,6 +68,12 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
 
+    const formError = validateSignupForm(formData);
+    if (formError) {
+      setError(formError);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -57,6 +86,13 @@ export default function SignupPage() {
     }
 
     setIsLoading(true);
+
+    const { limited } = await checkSignupRateLimit();
+    if (limited) {
+      setError('Too many signup attempts from this network. Please wait a few minutes and try again.');
+      setIsLoading(false);
+      return;
+    }
 
     const supabase = createClient();
 
