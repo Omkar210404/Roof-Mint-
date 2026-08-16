@@ -11,6 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { deleteUserProfile, updateUserRole } from './actions';
+import { isSuspiciousPhone } from '@/lib/suspicious-phone';
+import { SuspiciousPhoneBadge } from '@/components/suspicious-phone-badge';
 
 function formatBudget(min?: number, max?: number) {
   if (!min && !max) return '—';
@@ -453,7 +455,10 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
                     <TableCell>
                       <div>
                         <p className="font-semibold text-navy dark:text-white text-sm">{user.full_name || 'Anonymous User'}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{user.phone || 'No phone'}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+                          {user.phone || 'No phone'}
+                          {isSuspiciousPhone(user.phone) && <SuspiciousPhoneBadge />}
+                        </p>
                       </div>
                     </TableCell>
 

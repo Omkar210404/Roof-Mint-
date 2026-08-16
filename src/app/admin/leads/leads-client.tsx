@@ -13,6 +13,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Eye, EyeOff, MessageCircle, FileEdit, Globe } from 'lucide-react'
+import { isSuspiciousPhone } from '@/lib/suspicious-phone'
+import { SuspiciousPhoneBadge } from '@/components/suspicious-phone-badge'
 
 const sourceMeta: Record<string, { label: string; icon: any; style: string }> = {
   whatsapp: { label: 'WhatsApp', icon: MessageCircle, style: 'text-green-700 bg-green-50 dark:bg-green-950/40' },
@@ -614,7 +616,10 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                         )
                       })()}
                     </div>
-                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lead.phone}</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1.5">
+                      {lead.phone}
+                      {isSuspiciousPhone(lead.phone) && <SuspiciousPhoneBadge />}
+                    </div>
                     <div className="text-xs text-gray-400 dark:text-gray-500">{lead.email}</div>
                   </TableCell>
                   <TableCell className="align-top py-3 min-w-[220px]">
