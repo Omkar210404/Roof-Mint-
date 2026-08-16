@@ -325,9 +325,9 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center gap-3">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Agents Management</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowPlanManager(true)}
             className="h-9 px-3.5 rounded-lg bg-navy dark:bg-teal-700 text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-1.5"

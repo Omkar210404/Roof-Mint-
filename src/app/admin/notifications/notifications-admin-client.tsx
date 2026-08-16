@@ -171,7 +171,7 @@ export function NotificationsAdminClientWrapper({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Push Notifications Hub</h1>
           <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-0.5">

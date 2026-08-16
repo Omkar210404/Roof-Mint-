@@ -200,7 +200,7 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Properties</h1>
         <Link href="/admin/properties/new">
           <button className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 text-sm">
