@@ -171,42 +171,66 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h3 className={sectionHeading}>4. Data Security</h3>
+            <h3 className={sectionHeading}>4. Third-Party Service Providers</h3>
+            <p>
+              Roofmint relies on a small number of trusted service providers to operate the platform, and your data may pass through them for the specific purpose described: <strong>Supabase</strong> (database, authentication, and hosting infrastructure) stores your account and platform data, and <strong>Google's Gemini API</strong> powers our AI concierge chat, AI property matching, and price-appreciation predictor — meaning the messages and search context you provide to these AI features are processed by Google's servers to generate a response. These providers process your data only to deliver the corresponding platform feature, under their own data-processing terms; Roofmint does not permit them to sell your data or use it for purposes unrelated to operating Roofmint. Because these providers operate outside India, this involves a cross-border transfer of data, which is permitted under the DPDP Act except to countries the Central Government has restricted.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h3 className={sectionHeading}>5. Data Security</h3>
             <p>
               Data is encrypted in transit (TLS/SSL) and access-controlled through Supabase Row-Level Security. Passwords are never stored in plain text. While we take reasonable technical measures to protect your data, no online platform can guarantee absolute security.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className={sectionHeading}>5. Your Rights & Account Deletion</h3>
+            <h3 className={sectionHeading}>6. Your Rights, Correction & Consent Withdrawal</h3>
             <p>
-              You can download a copy of your data or delete your account at any time from Profile → Privacy & Security. Deleting your account removes your login, saved properties, search history, and preferences. <strong>Enquiries you've submitted are not deleted</strong> — a lead you sent to an agent is a business record they may still be actively following up on, and it contains no data beyond what you already provided at the time; deleting your account simply unlinks it from your (now-removed) profile. If you'd like a previously submitted enquiry removed as well, contact us at the address below and we will review the request.
+              You can download a copy of your data, correct inaccurate details, or delete your account at any time from Profile → Account Settings / Privacy & Security. Deleting your account removes your login, saved properties, search history, and preferences. <strong>Enquiries you've submitted are not deleted</strong> — a lead you sent to an agent is a business record they may still be actively following up on, and it contains no data beyond what you already provided at the time; deleting your account simply unlinks it from your (now-removed) profile. If you'd like a previously submitted enquiry removed as well, contact us at the address below and we will review the request.
+            </p>
+            <p>
+              You may also withdraw your consent for a specific processing activity — for example, AI-based personalization or a particular notification channel — without deleting your whole account, by contacting us at the address below. Withdrawing consent is as simple as giving it, and does not affect the lawfulness of any processing already carried out before withdrawal.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className={sectionHeading}>6. Cookies & Local Storage</h3>
+            <h3 className={sectionHeading}>7. Data Breach Notification</h3>
+            <p>
+              In the unlikely event of a personal data breach affecting your data, we will notify the Data Protection Board of India and affected users as required under the DPDP Act, describing the nature of the breach and the steps being taken to address it.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h3 className={sectionHeading}>8. Cookies & Local Storage</h3>
             <p>
               We use browser local storage (not third-party ad-tracking cookies) to remember things like your selected location and recently viewed searches, purely to improve your experience on return visits.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className={sectionHeading}>7. Children's Privacy</h3>
+            <h3 className={sectionHeading}>9. Children's Privacy</h3>
             <p>
               Roofmint is intended for users 18 years and older, consistent with the ability to enter into property-related agreements under Indian law. We do not knowingly collect data from minors.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className={sectionHeading}>8. Changes to This Policy</h3>
+            <h3 className={sectionHeading}>10. Right to Nominate</h3>
+            <p>
+              You may nominate another individual to exercise your rights under this policy — including access to or erasure of your data — in the event of your death or incapacity, by contacting us at the address below with the nominee's details.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h3 className={sectionHeading}>11. Changes to This Policy</h3>
             <p>
               We may update this Privacy Policy as the platform evolves. Material changes will be reflected here with an updated date at the top of this page.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className={sectionHeading}>9. Contact Us</h3>
+            <h3 className={sectionHeading}>12. Contact Us</h3>
             <p>
               For legal, compliance, or data-privacy questions — including data access or deletion requests:
             </p>
