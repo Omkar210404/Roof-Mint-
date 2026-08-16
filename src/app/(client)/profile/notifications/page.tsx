@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Bell, Check, CheckCircle2, Tag, Building2, ShieldCheck, Trash2, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { RequireLoginGate } from '@/components/require-login-gate';
 
 interface NotificationItem {
   id: string;
@@ -20,6 +21,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   // Toggle settings
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -30,6 +32,7 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
+    setIsLoggedIn(!!user);
 
     if (!user) {
       setNotifications([]);
@@ -145,6 +148,15 @@ export default function NotificationsPage() {
 
   const filtered = notifications.filter(n => activeTab === 'all' || !n.is_read);
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  if (isLoggedIn === false) {
+    return (
+      <RequireLoginGate
+        title="Log in to view notifications"
+        message="Your notifications and delivery preferences are tied to your account — log in to see them."
+      />
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">

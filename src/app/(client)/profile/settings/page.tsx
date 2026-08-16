@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Check, User, Phone, Mail, MapPin, Building2, ShieldCheck, Loader2, Sparkles, Clock, Compass } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { RequireLoginGate } from '@/components/require-login-gate';
 
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -28,6 +30,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
       if (!user) {
         setLoading(false);
         return;
@@ -101,6 +104,15 @@ export default function SettingsPage() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
+    );
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <RequireLoginGate
+        title="Log in to edit your settings"
+        message="Account details and search preferences are tied to your account — log in to manage them."
+      />
     );
   }
 

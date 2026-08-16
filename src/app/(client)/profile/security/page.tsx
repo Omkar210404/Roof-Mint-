@@ -1,14 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Key, Download, Trash2, LogOut, CheckCircle2, AlertTriangle, EyeOff, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
+import { RequireLoginGate } from '@/components/require-login-gate';
 
 export default function SecurityPage() {
   const supabase = createClient();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user));
+  }, []);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -86,6 +92,15 @@ export default function SecurityPage() {
 
   const inputCls = "w-full h-11 px-3.5 pl-10 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
   const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
+
+  if (isLoggedIn === false) {
+    return (
+      <RequireLoginGate
+        title="Log in to manage security"
+        message="Password, 2FA, and data controls are tied to your account — log in to manage them."
+      />
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
