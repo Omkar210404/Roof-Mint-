@@ -235,23 +235,28 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       {/* Top App Bar */}
       <header className="sticky top-0 z-40 w-full bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 md:w-[calc(100%-4rem)] md:ml-16">
         <div className="flex items-center justify-between gap-2 px-4 md:px-8 min-h-14 md:min-h-16 py-2">
-          <button
-            onClick={() => setShowLocationModal(true)}
-            className="flex items-center gap-2 text-left hover:opacity-75 transition-opacity min-w-0"
-          >
-            <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className={`text-sm md:text-base font-semibold text-navy dark:text-white truncate max-w-[130px] sm:max-w-[220px] md:max-w-none ${locationLoading ? 'animate-pulse' : ''}`}>
-                  {displayLocation}
-                </span>
-                <svg className="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Link href="/" className="md:hidden shrink-0">
+              <Image src="/images/logo-icon.png" alt="Roofmint" width={30} height={30} className="h-7 w-7 object-contain" priority />
+            </Link>
+            <button
+              onClick={() => setShowLocationModal(true)}
+              className="flex items-center gap-2 text-left hover:opacity-75 transition-opacity min-w-0"
+            >
+              <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className={`text-sm md:text-base font-semibold text-navy dark:text-white truncate max-w-[100px] sm:max-w-[220px] md:max-w-none ${locationLoading ? 'animate-pulse' : ''}`}>
+                    {displayLocation}
+                  </span>
+                  <svg className="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <span className="text-[10px] md:text-xs text-gray-400 dark:text-gray-500 truncate block">{displaySubtext}</span>
               </div>
-              <span className="text-[10px] md:text-xs text-gray-400 dark:text-gray-500 truncate block">{displaySubtext}</span>
-            </div>
-          </button>
+            </button>
+          </div>
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
             <Link
               href="/search"

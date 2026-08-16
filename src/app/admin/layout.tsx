@@ -3,13 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
-import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History } from "lucide-react";
+import { ReactNode, useState } from "react";
+import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History, Menu, X } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // No idle-timeout auto sign-out — an admin with multiple tabs/windows
   // open (easy to end up with, e.g. an old forgotten tab) would have each
@@ -30,6 +31,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/activity", icon: History, label: "Activity Log" },
     { href: "/admin/security", icon: KeyRound, label: "Security" },
   ];
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-navy-800">
@@ -72,11 +79,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="p-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center gap-2">
           <ThemeToggle />
           <button
-            onClick={async () => {
-              const supabase = createClient();
-              await supabase.auth.signOut();
-              window.location.href = '/login';
-            }}
+            onClick={handleLogout}
             className="flex-1 flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOut className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -87,16 +90,73 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        {/* Mobile Header (Placeholder if needed) */}
-        <header className="md:hidden bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 p-4 flex items-center justify-between">
-          <Image src="/images/logo.png" alt="Roofmint" width={100} height={28} className="h-6 w-auto" />
-          {/* Mobile menu button could go here */}
+        <header className="md:hidden sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 p-4 flex items-center justify-between">
+          <Link href="/admin">
+            <Image src="/images/logo.png" alt="Roofmint" width={100} height={28} className="h-6 w-auto" />
+          </Link>
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
         </header>
 
         <div className="p-6 md:p-8">
           {children}
         </div>
       </main>
+
+      {/* Mobile Nav Drawer — the sidebar above is desktop-only, so mobile
+          had no way to reach anything beyond whatever page it landed on. */}
+      {mobileNavOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex justify-end">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setMobileNavOpen(false)} />
+          <div className="relative w-72 max-w-[80%] h-full bg-white dark:bg-navy-900 shadow-2xl flex flex-col">
+            <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100/60 dark:border-gray-800/60 shrink-0">
+              <Image src="/images/logo.png" alt="Roofmint" width={120} height={32} className="h-8 w-auto" />
+              <button
+                onClick={() => setMobileNavOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto flex flex-col gap-1 p-3">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileNavOpen(false)}
+                    className={`flex items-center gap-2.5 h-11 px-3 text-sm font-medium rounded-lg transition-colors ${isActive
+                      ? "bg-teal-50 dark:bg-teal-950/40 text-primary"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 hover:text-navy dark:hover:text-white"
+                      }`}
+                  >
+                    <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="p-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center gap-2 shrink-0">
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="flex-1 flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
