@@ -31,6 +31,7 @@ const actionLabels: Record<string, string> = {
   create_bill: 'Created bill',
   update_bill_status: 'Updated bill status',
   delete_bill: 'Deleted bill',
+  restore_bill: 'Restored bill',
 }
 
 function actionLabel(action: string) {
@@ -104,6 +105,9 @@ function describeActivity(entry: any): string {
       break
     case 'delete_bill':
       if (d.bill_number) return `${actor} deleted bill ${d.bill_number}`
+      break
+    case 'restore_bill':
+      if (d.bill_number) return `${actor} restored bill ${d.bill_number}`
       break
   }
 

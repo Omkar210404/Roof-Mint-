@@ -13,9 +13,9 @@ import {
 import {
   Search, Plus, X, FileText, Download, Share2, Trash2, Receipt,
   User, Building2, Loader2, Check, Plus as PlusIcon, Trash, CreditCard, Pencil,
-  ShieldCheck, ShieldAlert,
+  ShieldCheck, ShieldAlert, ArchiveRestore, RotateCcw,
 } from 'lucide-react'
-import { getBills, getBillWithItems, createBill, updateBillStatus, deleteBill, verifyBill } from './actions'
+import { getBills, getDeletedBills, restoreBill, getBillWithItems, createBill, updateBillStatus, deleteBill, verifyBill } from './actions'
 import { buildBillPdf, billFileName } from '@/lib/generate-bill-pdf'
 import { formatPlanDuration, formatPlanPrice, type AgentPlanTier } from '@/lib/agent-plans'
 
@@ -37,8 +37,24 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
   const [statusFilter, setStatusFilter] = useState('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showVerifyModal, setShowVerifyModal] = useState(false)
+  const [showDeleted, setShowDeleted] = useState(false)
+  const [deletedBills, setDeletedBills] = useState<any[]>([])
+  const [loadingDeleted, setLoadingDeleted] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const supabase = createClient()
+
+  const openDeleted = async () => {
+    setShowDeleted(true)
+    setLoadingDeleted(true)
+    setDeletedBills(await getDeletedBills())
+    setLoadingDeleted(false)
+  }
+
+  const handleRestore = async (id: string) => {
+    setDeletedBills(prev => prev.filter(b => b.id !== id))
+    await restoreBill(id)
+    setBills(await getBills())
+  }
 
   useEffect(() => {
     const channel = supabase
@@ -113,6 +129,12 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={showDeleted ? () => setShowDeleted(false) : openDeleted}
+            className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm"
+          >
+            <ArchiveRestore className="w-4 h-4 text-primary" /> {showDeleted ? 'Back to Bills' : 'Deleted Bills'}
+          </button>
+          <button
             onClick={() => setShowVerifyModal(true)}
             className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm"
           >
@@ -124,10 +146,61 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
           >
             <Plus className="w-4 h-4" /> New Bill
           </button>
-          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{bills.length} total</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{showDeleted ? deletedBills.length : bills.length} total</span>
         </div>
       </div>
 
+      {showDeleted ? (
+        <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Bill #</TableHead>
+                <TableHead>Bill To</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Deleted On</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loadingDeleted ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10">
+                    <Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : deletedBills.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10 text-sm text-gray-400 dark:text-gray-500">
+                    No deleted bills — anything you delete shows up here so you can bring it back by mistake.
+                  </TableCell>
+                </TableRow>
+              ) : deletedBills.map((bill) => (
+                <TableRow key={bill.id}>
+                  <TableCell className="align-top py-3 font-mono text-xs font-semibold text-navy dark:text-white whitespace-nowrap">{bill.bill_number}</TableCell>
+                  <TableCell className="align-top py-3">
+                    <div className="text-sm font-medium text-navy dark:text-white">{bill.bill_to_name}</div>
+                    {bill.bill_to_company && <div className="text-xs text-gray-400 dark:text-gray-500">{bill.bill_to_company}</div>}
+                  </TableCell>
+                  <TableCell className="align-top py-3 text-sm font-semibold text-navy dark:text-white whitespace-nowrap">{formatINR(bill.total)}</TableCell>
+                  <TableCell className="align-top py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {new Date(bill.deleted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </TableCell>
+                  <TableCell className="align-top py-3 text-right">
+                    <button
+                      onClick={() => handleRestore(bill.id)}
+                      className="h-8 px-3 rounded-md bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-semibold inline-flex items-center gap-1.5"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> Restore
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+      <>
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -224,6 +297,8 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
           </TableBody>
         </Table>
       </div>
+      </>
+      )}
 
       {showCreateModal && (
         <CreateBillModal

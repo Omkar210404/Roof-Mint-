@@ -22,6 +22,49 @@ export async function getBills() {
   return data || []
 }
 
+export async function getDeletedBills() {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return []
+
+  const { data, error } = await supabase
+    .from('bills')
+    .select('*')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false })
+
+  if (error) {
+    console.warn('getDeletedBills error:', error.message)
+    return []
+  }
+
+  return data || []
+}
+
+export async function restoreBill(id: string) {
+  const { authorized, supabase, user } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { data: bill } = await supabase.from('bills').select('bill_number, bill_to_name').eq('id', id).single()
+
+  const { error } = await supabase
+    .from('bills')
+    .update({ deleted_at: null })
+    .eq('id', id)
+
+  if (error) {
+    console.error('restoreBill error:', error.message)
+    return { error: error.message }
+  }
+
+  await logActivity(supabase, user!.id, 'restore_bill', 'bill', id, {
+    bill_number: bill?.bill_number,
+    bill_to_name: bill?.bill_to_name,
+  })
+
+  revalidatePath('/admin/billing')
+  return { success: true }
+}
+
 export async function getBillWithItems(id: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return null
