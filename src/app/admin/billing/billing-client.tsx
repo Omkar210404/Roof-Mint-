@@ -12,10 +12,11 @@ import {
 } from '@/components/ui/table'
 import {
   Search, Plus, X, FileText, Download, Share2, Trash2, Receipt,
-  User, Building2, Loader2, Check, Plus as PlusIcon, Trash,
+  User, Building2, Loader2, Check, Plus as PlusIcon, Trash, CreditCard, Pencil,
 } from 'lucide-react'
-import { getBills, getBillWithItems, createBill, updateBillStatus, deleteBill, type BillLineItem } from './actions'
+import { getBills, getBillWithItems, createBill, updateBillStatus, deleteBill } from './actions'
 import { buildBillPdf, billFileName } from '@/lib/generate-bill-pdf'
+import { formatPlanDuration, formatPlanPrice, type AgentPlanTier } from '@/lib/agent-plans'
 
 const statusStyles: Record<string, string> = {
   unpaid: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -29,7 +30,7 @@ function formatINR(n: number) {
 
 type Agent = { id: string; name: string; company: string | null; phone: string | null; email: string | null }
 
-export function BillingClientWrapper({ initialBills, agents }: { initialBills: any[]; agents: Agent[] }) {
+export function BillingClientWrapper({ initialBills, agents, planTiers }: { initialBills: any[]; agents: Agent[]; planTiers: AgentPlanTier[] }) {
   const [bills, setBills] = useState<any[]>(initialBills)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -218,6 +219,7 @@ export function BillingClientWrapper({ initialBills, agents }: { initialBills: a
       {showCreateModal && (
         <CreateBillModal
           agents={agents}
+          planTiers={planTiers}
           onClose={() => setShowCreateModal(false)}
           onCreated={async () => setBills(await getBills())}
         />
@@ -226,7 +228,14 @@ export function BillingClientWrapper({ initialBills, agents }: { initialBills: a
   )
 }
 
-function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onClose: () => void; onCreated: () => void }) {
+// A line item is either tied to one of the agent plan tiers (picking one
+// auto-fills description + amount from that plan, still editable after —
+// e.g. for a prorated or discounted amount) or a free-form custom charge.
+// This distinction only exists client-side to drive the auto-fill; what
+// actually gets saved is just the resulting description + amount.
+type DraftItem = { mode: 'plan' | 'custom'; planId: string; description: string; amount: number }
+
+function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Agent[]; planTiers: AgentPlanTier[]; onClose: () => void; onCreated: () => void }) {
   const [billToType, setBillToType] = useState<'agent' | 'manual'>('agent')
   const [selectedAgentId, setSelectedAgentId] = useState('')
   const [name, setName] = useState('')
@@ -237,7 +246,7 @@ function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onCl
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<BillLineItem[]>([{ description: '', amount: 0 }])
+  const [items, setItems] = useState<DraftItem[]>([{ mode: 'custom', planId: '', description: '', amount: 0 }])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [createdBillId, setCreatedBillId] = useState<string | null>(null)
@@ -256,9 +265,21 @@ function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onCl
 
   const total = items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
 
-  const addItem = () => setItems(prev => [...prev, { description: '', amount: 0 }])
+  const addItem = () => setItems(prev => [...prev, { mode: 'custom', planId: '', description: '', amount: 0 }])
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx))
-  const updateItem = (idx: number, field: keyof BillLineItem, value: string) => {
+  const setItemMode = (idx: number, mode: 'plan' | 'custom') => {
+    setItems(prev => prev.map((item, i) => i === idx ? { ...item, mode, planId: '', description: '', amount: 0 } : item))
+  }
+  const setItemPlan = (idx: number, planId: string) => {
+    const tier = planTiers.find(t => t.id === planId)
+    setItems(prev => prev.map((item, i) => i === idx ? {
+      ...item,
+      planId,
+      description: tier ? `${tier.label} — Agent Plan (${formatPlanDuration(tier.duration_months)})` : '',
+      amount: tier?.price ?? 0,
+    } : item))
+  }
+  const updateItem = (idx: number, field: 'description' | 'amount', value: string) => {
     setItems(prev => prev.map((item, i) => i === idx
       ? { ...item, [field]: field === 'amount' ? Number(value) || 0 : value }
       : item
@@ -281,7 +302,7 @@ function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onCl
       issue_date: issueDate,
       due_date: dueDate || null,
       notes: notes || null,
-      items,
+      items: items.map(({ description, amount }) => ({ description, amount })),
     })
 
     if (result.error) {
@@ -429,17 +450,60 @@ function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onCl
                   <PlusIcon className="w-3.5 h-3.5" /> Add Item
                 </button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {items.map((item, idx) => (
-                  <div key={idx} className="flex flex-col sm:flex-row gap-2 sm:items-center p-2.5 sm:p-0 rounded-lg bg-gray-50/60 dark:bg-navy-800/40 sm:bg-transparent sm:dark:bg-transparent">
+                  <div key={idx} className="rounded-xl border border-gray-200/60 dark:border-gray-800/60 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setItemMode(idx, 'plan')}
+                          className={`h-7 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${item.mode === 'plan' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'}`}
+                        >
+                          <CreditCard className="w-3 h-3" /> From Plan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setItemMode(idx, 'custom')}
+                          className={`h-7 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${item.mode === 'custom' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'}`}
+                        >
+                          <Pencil className="w-3 h-3" /> Custom Charge
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        disabled={items.length === 1}
+                        className="w-7 h-7 rounded-md bg-red-50 dark:bg-red-950/40 text-red-600 flex items-center justify-center disabled:opacity-30 shrink-0"
+                      >
+                        <Trash className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {item.mode === 'plan' && (
+                      <select
+                        required
+                        value={item.planId}
+                        onChange={e => setItemPlan(idx, e.target.value)}
+                        className={inputCls + ' font-medium'}
+                      >
+                        <option value="">— Select an agent plan —</option>
+                        {planTiers.map(t => (
+                          <option key={t.id} value={t.id}>{t.label} — {formatPlanPrice(t.price)} ({formatPlanDuration(t.duration_months)})</option>
+                        ))}
+                      </select>
+                    )}
+
                     <input
                       required
                       value={item.description}
                       onChange={e => updateItem(idx, 'description', e.target.value)}
-                      placeholder="Description (e.g. Commission - Greenwoods Residences)"
-                      className={inputCls + ' w-full sm:flex-1'}
+                      placeholder={item.mode === 'plan' ? 'Description (auto-filled — edit if needed)' : 'What this charge is for, e.g. "Commission - Greenwoods Residences" or "Listing Fee"'}
+                      className={inputCls}
                     />
-                    <div className="flex gap-2 items-center">
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 shrink-0">₹</span>
                       <input
                         required
                         type="number"
@@ -447,17 +511,9 @@ function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onCl
                         step="0.01"
                         value={item.amount || ''}
                         onChange={e => updateItem(idx, 'amount', e.target.value)}
-                        placeholder="Amount"
-                        className={inputCls + ' flex-1 sm:flex-none sm:w-32'}
+                        placeholder={item.mode === 'plan' ? 'Amount (auto-filled — edit for a prorated/discounted charge)' : 'Amount'}
+                        className={inputCls}
                       />
-                      <button
-                        type="button"
-                        onClick={() => removeItem(idx)}
-                        disabled={items.length === 1}
-                        className="w-9 h-10 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 flex items-center justify-center disabled:opacity-30 shrink-0"
-                      >
-                        <Trash className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   </div>
                 ))}

@@ -31,7 +31,7 @@ export function findTier(tiers: AgentPlanTier[], id: string | null | undefined):
   return tiers.find(t => t.id === id) || FALLBACK_TIER
 }
 
-export function formatPlanPrice(price: number | null) {
+export function formatPlanPrice(price: number | null): string {
   return price == null ? 'As Required' : `₹${price.toLocaleString('en-IN')}`
 }
 
