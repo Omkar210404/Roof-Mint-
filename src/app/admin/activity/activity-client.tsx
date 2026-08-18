@@ -193,7 +193,7 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
           <option value="admin">Admins only</option>
           <option value="agent">Agents only</option>
         </select>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <input
             type="date"
             value={startDate}
@@ -201,7 +201,7 @@ export function ActivityLogClientWrapper({ initialLog }: { initialLog: any[] }) 
             max={endDate || undefined}
             className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
-          <span className="text-xs text-gray-400 dark:text-gray-500">to</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">to</span>
           <input
             type="date"
             value={endDate}

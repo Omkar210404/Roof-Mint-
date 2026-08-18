@@ -363,7 +363,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
         </div>
 
         {/* Date Range Picker — independent of the Month dropdown above; whichever was set most recently wins */}
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto min-w-0">
           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex-shrink-0">Range:</span>
           <input
             type="date"
@@ -372,7 +372,7 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
             max={endDate || undefined}
             className="h-10 px-2.5 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-navy dark:text-white"
           />
-          <span className="text-gray-400 dark:text-gray-500 text-xs">→</span>
+          <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">→</span>
           <input
             type="date"
             value={endDate}

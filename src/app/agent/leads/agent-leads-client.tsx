@@ -278,7 +278,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
             <option key={m} value={m}>{getMonthLabel(m)}</option>
           ))}
         </select>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <input
             type="date"
             value={startDate}
@@ -286,7 +286,7 @@ export function AgentLeadsClient({ initialLeads, plan }: { initialLeads: any[]; 
             max={endDate || undefined}
             className="h-10 px-2.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium text-navy dark:text-white"
           />
-          <span className="text-gray-400 dark:text-gray-500 text-xs">→</span>
+          <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">→</span>
           <input
             type="date"
             value={endDate}
