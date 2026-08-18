@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Check, User, Phone, Mail, MapPin, Building2, ShieldCheck, Loader2, Sparkles, Clock, Compass } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { ArrowLeft, Save, Check, User, Phone, Mail, MapPin, Building2, ShieldCheck, Loader2, Sparkles, Clock, Compass, Moon, Sun } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { RequireLoginGate } from '@/components/require-login-gate';
 
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => setThemeMounted(true), []);
 
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -195,6 +199,33 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Appearance */}
+        <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 md:p-6 border border-gray-100/60 dark:border-gray-800/60 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide border-b border-gray-100/60 dark:border-gray-800/60 pb-3 flex items-center gap-2">
+            {resolvedTheme === 'dark' ? <Moon className="w-4 h-4 text-primary" /> : <Sun className="w-4 h-4 text-primary" />} Appearance
+          </h2>
+          <div className="flex items-center justify-between py-1">
+            <div>
+              <p className="text-sm font-semibold text-navy dark:text-white">Dark Mode</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Switch between light and dark theme across the app</p>
+            </div>
+            {themeMounted && (
+              <button
+                type="button"
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                className={`w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0 ${
+                  resolvedTheme === 'dark' ? 'bg-primary' : 'bg-gray-300 dark:bg-navy-700'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full bg-white dark:bg-navy-900 shadow-sm transition-transform ${
+                  resolvedTheme === 'dark' ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </button>
+            )}
           </div>
         </div>
 

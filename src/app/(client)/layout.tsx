@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
 import { NotificationBell } from "@/components/notification-bell";
@@ -284,7 +283,6 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
                 <span>Login</span>
               </Link>
             )}
-            <ThemeToggle />
           </div>
         </div>
       </header>
