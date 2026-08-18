@@ -94,7 +94,7 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
   }
 
   const handleDelete = async (id: string, billNumber: string) => {
-    if (!confirm(`Delete bill ${billNumber}? This cannot be undone.`)) return
+    if (!confirm(`Delete bill ${billNumber}? It'll disappear from this list, but Verify Bill will still be able to confirm it was a genuine (now-deleted) bill if someone presents a copy.`)) return
     setBills(prev => prev.filter(b => b.id !== id))
     await deleteBill(id)
   }
@@ -289,7 +289,7 @@ function VerifyBillModal({ onClose }: { onClose: () => void }) {
           </button>
 
           {result && (
-            result.verified ? (
+            result.verified && !result.deleted ? (
               <div className="p-3.5 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-xl space-y-1">
                 <p className="text-sm font-bold text-green-700 dark:text-green-400 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" /> Genuine — matches our records
@@ -299,13 +299,23 @@ function VerifyBillModal({ onClose }: { onClose: () => void }) {
                 </p>
                 <p className="text-[11px] text-green-700/80 dark:text-green-400/80">Compare these details against what's being shown to you.</p>
               </div>
+            ) : result.verified && result.deleted ? (
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl space-y-1">
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4" /> Genuine, but deleted
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-300">
+                  {result.bill.bill_to_name} · {formatINR(result.bill.total)} · {new Date(result.bill.issue_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">This bill was really issued by Roofmint, but was later deleted from our system — do not treat it as valid.</p>
+              </div>
             ) : (
               <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl">
                 <p className="text-sm font-bold text-red-700 dark:text-red-400 flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4" /> Not verified
                 </p>
                 <p className="text-xs text-red-700/90 dark:text-red-400/90 mt-0.5">
-                  {result.reason === 'no_such_bill'
+                  {!result.verified && result.reason === 'no_such_bill'
                     ? "No bill exists with that number — it wasn't issued by Roofmint."
                     : 'That bill number exists, but the code doesn\'t match our records.'}
                 </p>
@@ -337,11 +347,19 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<DraftItem[]>([{ mode: 'custom', planId: '', description: '', amount: 0 }])
+  const [status, setStatus] = useState<'unpaid' | 'paid'>('unpaid')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showReview, setShowReview] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [createdBillId, setCreatedBillId] = useState<string | null>(null)
   const [createdBillNumber, setCreatedBillNumber] = useState<string | null>(null)
+
+  // Revoke the preview's object URL whenever it's replaced or the modal
+  // unmounts, so we don't leak blob URLs.
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }
+  }, [previewUrl])
 
   const selectAgent = (agentId: string) => {
     setSelectedAgentId(agentId)
@@ -379,10 +397,37 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
 
   // The form's submit just moves to a review screen — nothing is saved (and
   // no bill number is allocated) until Confirm & Create Bill on that screen.
+  // A real preview PDF is generated client-side from the draft (bill number
+  // shown as "PREVIEW" since none has been allocated yet) so what you see
+  // here is exactly what gets produced on download, not a hand-built
+  // approximation of it.
   const handleReview = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    buildBillPdf({
+      bill_number: 'PREVIEW',
+      bill_to_name: name,
+      bill_to_company: company || null,
+      bill_to_phone: phone || null,
+      bill_to_email: email || null,
+      bill_to_address: address || null,
+      issue_date: issueDate,
+      due_date: dueDate || null,
+      notes: notes || null,
+      status,
+      total,
+      items: items.map(({ description, amount }) => ({ description, amount })),
+    }).then(doc => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(URL.createObjectURL(doc.output('blob')))
+    })
     setShowReview(true)
+  }
+
+  const backToEdit = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setShowReview(false)
   }
 
   const confirmCreate = async () => {
@@ -400,6 +445,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
       issue_date: issueDate,
       due_date: dueDate || null,
       notes: notes || null,
+      status,
       items: items.map(({ description, amount }) => ({ description, amount })),
     })
 
@@ -472,70 +518,25 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
             )}
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Nothing is saved yet and no bill number has been used — check everything below before confirming.
+              Nothing is saved yet and no bill number has been used — this is exactly the PDF that will be produced. Check it, then confirm.
             </p>
 
-            {/* Bill To */}
-            <div className="rounded-xl border border-gray-200/60 dark:border-gray-800/60 p-4">
-              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Bill To</p>
-              <p className="text-sm font-bold text-navy dark:text-white">{name}</p>
-              {company && <p className="text-xs text-gray-500 dark:text-gray-400">{company}</p>}
-              {phone && <p className="text-xs text-gray-500 dark:text-gray-400">{phone}</p>}
-              {email && <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>}
-              {address && <p className="text-xs text-gray-500 dark:text-gray-400">{address}</p>}
-            </div>
-
-            {/* Dates */}
-            <div className="flex gap-6 text-sm">
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Issue Date</p>
-                <p className="text-navy dark:text-white font-medium">{new Date(issueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              </div>
-              {dueDate && (
-                <div>
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Due Date</p>
-                  <p className="text-navy dark:text-white font-medium">{new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Items */}
-            <div className="rounded-xl border border-gray-200/60 dark:border-gray-800/60 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-navy-800">
-                    <th className="text-left font-semibold text-gray-500 dark:text-gray-400 px-4 py-2.5 text-xs uppercase tracking-wide">Description</th>
-                    <th className="text-right font-semibold text-gray-500 dark:text-gray-400 px-4 py-2.5 text-xs uppercase tracking-wide">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {items.map((item, i) => (
-                    <tr key={i}>
-                      <td className="px-4 py-2.5 text-navy dark:text-white">{item.description || <span className="text-red-500 italic">Missing description</span>}</td>
-                      <td className="px-4 py-2.5 text-right font-medium text-navy dark:text-white whitespace-nowrap">{formatINR(item.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-gray-50 dark:bg-navy-800 font-bold">
-                    <td className="px-4 py-2.5 text-navy dark:text-white">Total</td>
-                    <td className="px-4 py-2.5 text-right text-primary whitespace-nowrap">{formatINR(total)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {notes && (
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Notes</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{notes}</p>
+            {previewUrl ? (
+              <iframe
+                src={previewUrl}
+                title="Bill preview"
+                className="w-full h-[420px] rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white"
+              />
+            ) : (
+              <div className="h-[420px] rounded-xl border border-gray-200/60 dark:border-gray-800/60 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
               </div>
             )}
 
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setShowReview(false)}
+                onClick={backToEdit}
                 disabled={submitting}
                 className="flex-1 h-11 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800 disabled:opacity-60"
               >
@@ -626,6 +627,27 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
               <div className="space-y-1">
                 <label className={labelCls}>Due Date (optional)</label>
                 <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} min={issueDate} className={inputCls} />
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="space-y-1">
+              <label className={labelCls}>Payment Status</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStatus('unpaid')}
+                  className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${status === 'unpaid' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                >
+                  Unpaid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatus('paid')}
+                  className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${status === 'paid' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                >
+                  Already Paid
+                </button>
               </div>
             </div>
 

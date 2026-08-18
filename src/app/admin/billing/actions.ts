@@ -11,6 +11,7 @@ export async function getBills() {
   const { data, error } = await supabase
     .from('bills')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -65,6 +66,7 @@ export async function createBill(input: {
   issue_date: string
   due_date: string | null
   notes: string | null
+  status?: 'unpaid' | 'paid'
   items: BillLineItem[]
 }) {
   const { authorized, supabase, user } = await requireAdmin()
@@ -89,6 +91,7 @@ export async function createBill(input: {
       issue_date: input.issue_date,
       due_date: input.due_date || null,
       notes: input.notes?.trim() || null,
+      status: input.status || 'unpaid',
       total,
       created_by: user!.id,
     })
@@ -149,14 +152,21 @@ export async function updateBillStatus(id: string, status: 'unpaid' | 'paid' | '
   return { success: true }
 }
 
+// Soft-delete — the row (and its verification code) stays, just marked
+// deleted_at, so Verify Bill can later tell "this bill number never
+// existed" apart from "this was a genuine bill that was deleted/voided",
+// which is a meaningfully different answer when someone is presenting a
+// bill as proof of something.
 export async function deleteBill(id: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const { data: bill } = await supabase.from('bills').select('bill_number, bill_to_name').eq('id', id).single()
 
-  // FK cascade removes the associated bill_items.
-  const { error } = await supabase.from('bills').delete().eq('id', id)
+  const { error } = await supabase
+    .from('bills')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
 
   if (error) {
     console.error('deleteBill error:', error.message)
@@ -177,7 +187,10 @@ export async function deleteBill(id: string) {
 // bill's visible content, so it can't be guessed from a document someone is
 // presenting, only looked up against what we actually issued. Returns the
 // real stored details so admin can compare them against whatever is being
-// shown, rather than just a bare yes/no.
+// shown, rather than just a bare yes/no. Deliberately does NOT exclude
+// soft-deleted bills — a deleted bill's code still matches, but the result
+// flags it as deleted so admin can say "this was real, but we voided it"
+// instead of the misleading "never issued by us".
 export async function verifyBill(billNumber: string, code: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
@@ -200,5 +213,5 @@ export async function verifyBill(billNumber: string, code: string) {
     return { verified: false as const, reason: 'code_mismatch' as const }
   }
 
-  return { verified: true as const, bill }
+  return { verified: true as const, deleted: !!bill.deleted_at, bill }
 }
