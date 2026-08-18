@@ -97,8 +97,7 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
     await deleteBill(id)
   }
 
-  const cycleStatus = async (id: string, current: string) => {
-    const next = current === 'unpaid' ? 'paid' : current === 'paid' ? 'cancelled' : 'unpaid'
+  const changeStatus = async (id: string, next: 'unpaid' | 'paid' | 'cancelled') => {
     setBills(prev => prev.map(b => b.id === id ? { ...b, status: next } : b))
     await updateBillStatus(id, next)
   }
@@ -175,13 +174,15 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
                   {new Date(bill.issue_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </TableCell>
                 <TableCell className="align-top py-3">
-                  <button
-                    onClick={() => cycleStatus(bill.id, bill.status)}
-                    title="Click to change status"
-                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border capitalize ${statusStyles[bill.status]}`}
+                  <select
+                    value={bill.status}
+                    onChange={(e) => changeStatus(bill.id, e.target.value as 'unpaid' | 'paid' | 'cancelled')}
+                    className={`text-xs font-bold pl-2.5 pr-6 py-1 rounded-lg border capitalize focus:outline-none focus:ring-2 focus:ring-primary/20 ${statusStyles[bill.status]}`}
                   >
-                    {bill.status}
-                  </button>
+                    <option value="unpaid" className="bg-white text-gray-900">Unpaid</option>
+                    <option value="paid" className="bg-white text-gray-900">Paid</option>
+                    <option value="cancelled" className="bg-white text-gray-900">Cancelled</option>
+                  </select>
                 </TableCell>
                 <TableCell className="align-top py-3 text-right">
                   <div className="flex items-center justify-end gap-1.5">
@@ -249,6 +250,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
   const [items, setItems] = useState<DraftItem[]>([{ mode: 'custom', planId: '', description: '', amount: 0 }])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showReview, setShowReview] = useState(false)
   const [createdBillId, setCreatedBillId] = useState<string | null>(null)
   const [createdBillNumber, setCreatedBillNumber] = useState<string | null>(null)
 
@@ -286,8 +288,15 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
     ))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // The form's submit just moves to a review screen — nothing is saved (and
+  // no bill number is allocated) until Confirm & Create Bill on that screen.
+  const handleReview = (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    setShowReview(true)
+  }
+
+  const confirmCreate = async () => {
     setError(null)
     setSubmitting(true)
 
@@ -326,7 +335,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
     }
   }
 
-  const inputCls = "w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+  const inputCls = "w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-navy dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
   const labelCls = "text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
 
   return (
@@ -334,7 +343,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
       <div className="bg-white dark:bg-navy-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-white dark:bg-navy-900 h-14 px-6 border-b border-gray-100/60 dark:border-gray-800/60 flex items-center justify-between z-10">
           <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-primary" /> {createdBillId ? 'Bill Created' : 'New Bill'}
+            <Receipt className="w-4 h-4 text-primary" /> {createdBillId ? 'Bill Created' : showReview ? 'Review Bill' : 'New Bill'}
           </h2>
           <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 p-1">
             <X className="w-5 h-5" />
@@ -365,8 +374,97 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
               </button>
             </div>
           </div>
+        ) : showReview ? (
+          <div className="p-6 space-y-5">
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-xl border border-red-200 dark:border-red-900">
+                {error}
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Nothing is saved yet and no bill number has been used — check everything below before confirming.
+            </p>
+
+            {/* Bill To */}
+            <div className="rounded-xl border border-gray-200/60 dark:border-gray-800/60 p-4">
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Bill To</p>
+              <p className="text-sm font-bold text-navy dark:text-white">{name}</p>
+              {company && <p className="text-xs text-gray-500 dark:text-gray-400">{company}</p>}
+              {phone && <p className="text-xs text-gray-500 dark:text-gray-400">{phone}</p>}
+              {email && <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>}
+              {address && <p className="text-xs text-gray-500 dark:text-gray-400">{address}</p>}
+            </div>
+
+            {/* Dates */}
+            <div className="flex gap-6 text-sm">
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Issue Date</p>
+                <p className="text-navy dark:text-white font-medium">{new Date(issueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              </div>
+              {dueDate && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Due Date</p>
+                  <p className="text-navy dark:text-white font-medium">{new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Items */}
+            <div className="rounded-xl border border-gray-200/60 dark:border-gray-800/60 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-navy-800">
+                    <th className="text-left font-semibold text-gray-500 dark:text-gray-400 px-4 py-2.5 text-xs uppercase tracking-wide">Description</th>
+                    <th className="text-right font-semibold text-gray-500 dark:text-gray-400 px-4 py-2.5 text-xs uppercase tracking-wide">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {items.map((item, i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-2.5 text-navy dark:text-white">{item.description || <span className="text-red-500 italic">Missing description</span>}</td>
+                      <td className="px-4 py-2.5 text-right font-medium text-navy dark:text-white whitespace-nowrap">{formatINR(item.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gray-50 dark:bg-navy-800 font-bold">
+                    <td className="px-4 py-2.5 text-navy dark:text-white">Total</td>
+                    <td className="px-4 py-2.5 text-right text-primary whitespace-nowrap">{formatINR(total)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {notes && (
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{notes}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowReview(false)}
+                disabled={submitting}
+                className="flex-1 h-11 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800 disabled:opacity-60"
+              >
+                Back to Edit
+              </button>
+              <button
+                type="button"
+                onClick={confirmCreate}
+                disabled={submitting}
+                className="flex-1 h-11 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {submitting ? 'Creating...' : 'Confirm & Create Bill'}
+              </button>
+            </div>
+          </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <form onSubmit={handleReview} className="p-6 space-y-5">
             {error && (
               <div className="p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-xl border border-red-200 dark:border-red-900">
                 {error}
@@ -532,9 +630,8 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
               <button type="button" onClick={onClose} className="flex-1 h-11 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800">
                 Cancel
               </button>
-              <button type="submit" disabled={submitting} className="flex-1 h-11 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                {submitting ? 'Creating...' : 'Create Bill'}
+              <button type="submit" className="flex-1 h-11 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl flex items-center justify-center gap-2">
+                <FileText className="w-4 h-4" /> Review Bill
               </button>
             </div>
           </form>

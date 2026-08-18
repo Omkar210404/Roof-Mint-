@@ -260,12 +260,15 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             </button>
           </div>
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
-            <Link
-              href="/search"
-              className="hidden md:flex items-center gap-1.5 h-9 px-3.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-bold rounded-lg transition-colors"
-            >
-              <Search className="w-3.5 h-3.5" /> Find Verified Properties
-            </Link>
+            {/* Already on Search? Its own search bar makes this redundant. */}
+            {pathname !== '/search' && (
+              <Link
+                href="/search"
+                className="hidden md:flex items-center gap-1.5 h-9 px-3.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-bold rounded-lg transition-colors"
+              >
+                <Search className="w-3.5 h-3.5" /> Find Verified Properties
+              </Link>
+            )}
             <button
               onClick={() => detectLocation(true)}
               className="hidden md:flex w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 items-center justify-center hover:bg-gray-100 transition-colors"
@@ -273,13 +276,15 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             >
               <MapPin className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </button>
-            <Link
-              href="/search"
-              className="md:hidden w-9 h-9 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"
-              title="Search properties"
-            >
-              <Search className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-            </Link>
+            {pathname !== '/search' && (
+              <Link
+                href="/search"
+                className="md:hidden w-9 h-9 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"
+                title="Search properties"
+              >
+                <Search className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              </Link>
+            )}
             <NotificationBell />
             {isLoggedIn === false && (
               <Link
