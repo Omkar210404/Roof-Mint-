@@ -28,6 +28,9 @@ const actionLabels: Record<string, string> = {
   update_plan_tier: 'Edited plan tier',
   delete_feedback: 'Deleted feedback message',
   update_lead_status: 'Updated lead status',
+  create_bill: 'Created bill',
+  update_bill_status: 'Updated bill status',
+  delete_bill: 'Deleted bill',
 }
 
 function actionLabel(action: string) {
@@ -93,6 +96,15 @@ function describeActivity(entry: any): string {
       break
     case 'delete_feedback':
       return `${actor} deleted a feedback message`
+    case 'create_bill':
+      if (d.bill_number && d.bill_to_name) return `${actor} created bill ${d.bill_number} for ${d.bill_to_name}${d.total ? ` (₹${Number(d.total).toLocaleString('en-IN')})` : ''}`
+      break
+    case 'update_bill_status':
+      if (d.bill_number && d.status) return `${actor} marked bill ${d.bill_number} as ${d.status}`
+      break
+    case 'delete_bill':
+      if (d.bill_number) return `${actor} deleted bill ${d.bill_number}`
+      break
   }
 
   const details = formatDetails(d)
