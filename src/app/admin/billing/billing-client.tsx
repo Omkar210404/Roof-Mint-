@@ -346,7 +346,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<DraftItem[]>([{ mode: 'custom', planId: '', description: '', amount: 0 }])
+  const [items, setItems] = useState<DraftItem[]>([{ mode: 'plan', planId: '', description: '', amount: 0 }])
   const [status, setStatus] = useState<'unpaid' | 'paid'>('unpaid')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -374,7 +374,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
 
   const total = items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
 
-  const addItem = () => setItems(prev => [...prev, { mode: 'custom', planId: '', description: '', amount: 0 }])
+  const addItem = () => setItems(prev => [...prev, { mode: 'plan', planId: '', description: '', amount: 0 }])
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx))
   const setItemMode = (idx: number, mode: 'plan' | 'custom') => {
     setItems(prev => prev.map((item, i) => i === idx ? { ...item, mode, planId: '', description: '', amount: 0 } : item))
