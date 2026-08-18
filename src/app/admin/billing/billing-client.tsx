@@ -13,8 +13,9 @@ import {
 import {
   Search, Plus, X, FileText, Download, Share2, Trash2, Receipt,
   User, Building2, Loader2, Check, Plus as PlusIcon, Trash, CreditCard, Pencil,
+  ShieldCheck, ShieldAlert,
 } from 'lucide-react'
-import { getBills, getBillWithItems, createBill, updateBillStatus, deleteBill } from './actions'
+import { getBills, getBillWithItems, createBill, updateBillStatus, deleteBill, verifyBill } from './actions'
 import { buildBillPdf, billFileName } from '@/lib/generate-bill-pdf'
 import { formatPlanDuration, formatPlanPrice, type AgentPlanTier } from '@/lib/agent-plans'
 
@@ -35,6 +36,7 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showVerifyModal, setShowVerifyModal] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const supabase = createClient()
 
@@ -110,6 +112,12 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Generate, track, and download bills for agents or manual recipients</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowVerifyModal(true)}
+            className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm"
+          >
+            <ShieldCheck className="w-4 h-4 text-primary" /> Verify Bill
+          </button>
           <button
             onClick={() => setShowCreateModal(true)}
             className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 text-sm"
@@ -225,6 +233,87 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
           onCreated={async () => setBills(await getBills())}
         />
       )}
+
+      {showVerifyModal && (
+        <VerifyBillModal onClose={() => setShowVerifyModal(false)} />
+      )}
+    </div>
+  )
+}
+
+function VerifyBillModal({ onClose }: { onClose: () => void }) {
+  const [billNumber, setBillNumber] = useState('')
+  const [code, setCode] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [result, setResult] = useState<Awaited<ReturnType<typeof verifyBill>> | null>(null)
+
+  const handleCheck = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setChecking(true)
+    setResult(null)
+    const res = await verifyBill(billNumber, code)
+    setResult(res)
+    setChecking(false)
+  }
+
+  const inputCls = "w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-navy dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-navy-900 rounded-2xl max-w-sm w-full shadow-2xl">
+        <div className="h-14 px-6 border-b border-gray-100/60 dark:border-gray-800/60 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" /> Verify Bill
+          </h2>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleCheck} className="p-6 space-y-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Enter the bill number and the small "Ref" code printed at the bottom of the PDF someone has shown you. It'll only match if both came from a genuine, unedited Roofmint bill.
+          </p>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bill Number</label>
+            <input required value={billNumber} onChange={e => setBillNumber(e.target.value)} placeholder="RM-INV-000001" className={inputCls + ' font-mono'} />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ref Code</label>
+            <input required value={code} onChange={e => setCode(e.target.value)} placeholder="From the bottom of the PDF" className={inputCls + ' font-mono uppercase'} />
+          </div>
+
+          <button type="submit" disabled={checking} className="w-full h-11 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
+            {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            {checking ? 'Checking...' : 'Check'}
+          </button>
+
+          {result && (
+            result.verified ? (
+              <div className="p-3.5 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-xl space-y-1">
+                <p className="text-sm font-bold text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" /> Genuine — matches our records
+                </p>
+                <p className="text-xs text-green-800 dark:text-green-300">
+                  {result.bill.bill_to_name} · {formatINR(result.bill.total)} · {new Date(result.bill.issue_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {result.bill.status}
+                </p>
+                <p className="text-[11px] text-green-700/80 dark:text-green-400/80">Compare these details against what's being shown to you.</p>
+              </div>
+            ) : (
+              <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl">
+                <p className="text-sm font-bold text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4" /> Not verified
+                </p>
+                <p className="text-xs text-red-700/90 dark:text-red-400/90 mt-0.5">
+                  {result.reason === 'no_such_bill'
+                    ? "No bill exists with that number — it wasn't issued by Roofmint."
+                    : 'That bill number exists, but the code doesn\'t match our records.'}
+                </p>
+              </div>
+            )
+          )}
+        </form>
+      </div>
     </div>
   )
 }

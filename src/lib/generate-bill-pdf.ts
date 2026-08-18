@@ -16,6 +16,7 @@ export interface BillPdfData {
   status?: string
   total: number
   items: BillPdfItem[]
+  verification_code?: string
 }
 
 function formatINR(n: number) {
@@ -219,6 +220,12 @@ export async function buildBillPdf(bill: BillPdfData) {
   doc.setTextColor(...gray)
   doc.text('Thank you for partnering with Roofmint.', margin, pageHeight - 42)
   doc.text('This is a system-generated bill and does not require a signature.', margin, pageHeight - 28)
+
+  if (bill.verification_code) {
+    doc.setFontSize(7)
+    doc.setTextColor(203, 213, 225)
+    doc.text(`Ref: ${bill.verification_code}`, pageWidth - margin, pageHeight - 28, { align: 'right' })
+  }
 
   return doc
 }

@@ -171,3 +171,34 @@ export async function deleteBill(id: string) {
   revalidatePath('/admin/billing')
   return { success: true }
 }
+
+// Confirms whether a bill number + the small reference code printed on its
+// PDF actually match our records — the code has no relationship to the
+// bill's visible content, so it can't be guessed from a document someone is
+// presenting, only looked up against what we actually issued. Returns the
+// real stored details so admin can compare them against whatever is being
+// shown, rather than just a bare yes/no.
+export async function verifyBill(billNumber: string, code: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const trimmedNumber = billNumber.trim()
+  const trimmedCode = code.trim().toUpperCase()
+  if (!trimmedNumber || !trimmedCode) return { error: 'Enter both the bill number and the reference code.' }
+
+  const { data: bill } = await supabase
+    .from('bills')
+    .select('*')
+    .eq('bill_number', trimmedNumber)
+    .maybeSingle()
+
+  if (!bill) {
+    return { verified: false as const, reason: 'no_such_bill' as const }
+  }
+
+  if (bill.verification_code !== trimmedCode) {
+    return { verified: false as const, reason: 'code_mismatch' as const }
+  }
+
+  return { verified: true as const, bill }
+}
