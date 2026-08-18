@@ -122,36 +122,76 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Billing</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Generate, track, and download bills for agents or manual recipients</p>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Billing</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Generate, track, and download bills for agents or manual recipients</p>
+          </div>
+          <span className="shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full whitespace-nowrap">{showDeleted ? deletedBills.length : bills.length} total</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={showDeleted ? () => setShowDeleted(false) : openDeleted}
-            className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm"
+            className="h-10 px-3 sm:px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
           >
-            <ArchiveRestore className="w-4 h-4 text-primary" /> {showDeleted ? 'Back to Bills' : 'Deleted Bills'}
+            <ArchiveRestore className="w-4 h-4 text-primary shrink-0" /> {showDeleted ? 'Back to Bills' : 'Deleted Bills'}
           </button>
           <button
             onClick={() => setShowVerifyModal(true)}
-            className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm"
+            className="h-10 px-3 sm:px-4 border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-navy dark:text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
           >
-            <ShieldCheck className="w-4 h-4 text-primary" /> Verify Bill
+            <ShieldCheck className="w-4 h-4 text-primary shrink-0" /> Verify Bill
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 text-sm"
+            className="h-10 px-3 sm:px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
           >
-            <Plus className="w-4 h-4" /> New Bill
+            <Plus className="w-4 h-4 shrink-0" /> New Bill
           </button>
-          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{showDeleted ? deletedBills.length : bills.length} total</span>
         </div>
       </div>
 
       {showDeleted ? (
-        <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">
+        loadingDeleted ? (
+          <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm py-10 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+          </div>
+        ) : deletedBills.length === 0 ? (
+          <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm py-10 text-center text-sm text-gray-400 dark:text-gray-500 px-4">
+            No deleted bills — anything you delete shows up here so you can bring it back by mistake.
+          </div>
+        ) : (
+        <>
+        {/* Mobile: card list */}
+        <div className="sm:hidden space-y-3">
+          {deletedBills.map((bill) => (
+            <div key={bill.id} className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-mono text-xs font-semibold text-navy dark:text-white">{bill.bill_number}</div>
+                  <div className="text-sm font-medium text-navy dark:text-white mt-1">{bill.bill_to_name}</div>
+                  {bill.bill_to_company && <div className="text-xs text-gray-400 dark:text-gray-500">{bill.bill_to_company}</div>}
+                </div>
+                <div className="text-sm font-semibold text-navy dark:text-white whitespace-nowrap">{formatINR(bill.total)}</div>
+              </div>
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Deleted {new Date(bill.deleted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+                <button
+                  onClick={() => handleRestore(bill.id)}
+                  className="h-8 px-3 rounded-md bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Restore
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden sm:block bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -163,19 +203,7 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingDeleted ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10">
-                    <Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" />
-                  </TableCell>
-                </TableRow>
-              ) : deletedBills.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-sm text-gray-400 dark:text-gray-500">
-                    No deleted bills — anything you delete shows up here so you can bring it back by mistake.
-                  </TableCell>
-                </TableRow>
-              ) : deletedBills.map((bill) => (
+              {deletedBills.map((bill) => (
                 <TableRow key={bill.id}>
                   <TableCell className="align-top py-3 font-mono text-xs font-semibold text-navy dark:text-white whitespace-nowrap">{bill.bill_number}</TableCell>
                   <TableCell className="align-top py-3">
@@ -199,6 +227,8 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
             </TableBody>
           </Table>
         </div>
+        </>
+        )
       ) : (
       <>
       <div className="flex flex-col sm:flex-row gap-3">
@@ -224,7 +254,69 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
         </select>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">
+      {filtered.length === 0 ? (
+        <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm py-10 text-center text-sm text-gray-400 dark:text-gray-500 px-4">
+          {bills.length === 0 ? 'No bills yet — create your first one.' : 'No bills match your search/filter.'}
+        </div>
+      ) : (
+      <>
+      {/* Mobile: card list */}
+      <div className="sm:hidden space-y-3">
+        {filtered.map((bill) => (
+          <div key={bill.id} className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-mono text-xs font-semibold text-navy dark:text-white">{bill.bill_number}</div>
+                <div className="text-sm font-medium text-navy dark:text-white mt-1">{bill.bill_to_name}</div>
+                {bill.bill_to_company && <div className="text-xs text-gray-400 dark:text-gray-500">{bill.bill_to_company}</div>}
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {new Date(bill.issue_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-navy dark:text-white whitespace-nowrap">{formatINR(bill.total)}</div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <select
+                value={bill.status}
+                onChange={(e) => changeStatus(bill.id, e.target.value as 'unpaid' | 'paid' | 'cancelled')}
+                className={`text-xs font-bold pl-2.5 pr-6 py-1 rounded-lg border capitalize focus:outline-none focus:ring-2 focus:ring-primary/20 ${statusStyles[bill.status]}`}
+              >
+                <option value="unpaid" className="bg-white text-gray-900">Unpaid</option>
+                <option value="paid" className="bg-white text-gray-900">Paid</option>
+                <option value="cancelled" className="bg-white text-gray-900">Cancelled</option>
+              </select>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => downloadBill(bill.id)}
+                  disabled={busyId === bill.id}
+                  title="Download PDF"
+                  className="w-8 h-8 rounded-md bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 dark:hover:bg-navy-700 text-navy dark:text-white flex items-center justify-center disabled:opacity-40"
+                >
+                  {busyId === bill.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  onClick={() => shareBill(bill.id)}
+                  disabled={busyId === bill.id}
+                  title="Share PDF"
+                  className="w-8 h-8 rounded-md bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary flex items-center justify-center disabled:opacity-40"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(bill.id, bill.bill_number)}
+                  title="Delete bill"
+                  className="w-8 h-8 rounded-md bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 flex items-center justify-center"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden sm:block bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -237,13 +329,7 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-sm text-gray-400 dark:text-gray-500">
-                  {bills.length === 0 ? 'No bills yet — create your first one.' : 'No bills match your search/filter.'}
-                </TableCell>
-              </TableRow>
-            ) : filtered.map((bill) => (
+            {filtered.map((bill) => (
               <TableRow key={bill.id}>
                 <TableCell className="align-top py-3 font-mono text-xs font-semibold text-navy dark:text-white whitespace-nowrap">{bill.bill_number}</TableCell>
                 <TableCell className="align-top py-3">
@@ -297,6 +383,8 @@ export function BillingClientWrapper({ initialBills, agents, planTiers }: { init
           </TableBody>
         </Table>
       </div>
+      </>
+      )}
       </>
       )}
 
@@ -642,16 +730,16 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
                 <button
                   type="button"
                   onClick={() => setBillToType('agent')}
-                  className={`flex-1 h-10 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${billToType === 'agent' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                  className={`flex-1 h-10 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap px-1 ${billToType === 'agent' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
                 >
-                  <Building2 className="w-3.5 h-3.5" /> Select Agent
+                  <Building2 className="w-3.5 h-3.5 shrink-0" /> Select Agent
                 </button>
                 <button
                   type="button"
                   onClick={() => { setBillToType('manual'); setSelectedAgentId('') }}
-                  className={`flex-1 h-10 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${billToType === 'manual' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                  className={`flex-1 h-10 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap px-1 ${billToType === 'manual' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
                 >
-                  <User className="w-3.5 h-3.5" /> Manual Entry
+                  <User className="w-3.5 h-3.5 shrink-0" /> Manual Entry
                 </button>
               </div>
 
@@ -712,14 +800,14 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
                 <button
                   type="button"
                   onClick={() => setStatus('unpaid')}
-                  className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${status === 'unpaid' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                  className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap px-1 ${status === 'unpaid' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
                 >
                   Unpaid
                 </button>
                 <button
                   type="button"
                   onClick={() => setStatus('paid')}
-                  className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${status === 'paid' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
+                  className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap px-1 ${status === 'paid' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-300'}`}
                 >
                   Already Paid
                 </button>
@@ -737,19 +825,19 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
               <div className="space-y-3">
                 {items.map((item, idx) => (
                   <div key={idx} className="rounded-xl border border-gray-200/60 dark:border-gray-800/60 p-3 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex gap-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           type="button"
                           onClick={() => setItemMode(idx, 'plan')}
-                          className={`h-7 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${item.mode === 'plan' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'}`}
+                          className={`h-7 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${item.mode === 'plan' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'}`}
                         >
                           <CreditCard className="w-3 h-3" /> From Plan
                         </button>
                         <button
                           type="button"
                           onClick={() => setItemMode(idx, 'custom')}
-                          className={`h-7 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${item.mode === 'custom' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'}`}
+                          className={`h-7 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${item.mode === 'custom' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-navy-800 text-gray-500 dark:text-gray-400'}`}
                         >
                           <Pencil className="w-3 h-3" /> Custom Charge
                         </button>

@@ -364,14 +364,14 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Leads & Enquiries</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowAddLead(true)}
-            className="h-9 px-3 rounded-lg text-xs font-semibold bg-primary hover:bg-teal-700 text-white transition-colors inline-flex items-center gap-1.5"
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-primary hover:bg-teal-700 text-white transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <Plus className="w-3.5 h-3.5" /> Add Lead
           </button>
-          <label className="h-9 px-2.5 rounded-lg bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 cursor-pointer select-none" title="Uncheck before sending an export to an agent/broker — hides which channel each lead came from">
+          <label className="h-9 px-2.5 rounded-lg bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 cursor-pointer select-none whitespace-nowrap shrink-0" title="Uncheck before sending an export to an agent/broker — hides which channel each lead came from">
             <input
               type="checkbox"
               checked={includeSource}
@@ -383,18 +383,18 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
           <button
             onClick={exportCSV}
             disabled={filteredSorted.length === 0}
-            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" /> Export CSV
           </button>
           <button
             onClick={exportPDF}
             disabled={filteredSorted.length === 0}
-            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5"
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <FileText className="w-3.5 h-3.5" /> Export PDF
           </button>
-          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">{leads.length} total</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full whitespace-nowrap shrink-0">{leads.length} total</span>
         </div>
       </div>
 

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { MfaChallenge } from '@/components/mfa-challenge';
 import { RoofmintLogo } from '@/components/roofmint-logo';
 import { ThemeImage } from '@/components/theme-image';
@@ -126,7 +125,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col max-w-[480px] md:max-w-none md:flex-row mx-auto w-full relative">
-      <ThemeToggle className="absolute top-4 right-4 z-20" />
       <Link
         href="/"
         title="Back to home"

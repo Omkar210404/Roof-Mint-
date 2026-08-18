@@ -2,15 +2,88 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History, Menu, X, Receipt } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoofmintLogo } from "@/components/roofmint-logo";
 
+// Nav paths that get a "something new" dot, and the table whose latest
+// row decides it. Kept separate from navItems below since it also drives
+// the last-seen bookkeeping in localStorage.
+const WATCHED_NAV: Record<string, string> = {
+  "/admin/leads": "enquiries",
+  "/admin/users": "profiles",
+  "/admin/feedback": "feedback",
+  "/admin/activity": "activity_log",
+};
+
+function lastSeenKey(table: string) {
+  return `admin_nav_last_seen_${table}`;
+}
+
+function NavDot() {
+  return (
+    <span className="relative ml-auto flex h-2 w-2 shrink-0" aria-label="New activity">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+    </span>
+  );
+}
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [hasNew, setHasNew] = useState<Record<string, boolean>>({});
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
+  // Check what's new once on mount, then keep it live via realtime — a new
+  // row in any watched table marks its nav item, unless the admin is
+  // already looking at that section.
+  useEffect(() => {
+    const supabase = createClient();
+
+    (async () => {
+      for (const [path, table] of Object.entries(WATCHED_NAV)) {
+        const { data } = await supabase
+          .from(table)
+          .select("created_at")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const latest = data?.created_at;
+        const seen = localStorage.getItem(lastSeenKey(table));
+        if (latest && (!seen || new Date(latest) > new Date(seen))) {
+          setHasNew(prev => ({ ...prev, [path]: true }));
+        }
+      }
+    })();
+
+    const channels = Object.entries(WATCHED_NAV).map(([path, table]) =>
+      supabase
+        .channel(`admin_nav_${table}`)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table }, () => {
+          if (pathnameRef.current !== path) {
+            setHasNew(prev => ({ ...prev, [path]: true }));
+          }
+        })
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach(ch => supabase.removeChannel(ch));
+    };
+  }, []);
+
+  // Visiting a watched section clears its dot and records "seen" so it
+  // stays cleared across reloads until something new actually shows up.
+  useEffect(() => {
+    const table = WATCHED_NAV[pathname];
+    if (!table) return;
+    setHasNew(prev => (prev[pathname] ? { ...prev, [pathname]: false } : prev));
+    localStorage.setItem(lastSeenKey(table), new Date().toISOString());
+  }, [pathname]);
 
   // No idle-timeout auto sign-out — an admin with multiple tabs/windows
   // open (easy to end up with, e.g. an old forgotten tab) would have each
@@ -65,6 +138,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               >
                 <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
                 {item.label}
+                {hasNew[item.href] && <NavDot />}
               </Link>
             );
           })}
@@ -135,6 +209,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   >
                     <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
                     {item.label}
+                    {hasNew[item.href] && <NavDot />}
                   </Link>
                 );
               })}

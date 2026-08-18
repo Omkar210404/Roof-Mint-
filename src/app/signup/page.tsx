@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, User, Phone, Shield, Sparkles, CheckCircle, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 import { RoofmintLogo } from '@/components/roofmint-logo';
 import { HomeSearchIllustration } from '@/components/home-search-illustration';
@@ -160,7 +159,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-navy-900 flex flex-col max-w-[480px] md:max-w-none md:flex-row mx-auto w-full relative">
-      <ThemeToggle className="absolute top-4 right-4 z-20" />
       <Link
         href="/"
         title="Back to home"

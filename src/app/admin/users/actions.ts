@@ -38,7 +38,16 @@ export async function getUserProfiles() {
   const { data: activity } = await supabase.rpc('admin_list_auth_activity')
   const activityById = new Map((activity || []).map((a: any) => [a.id, a.last_sign_in_at]))
 
-  return (data || []).map(u => ({ ...u, last_sign_in_at: activityById.get(u.id) || null }))
+  // The primary admin (admin@roofmint.in) is protected at the DB level
+  // (see 28_protect_primary_admin.sql) — this just lets the UI hide the
+  // delete/role controls for that row instead of the action erroring out.
+  const { data: primaryAdminId } = await supabase.rpc('admin_get_primary_admin_id')
+
+  return (data || []).map(u => ({
+    ...u,
+    last_sign_in_at: activityById.get(u.id) || null,
+    is_primary_admin: !!primaryAdminId && u.id === primaryAdminId,
+  }))
 }
 
 export async function deleteUserProfile(id: string) {
@@ -46,6 +55,14 @@ export async function deleteUserProfile(id: string) {
   if (!authorized) return { error: 'Unauthorized' }
 
   const { data: target } = await supabase.from('profiles').select('full_name').eq('id', id).single()
+
+  // activity_log.admin_id has a FK to profiles.id — deleting the actor's own
+  // row first would make the log insert below fail silently (logActivity is
+  // fire-and-forget), losing the audit trail for exactly the self-delete
+  // case that matters most. Log first when it's a self-delete.
+  if (id === user!.id) {
+    await logActivity(supabase, user!.id, 'delete_user_profile', 'profile', id, { user_name: target?.full_name || 'Unknown' })
+  }
 
   // Foreign key constraints on delete cascade will handle related records
   const { error } = await supabase.from('profiles').delete().eq('id', id)
@@ -55,7 +72,9 @@ export async function deleteUserProfile(id: string) {
     return { error: error.message }
   }
 
-  await logActivity(supabase, user!.id, 'delete_user_profile', 'profile', id, { user_name: target?.full_name || 'Unknown' })
+  if (id !== user!.id) {
+    await logActivity(supabase, user!.id, 'delete_user_profile', 'profile', id, { user_name: target?.full_name || 'Unknown' })
+  }
 
   return { success: true }
 }

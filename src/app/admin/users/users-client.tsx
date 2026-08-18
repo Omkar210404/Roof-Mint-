@@ -70,14 +70,24 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
 
   const handleDeleteUser = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete user "${name || 'User'}"?`)) return;
+    const removed = usersList.find(u => u.id === id);
     setUsersList(prev => prev.filter(u => u.id !== id));
     setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-    await deleteUserProfile(id);
+    const result = await deleteUserProfile(id);
+    if (result?.error) {
+      alert(result.error);
+      if (removed) setUsersList(prev => [...prev, removed].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    }
   };
 
   const handleRoleChange = async (id: string, role: string) => {
+    const previousRole = usersList.find(u => u.id === id)?.role;
     setUsersList(prev => prev.map(u => u.id === id ? { ...u, role } : u));
-    await updateUserRole(id, role);
+    const result = await updateUserRole(id, role);
+    if (result?.error) {
+      alert(result.error);
+      setUsersList(prev => prev.map(u => u.id === id ? { ...u, role: previousRole } : u));
+    }
   };
 
   const toggleSort = (key: SortKey) => {
@@ -91,10 +101,11 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
 
   const toggleSelectAll = () => {
     setSelectedIds(prev => {
-      const allSelected = filteredUsers.length > 0 && filteredUsers.every(u => prev.has(u.id));
+      const selectable = filteredUsers.filter(u => !u.is_primary_admin);
+      const allSelected = selectable.length > 0 && selectable.every(u => prev.has(u.id));
       const next = new Set(prev);
-      if (allSelected) filteredUsers.forEach(u => next.delete(u.id));
-      else filteredUsers.forEach(u => next.add(u.id));
+      if (allSelected) selectable.forEach(u => next.delete(u.id));
+      else selectable.forEach(u => next.add(u.id));
       return next;
     });
   };
@@ -115,8 +126,14 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
     if (ids.length === 0) return;
     if (!confirm(`Delete ${ids.length} selected user${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
     setBulkBusy(true);
+    const removed = usersList.filter(u => selectedIds.has(u.id));
     setUsersList(prev => prev.filter(u => !selectedIds.has(u.id)));
-    await Promise.all(ids.map(id => deleteUserProfile(id)));
+    const results = await Promise.all(ids.map(id => deleteUserProfile(id)));
+    const failedIds = new Set(ids.filter((id, i) => results[i]?.error));
+    if (failedIds.size > 0) {
+      setUsersList(prev => [...prev, ...removed.filter(u => failedIds.has(u.id))].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      alert(results.find(r => r?.error)?.error || 'Some users could not be deleted.');
+    }
     clearSelection();
     setBulkBusy(false);
   };
@@ -126,8 +143,14 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
     setBulkBusy(true);
+    const previousRoles = new Map(usersList.filter(u => selectedIds.has(u.id)).map(u => [u.id, u.role]));
     setUsersList(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, role } : u));
-    await Promise.all(ids.map(id => updateUserRole(id, role)));
+    const results = await Promise.all(ids.map(id => updateUserRole(id, role)));
+    const failed = ids.filter((id, i) => results[i]?.error);
+    if (failed.length > 0) {
+      setUsersList(prev => prev.map(u => failed.includes(u.id) ? { ...u, role: previousRoles.get(u.id) } : u));
+      alert(results.find(r => r?.error)?.error || 'Some roles could not be updated.');
+    }
     setBulkBusy(false);
   };
 
@@ -260,10 +283,10 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
         </div>
 
         {/* Export Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleExportCSV}
-            className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 active:scale-[0.98]"
+            className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 active:scale-[0.98] whitespace-nowrap shrink-0"
           >
             <Download className="w-4 h-4" />
             Export Excel / CSV
@@ -444,12 +467,14 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
                 filteredUsers.map((user) => (
                   <TableRow key={user.id} className={`hover:bg-gray-50/50 dark:hover:bg-navy-800/50 transition-colors ${selectedIds.has(user.id) ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}`}>
                     <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(user.id)}
-                        onChange={() => toggleSelectOne(user.id)}
-                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
-                      />
+                      {!user.is_primary_admin && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(user.id)}
+                          onChange={() => toggleSelectOne(user.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                        />
+                      )}
                     </TableCell>
                     {/* User Info */}
                     <TableCell>
@@ -534,24 +559,33 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
 
                     {/* Actions */}
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <select
-                          value={user.role || 'user'}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                          className="h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      {user.is_primary_admin ? (
+                        <span
+                          className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-bold bg-navy dark:bg-teal-950/40 text-white dark:text-teal-400"
+                          title="The primary admin account — role is fixed and it cannot be deleted"
                         >
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                        <button
-                          onClick={() => handleDeleteUser(user.id, user.full_name)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 h-8 px-2.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1"
-                          title="Delete User Profile"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Delete
-                        </button>
-                      </div>
+                          <UserCheck className="w-3.5 h-3.5" /> Admin (fixed)
+                        </span>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <select
+                            value={user.role || 'user'}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            className="h-8 text-xs font-semibold rounded-lg px-2 border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.full_name)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 h-8 px-2.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1"
+                            title="Delete User Profile"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
