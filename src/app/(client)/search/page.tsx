@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, MapPin, ArrowLeft, X, TrendingUp, Clock, Sparkles, Trash2 } from 'lucide-react';
+import { Search, MapPin, ArrowLeft, X, Clock, Sparkles, Trash2 } from 'lucide-react';
 import { searchProperties } from '../properties/actions';
 
 export default function SearchPage() {
@@ -12,7 +12,6 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [topSearches, setTopSearches] = useState<{ label: string; count: number }[]>([]);
 
   useEffect(() => {
     try {
@@ -20,21 +19,6 @@ export default function SearchPage() {
       if (saved) {
         const parsed = JSON.parse(saved);
         setRecentSearches(parsed);
-      }
-
-      const history = localStorage.getItem('roofmint_search_history');
-      if (history) {
-        const parsed: string[] = JSON.parse(history);
-        const freq: Record<string, number> = {};
-        parsed.forEach(term => {
-          const key = term.toLowerCase().trim();
-          freq[key] = (freq[key] || 0) + 1;
-        });
-        const sorted = Object.entries(freq)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 6)
-          .map(([label, count]) => ({ label, count }));
-        setTopSearches(sorted);
       }
     } catch {}
   }, []);
@@ -46,24 +30,6 @@ export default function SearchPage() {
     const updatedRecent = [trimmed, ...recentSearches.filter(s => s.toLowerCase() !== trimmed.toLowerCase())].slice(0, 8);
     setRecentSearches(updatedRecent);
     localStorage.setItem('roofmint_recent_searches', JSON.stringify(updatedRecent));
-
-    try {
-      const history = JSON.parse(localStorage.getItem('roofmint_search_history') || '[]');
-      history.push(trimmed);
-      const capped = history.slice(-200);
-      localStorage.setItem('roofmint_search_history', JSON.stringify(capped));
-
-      const freq: Record<string, number> = {};
-      capped.forEach((t: string) => {
-        const key = t.toLowerCase().trim();
-        freq[key] = (freq[key] || 0) + 1;
-      });
-      const sorted = Object.entries(freq)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 6)
-        .map(([label, count]) => ({ label, count }));
-      setTopSearches(sorted);
-    } catch {}
   };
 
   const clearRecentSearches = () => {
@@ -85,19 +51,6 @@ export default function SearchPage() {
     e.preventDefault();
     doSearch(query);
   };
-
-  const defaultSuggestions = [
-    '3 BHK Apartment',
-    'Rent',
-    'Resale',
-    '1st Owner',
-    'Under 1 Cr',
-    'Ready to Move',
-    'Villa',
-    'Near Metro',
-  ];
-
-  const hasHistory = topSearches.length > 0;
 
   return (
     <div className="bg-background min-h-screen max-w-7xl mx-auto pb-8">
@@ -182,59 +135,31 @@ export default function SearchPage() {
         ) : (
           /* Pre-search UI (Desktop 2-column grid) */
           <div className="space-y-6 md:space-y-8">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Recent Searches */}
-              {recentSearches.length > 0 && (
-                <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100/60 dark:border-gray-800/60 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-navy dark:text-white flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" /> Recent Searches
-                    </h3>
-                    <button onClick={clearRecentSearches} className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-500 flex items-center gap-1 transition-colors">
-                      <Trash2 className="w-3 h-3" /> Clear
-                    </button>
-                  </div>
-                  <div className="space-y-1">
-                    {recentSearches.map(term => (
-                      <button key={term} onClick={() => { setQuery(term); doSearch(term); }}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-navy-800 text-sm text-gray-700 dark:text-gray-300 font-medium flex items-center justify-between transition-colors">
-                        <span className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-                          {term}
-                        </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">Search →</span>
-                      </button>
-                    ))}
-                  </div>
+            {/* Recent Searches */}
+            {recentSearches.length > 0 && (
+              <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100/60 dark:border-gray-800/60 shadow-sm md:max-w-md">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-navy dark:text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" /> Recent Searches
+                  </h3>
+                  <button onClick={clearRecentSearches} className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-500 flex items-center gap-1 transition-colors">
+                    <Trash2 className="w-3 h-3" /> Clear
+                  </button>
                 </div>
-              )}
-
-              {/* Popular Searches */}
-              <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100/60 dark:border-gray-800/60 shadow-sm">
-                <h3 className="text-sm font-bold text-navy dark:text-white mb-3 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  {hasHistory ? 'Your Top Searches' : 'Popular Suggestions'}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {hasHistory ? (
-                    topSearches.map(item => (
-                      <button key={item.label} onClick={() => { setQuery(item.label); doSearch(item.label); }}
-                        className="h-9 px-4 rounded-xl bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary hover:bg-teal-50 flex items-center gap-1.5 transition-colors">
-                        <span className="capitalize">{item.label}</span>
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal">({item.count})</span>
-                      </button>
-                    ))
-                  ) : (
-                    defaultSuggestions.map(label => (
-                      <button key={label} onClick={() => { setQuery(label); doSearch(label); }}
-                        className="h-9 px-4 rounded-xl bg-gray-50 dark:bg-navy-800 border border-gray-200/60 dark:border-gray-800/60 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary hover:bg-teal-50 flex items-center gap-1.5 transition-colors">
-                        {label}
-                      </button>
-                    ))
-                  )}
+                <div className="space-y-1">
+                  {recentSearches.map(term => (
+                    <button key={term} onClick={() => { setQuery(term); doSearch(term); }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-navy-800 text-sm text-gray-700 dark:text-gray-300 font-medium flex items-center justify-between transition-colors">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+                        {term}
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Search →</span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* AI Banner */}
             <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

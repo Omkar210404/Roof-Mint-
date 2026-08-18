@@ -6,17 +6,17 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next')
 
+  const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : null
+
   if (code) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
       // Explicit destinations (e.g. the password-reset flow, or a property
-      // page a signed-out visitor was on) are honored as-is — but only
-      // relative in-app paths, never a full URL, so this can't become an
-      // open redirect.
-      if (next && next.startsWith('/') && !next.startsWith('//')) {
-        return NextResponse.redirect(`${origin}${next}`)
+      // page a signed-out visitor was on) are honored as-is.
+      if (safeNext) {
+        return NextResponse.redirect(`${origin}${safeNext}`)
       }
 
       // Otherwise this is an OAuth sign-in — route the same way email
@@ -37,6 +37,15 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.redirect(`${origin}/`)
+    }
+
+    // Code exchange failed (link expired, already used, etc). If this was
+    // a password-reset link, send them to /reset-password anyway rather
+    // than a generic login error — that page checks for a session itself
+    // and shows a proper "link expired, request a new one" state instead
+    // of a dead end.
+    if (safeNext) {
+      return NextResponse.redirect(`${origin}${safeNext}`)
     }
   }
 

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '@/lib/password-policy';
 import { RoofmintLogo } from '@/components/roofmint-logo';
@@ -15,6 +16,45 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // null = still checking, true = a valid recovery session exists, false =
+  // the link was invalid/expired/already used. Supabase's reset link can
+  // land here two different ways depending on flow type — either a session
+  // cookie is already set by the time we get here (code-exchange flow via
+  // /auth/callback), or the client SDK parses a #access_token=...&type=
+  // recovery fragment straight out of the URL on load and fires a
+  // PASSWORD_RECOVERY auth event. Checking for both is what actually makes
+  // this page work regardless of which one Supabase used for a given link,
+  // instead of silently showing a working-looking form with no real session
+  // behind it.
+  const [sessionReady, setSessionReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let settled = false;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session && !settled) {
+        settled = true;
+        setSessionReady(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        settled = true;
+        setSessionReady(true);
+      }
+    });
+
+    const timer = setTimeout(() => {
+      if (!settled) setSessionReady(false);
+    }, 3000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +90,25 @@ export default function ResetPasswordPage() {
         <RoofmintLogo width={160} height={42} className="h-10 w-auto" priority />
       </div>
 
-      {success ? (
+      {sessionReady === null ? (
+        <div className="text-center py-8">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Verifying your reset link...</p>
+        </div>
+      ) : sessionReady === false ? (
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-navy dark:text-white mb-2">Link Expired</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+            This password reset link is invalid or has already been used. Request a new one to continue.
+          </p>
+          <Link href="/forgot-password" className="inline-flex h-12 px-8 bg-primary text-white font-bold rounded-xl hover:bg-teal-700 transition-colors items-center justify-center">
+            Send New Link
+          </Link>
+        </div>
+      ) : success ? (
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-primary" />

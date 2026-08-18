@@ -63,9 +63,9 @@ export function AppreciationPredictor({ property }: PropertyProps) {
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2 flex-wrap">
               <h3 className="text-base font-bold text-white">5-Year Price & Growth Predictor</h3>
-              <span className="text-[10px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-extrabold bg-teal-400/20 text-teal-300 border border-teal-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
                 Roofmint AI
               </span>
             </div>

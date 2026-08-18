@@ -431,32 +431,34 @@ function CreateBillModal({ agents, onClose, onCreated }: { agents: Agent[]; onCl
               </div>
               <div className="space-y-2">
                 {items.map((item, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
+                  <div key={idx} className="flex flex-col sm:flex-row gap-2 sm:items-center p-2.5 sm:p-0 rounded-lg bg-gray-50/60 dark:bg-navy-800/40 sm:bg-transparent sm:dark:bg-transparent">
                     <input
                       required
                       value={item.description}
                       onChange={e => updateItem(idx, 'description', e.target.value)}
                       placeholder="Description (e.g. Commission - Greenwoods Residences)"
-                      className={inputCls + ' flex-1'}
+                      className={inputCls + ' w-full sm:flex-1'}
                     />
-                    <input
-                      required
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.amount || ''}
-                      onChange={e => updateItem(idx, 'amount', e.target.value)}
-                      placeholder="Amount"
-                      className={inputCls + ' w-32'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      disabled={items.length === 1}
-                      className="w-9 h-10 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 flex items-center justify-center disabled:opacity-30 shrink-0"
-                    >
-                      <Trash className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        required
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.amount || ''}
+                        onChange={e => updateItem(idx, 'amount', e.target.value)}
+                        placeholder="Amount"
+                        className={inputCls + ' flex-1 sm:flex-none sm:w-32'}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        disabled={items.length === 1}
+                        className="w-9 h-10 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 flex items-center justify-center disabled:opacity-30 shrink-0"
+                      >
+                        <Trash className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

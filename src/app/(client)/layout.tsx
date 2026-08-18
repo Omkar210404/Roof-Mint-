@@ -273,6 +273,13 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             >
               <MapPin className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </button>
+            <Link
+              href="/search"
+              className="md:hidden w-9 h-9 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"
+              title="Search properties"
+            >
+              <Search className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+            </Link>
             <NotificationBell />
             {isLoggedIn === false && (
               <Link
