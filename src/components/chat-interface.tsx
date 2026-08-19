@@ -8,19 +8,31 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { Bot, User, ArrowRight } from 'lucide-react'
+import { Bot, User, ArrowRight, Home, Building2, IndianRupee } from 'lucide-react'
+
+const STARTER_PROMPTS = [
+  { label: 'Homes in Whitefield', icon: Home, text: 'Show me homes in Whitefield' },
+  { label: '2BHK under 80L', icon: IndianRupee, text: '2BHK under 80 lakhs' },
+  { label: 'Villas in North', icon: Building2, text: 'Show me villas in North area' },
+  { label: 'Commercial spaces', icon: Building2, text: 'Commercial spaces' },
+]
 
 export function ChatInterface() {
   const [input, setInput] = useState('')
-  const { messages, sendMessage, status } = useChat()
+  const { messages, sendMessage, status, error } = useChat()
 
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input.trim() || isLoading) return
     sendMessage({ text: input })
     setInput('')
+  }
+
+  const sendPrompt = (text: string) => {
+    if (isLoading) return
+    sendMessage({ text })
   }
 
   return (
@@ -37,6 +49,29 @@ export function ChatInterface() {
       
       <ScrollArea className="h-[400px] p-4">
         <div className="space-y-6">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center text-center py-6 gap-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                <Bot className="w-7 h-7 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-gray-800 dark:text-gray-100">Tell me what you&apos;re looking for</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">e.g. &quot;2BHK in South Mumbai under 5 Cr&quot; — I&apos;ll search and show you real listings.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {STARTER_PROMPTS.map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => sendPrompt(p.text)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200/60 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-800 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors text-left"
+                  >
+                    <p.icon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {messages.map((message: any) => (
             <div
               key={message.id}
@@ -155,6 +190,18 @@ export function ChatInterface() {
                </div>
              </div>
           )}
+          {error && (
+            <div className="flex justify-start">
+              <div className="flex gap-3 max-w-[85%] flex-row">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-red-50 dark:bg-red-950/40 text-red-500 flex items-center justify-center">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm text-sm">
+                  Something went wrong on my end — please try that again in a moment.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
@@ -177,11 +224,20 @@ export function ChatInterface() {
             Send
           </Button>
         </form>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-           <Badge variant="outline" className="cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 whitespace-nowrap" onClick={() => setInput('Show me villas in North area')}>Villa in North</Badge>
-           <Badge variant="outline" className="cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 whitespace-nowrap" onClick={() => setInput('3BHK under 1.5 Cr')}>3BHK &lt; 1.5 Cr</Badge>
-           <Badge variant="outline" className="cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 whitespace-nowrap" onClick={() => setInput('Commercial spaces')}>Commercial</Badge>
-        </div>
+        {messages.length > 0 && (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {STARTER_PROMPTS.map((p) => (
+              <Badge
+                key={p.label}
+                variant="outline"
+                className="cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 whitespace-nowrap"
+                onClick={() => sendPrompt(p.text)}
+              >
+                {p.label}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   )

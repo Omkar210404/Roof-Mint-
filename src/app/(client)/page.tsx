@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { getPublicProperties } from './properties/actions';
 import { HomePropertyCards } from './home-cards';
-import { FloatingAIButton } from '@/components/floating-ai-button';
 import { NearbyPropertiesButton } from '@/components/nearby-properties-button';
 import { checkProfileComplete } from './onboarding/actions';
 
@@ -91,9 +90,6 @@ export default async function HomePage() {
 
       {/* Property Cards (client component for interactivity) */}
       <HomePropertyCards properties={properties} />
-
-      {/* 🚀 Floating AI Matchmaker Button (Auto-hides after 8s so content behind is accessible) */}
-      <FloatingAIButton />
     </div>
   );
 }

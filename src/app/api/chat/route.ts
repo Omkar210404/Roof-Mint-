@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google'
-import { streamText, tool } from 'ai'
+import { streamText, tool, convertToModelMessages, type UIMessage } from 'ai'
 import { z } from 'zod'
 import { createClient } from '@/utils/supabase/server'
 import { isRateLimited, getClientIp, isSameOrigin } from '@/lib/rate-limit'
@@ -15,16 +15,16 @@ export async function POST(req: Request) {
     return new Response('Too many requests — please try again in a few minutes.', { status: 429 })
   }
 
-  const { messages } = await req.json()
+  const { messages }: { messages: UIMessage[] } = await req.json()
 
-  const result = await streamText({
+  const result = streamText({
     model: google('gemini-flash-latest') as any,
     system: `You are the Roofmint AI real estate concierge. Your goal is to help users find their perfect property.
-    Be extremely concise, polite, and professional. 
+    Be extremely concise, polite, and professional.
     Do not hallucinate properties. ALWAYS use the 'extract_filters' tool to search the database when the user expresses an intent to find properties.
     If the user's request is too vague (e.g. "I want a house"), ask ONE clarifying question (e.g. "What is your budget or preferred location?").
     Once you call 'extract_filters', the tool will return a list of properties. You don't need to summarize the properties as they will be rendered as interactive cards in the UI by the tool result, but you can say a brief concluding sentence like "Here are some great options I found for you:" before or after the tool call.`,
-    messages,
+    messages: await convertToModelMessages(messages),
     tools: {
       extract_filters: tool({
         description: 'Extract search filters from the user conversation and search the property database.',
