@@ -1,9 +1,10 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn, Bot } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
 import { NotificationBell } from "@/components/notification-bell";
@@ -423,11 +424,11 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="fixed z-40 bottom-20 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom"
+          className="fixed z-40 bottom-20 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-white dark:bg-navy-900 border border-teal-400/30 shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom overflow-hidden"
           title="AI Concierge"
           aria-label="Open AI Concierge chat"
         >
-          <Bot className="w-6 h-6" />
+          <Image src="/images/roofmintai.png" alt="AI Concierge" width={56} height={56} className="w-full h-full object-contain p-1" />
         </button>
       )}
 

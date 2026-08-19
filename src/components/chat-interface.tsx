@@ -39,8 +39,8 @@ export function ChatInterface() {
   return (
     <Card className="w-full max-w-2xl mx-auto h-full md:h-auto flex flex-col shadow-2xl border-emerald-100 dark:border-emerald-900/30 overflow-hidden bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
       <div className="bg-emerald-600 p-4 flex items-center gap-3 shrink-0">
-        <div className="bg-white p-2 rounded-full">
-          <Bot className="w-6 h-6 text-emerald-600" />
+        <div className="bg-white rounded-full w-10 h-10 shrink-0 overflow-hidden">
+          <Image src="/images/roofmintai.png" alt="" width={40} height={40} className="w-full h-full object-contain p-0.5" />
         </div>
         <div>
           <h2 className="text-white font-bold text-lg leading-tight">AI Concierge</h2>
@@ -52,8 +52,8 @@ export function ChatInterface() {
         <div className="space-y-6">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center text-center py-6 gap-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-                <Bot className="w-7 h-7 text-emerald-600" />
+              <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/30 overflow-hidden">
+                <Image src="/images/roofmintai.png" alt="" width={56} height={56} className="w-full h-full object-contain p-1.5" />
               </div>
               <div>
                 <p className="font-bold text-sm text-gray-800 dark:text-gray-100">Tell me what you&apos;re looking for</p>
@@ -85,12 +85,14 @@ export function ChatInterface() {
                   message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
-                <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.role === 'user' 
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' 
-                    : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
+                <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
+                  message.role === 'user'
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                    : 'bg-gray-100 dark:bg-zinc-800'
                 }`}>
-                  {message.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                  {message.role === 'user'
+                    ? <User className="w-5 h-5" />
+                    : <Image src="/images/roofmintai.png" alt="" width={32} height={32} className="w-full h-full object-contain p-0.5" />}
                 </div>
                 
                 <div className="flex flex-col gap-2">
@@ -186,8 +188,8 @@ export function ChatInterface() {
           {isLoading && messages[messages.length - 1]?.role === 'user' && (
              <div className="flex justify-start">
                <div className="flex gap-3 max-w-[85%] flex-row">
-                 <div className="shrink-0 w-8 h-8 rounded-full bg-gray-100 text-gray-600 dark:bg-zinc-800 flex items-center justify-center">
-                    <Bot className="w-5 h-5" />
+                 <div className="shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
+                    <Image src="/images/roofmintai.png" alt="" width={32} height={32} className="w-full h-full object-contain p-0.5" />
                  </div>
                  <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1">
                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
