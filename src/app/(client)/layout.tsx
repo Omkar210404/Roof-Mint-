@@ -419,14 +419,11 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         message="You were logged out after 20 minutes of inactivity. Please log in again to continue."
       />
 
-      {/* AI Concierge — floating launcher, available from every page. Left
-          side deliberately: the home page's own "Ask AI" matchmaker button
-          (a different feature — the guided onboarding flow) already lives
-          bottom-right. */}
+      {/* AI Concierge — floating launcher, available from every page. */}
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="fixed z-40 bottom-20 left-4 md:bottom-6 md:left-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl flex items-center justify-center transition-transform hover:scale-105"
+          className="fixed z-40 bottom-20 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom"
           title="AI Concierge"
           aria-label="Open AI Concierge chat"
         >

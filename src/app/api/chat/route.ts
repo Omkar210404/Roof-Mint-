@@ -44,7 +44,8 @@ export async function POST(req: Request) {
           let query = supabase
             .from('properties')
             .select(`
-              id, title, slug, location_address, locality, city, price, property_type, listing_type, ownership, bhk, demand_tag, status
+              id, title, slug, location_address, locality, city, price, property_type, listing_type, ownership, bhk, demand_tag, status,
+              media:property_media(url, is_cover)
             `)
             .eq('status', 'available')
             .order('created_at', { ascending: false })
@@ -65,10 +66,16 @@ export async function POST(req: Request) {
           if (ownership) query = query.eq('ownership', ownership)
 
           const { data } = await query.limit(5)
-          
+
+          const properties = (data || []).map((p: any) => ({
+            ...p,
+            cover_image: p.media?.find((m: any) => m.is_cover)?.url || p.media?.[0]?.url || null,
+            media: undefined,
+          }))
+
           return {
-            properties: data || [],
-            summary: `Found ${data?.length || 0} matching properties.`
+            properties,
+            summary: `Found ${properties.length} matching properties.`
           }
         },
       } as any),

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useChat } from '@ai-sdk/react'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,8 +37,8 @@ export function ChatInterface() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-2xl border-emerald-100 dark:border-emerald-900/30 overflow-hidden bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
-      <div className="bg-emerald-600 p-4 flex items-center gap-3">
+    <Card className="w-full max-w-2xl mx-auto h-full md:h-auto flex flex-col shadow-2xl border-emerald-100 dark:border-emerald-900/30 overflow-hidden bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+      <div className="bg-emerald-600 p-4 flex items-center gap-3 shrink-0">
         <div className="bg-white p-2 rounded-full">
           <Bot className="w-6 h-6 text-emerald-600" />
         </div>
@@ -46,8 +47,8 @@ export function ChatInterface() {
           <p className="text-emerald-100 text-xs">Always here to help you find your dream home</p>
         </div>
       </div>
-      
-      <ScrollArea className="h-[400px] p-4">
+
+      <ScrollArea className="flex-1 min-h-0 md:h-[400px] md:flex-none p-4">
         <div className="space-y-6">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center text-center py-6 gap-4">
@@ -127,10 +128,16 @@ export function ChatInterface() {
                                 properties.map((property: any) => (
                                   <Link key={property.id} href={`/properties/${property.slug}`}>
                                     <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex group">
-                                      <div className="w-24 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0 flex items-center justify-center">
-                                        <span className="text-xs text-emerald-600/50 font-medium">Image</span>
+                                      <div className="relative w-24 shrink-0 bg-emerald-50 dark:bg-emerald-900/20">
+                                        <Image
+                                          src={property.cover_image || '/images/property1.png'}
+                                          alt={property.title}
+                                          fill
+                                          sizes="96px"
+                                          className="object-cover"
+                                        />
                                       </div>
-                                      <div className="p-3 flex-1 flex flex-col justify-between">
+                                      <div className="p-3 flex-1 min-w-0 flex flex-col justify-between">
                                         <div>
                                           <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-emerald-600 transition-colors">
                                             {property.title}
@@ -205,7 +212,7 @@ export function ChatInterface() {
         </div>
       </ScrollArea>
 
-      <div className="p-4 bg-gray-50 dark:bg-zinc-950 border-t border-gray-100/60 dark:border-zinc-800">
+      <div className="p-4 bg-gray-50 dark:bg-zinc-950 border-t border-gray-100/60 dark:border-zinc-800 shrink-0 safe-area-bottom">
         <form
           onSubmit={handleSubmit}
           className="flex items-center gap-2 relative"

@@ -14,6 +14,13 @@
     scrollbar-width: none;
   }
 
+  /* Was referenced on the bottom nav bars with no actual rule backing it —
+     content flush against the bottom edge on a phone with a home-indicator
+     bar (iOS) or gesture bar (Android) sits under it instead of above. */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   /* Dual-handle range slider — two overlaid <input type="range"> share one
      track; only the draggable thumb itself needs pointer events, the rest
      of each input stays pointer-events-none so drags land on the right
