@@ -47,7 +47,7 @@ export default async function HomePage() {
                   </span>
                 </div>
                 <p className="text-xs md:text-sm text-slate-300 leading-normal">
-                  Answer 3 quick questions and get 100% personalized property matches
+                  Answer a few quick questions and get 100% personalized property matches
                 </p>
               </div>
             </div>

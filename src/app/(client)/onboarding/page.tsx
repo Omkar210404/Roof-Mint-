@@ -86,7 +86,7 @@ export default function OnboardingPage() {
                       <h3 className="text-sm md:text-base font-bold text-navy dark:text-white">AI Recommendation Mode</h3>
                       <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">RECOMMENDED</span>
                     </div>
-                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">Answer 3 quick questions and let AI find your dream home with 100% accurate match scoring</p>
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">Answer a few quick questions and let AI find your dream home with 100% accurate match scoring</p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                     selectedMode === 'ai' ? 'border-primary bg-primary' : 'border-gray-300 dark:border-gray-700'
