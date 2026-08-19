@@ -432,22 +432,29 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         </button>
       )}
 
-      {showChat && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="w-full md:max-w-2xl h-[85vh] md:h-auto relative">
-            <button
-              onClick={() => setShowChat(false)}
-              className="absolute -top-2 -right-2 md:-top-3 md:-right-3 z-10 w-9 h-9 rounded-full bg-white dark:bg-navy-800 shadow-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700"
-              aria-label="Close AI Concierge chat"
-            >
-              <X className="w-4.5 h-4.5" />
-            </button>
-            <div className="h-full md:h-auto overflow-hidden rounded-t-2xl md:rounded-2xl">
-              <ChatInterface />
-            </div>
+      {/* Kept mounted (just hidden) rather than conditionally rendered —
+          ChatInterface's conversation lives in its own useChat() state, so
+          unmounting on every close (X button, or navigating away to a
+          property from a result card) would silently wipe it. */}
+      <div
+        className={`fixed inset-0 z-[70] bg-black/50 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 transition-opacity ${
+          showChat ? 'opacity-100' : 'opacity-0'
+        }`}
+        inert={!showChat}
+      >
+        <div className="w-full md:max-w-2xl h-[85vh] md:h-auto relative">
+          <button
+            onClick={() => setShowChat(false)}
+            className="absolute -top-2 -right-2 md:-top-3 md:-right-3 z-10 w-9 h-9 rounded-full bg-white dark:bg-navy-800 shadow-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700"
+            aria-label="Close AI Concierge chat"
+          >
+            <X className="w-4.5 h-4.5" />
+          </button>
+          <div className="h-full md:h-auto overflow-hidden rounded-t-2xl md:rounded-2xl">
+            <ChatInterface onNavigate={() => setShowChat(false)} />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

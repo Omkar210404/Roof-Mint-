@@ -18,7 +18,7 @@ const STARTER_PROMPTS = [
   { label: 'Commercial spaces', icon: Building2, text: 'Commercial spaces' },
 ]
 
-export function ChatInterface() {
+export function ChatInterface({ onNavigate }: { onNavigate?: () => void } = {}) {
   const [input, setInput] = useState('')
   const [timedOut, setTimedOut] = useState(false)
   const { messages, sendMessage, status, error, stop } = useChat()
@@ -145,7 +145,7 @@ export function ChatInterface() {
                                 </div>
                               ) : (
                                 properties.map((property: any) => (
-                                  <Link key={property.id} href={`/properties/${property.slug}`}>
+                                  <Link key={property.id} href={`/properties/${property.slug}`} onClick={() => onNavigate?.()}>
                                     <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex group">
                                       <div className="relative w-24 shrink-0 bg-emerald-50 dark:bg-emerald-900/20">
                                         <Image
