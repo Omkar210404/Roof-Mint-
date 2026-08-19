@@ -15,7 +15,14 @@ export async function POST(req: Request) {
     return new Response('Too many requests — please try again in a few minutes.', { status: 429 })
   }
 
-  const { messages }: { messages: UIMessage[] } = await req.json()
+  const { messages: allMessages }: { messages: UIMessage[] } = await req.json()
+
+  // A long-running chat tab (this one included, after a lot of testing)
+  // resends its whole history on every turn — that grows the prompt, slows
+  // the model down, and pushes it closer to the function's execution limit,
+  // where a slow response just dies mid-stream with nothing shown. Recent
+  // context is what actually matters for a property search anyway.
+  const messages = allMessages.slice(-12)
 
   const result = streamText({
     model: google('gemini-flash-latest') as any,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,19 +20,36 @@ const STARTER_PROMPTS = [
 
 export function ChatInterface() {
   const [input, setInput] = useState('')
-  const { messages, sendMessage, status, error } = useChat()
+  const [timedOut, setTimedOut] = useState(false)
+  const { messages, sendMessage, status, error, stop } = useChat()
 
   const isLoading = status === 'submitted' || status === 'streaming'
+
+  // Safety net: if a request just hangs (slow model response, function
+  // killed mid-stream by the platform's execution limit, dropped
+  // connection — none of which necessarily surface as a clean `error`),
+  // don't leave the user staring at nothing forever.
+  useEffect(() => {
+    if (!isLoading) return
+    setTimedOut(false)
+    const timer = setTimeout(() => {
+      stop()
+      setTimedOut(true)
+    }, 25000)
+    return () => clearTimeout(timer)
+  }, [isLoading, stop])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
+    setTimedOut(false)
     sendMessage({ text: input })
     setInput('')
   }
 
   const sendPrompt = (text: string) => {
     if (isLoading) return
+    setTimedOut(false)
     sendMessage({ text })
   }
 
@@ -199,14 +216,16 @@ export function ChatInterface() {
                </div>
              </div>
           )}
-          {error && (
+          {(error || timedOut) && (
             <div className="flex justify-start">
               <div className="flex gap-3 max-w-[85%] flex-row">
                 <div className="shrink-0 w-8 h-8 rounded-full bg-red-50 dark:bg-red-950/40 text-red-500 flex items-center justify-center">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm text-sm">
-                  Something went wrong on my end — please try that again in a moment.
+                  {timedOut
+                    ? "That's taking longer than it should — please try again."
+                    : 'Something went wrong on my end — please try that again in a moment.'}
                 </div>
               </div>
             </div>
