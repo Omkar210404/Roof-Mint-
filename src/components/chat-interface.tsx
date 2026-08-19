@@ -58,74 +58,84 @@ export function ChatInterface() {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  {message.content && (
-                    <div
-                      className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${
-                        message.role === 'user'
-                          ? 'bg-emerald-600 text-white rounded-tr-sm'
-                          : 'bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  )}
-
-                  {/* Render Tool Invocations (Property Results) */}
-                  {message.toolInvocations?.map((toolInvocation: any) => {
-                    const { toolName, toolCallId, state } = toolInvocation;
-
-                    if (state === 'result' && toolName === 'extract_filters') {
-                      const properties = toolInvocation.result;
-                      
+                  {message.parts?.map((part: any, partIdx: number) => {
+                    if (part.type === 'text' && part.text) {
                       return (
-                        <div key={toolCallId} className="space-y-3 mt-2">
-                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">
-                            Found {properties.length} matches
-                          </p>
-                          <div className="flex flex-col gap-3">
-                            {properties.length === 0 ? (
-                              <div className="bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl text-sm text-gray-500 border border-dashed">
-                                No exact matches found for your criteria. Try broadening your search!
-                              </div>
-                            ) : (
-                              properties.map((property: any) => (
-                                <Link key={property.id} href={`/properties/${property.slug}`}>
-                                  <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex group">
-                                    <div className="w-24 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0 flex items-center justify-center">
-                                      <span className="text-xs text-emerald-600/50 font-medium">Image</span>
-                                    </div>
-                                    <div className="p-3 flex-1 flex flex-col justify-between">
-                                      <div>
-                                        <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                                          {property.title}
-                                        </h4>
-                                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{property.location_address}</p>
-                                      </div>
-                                      <div className="flex justify-between items-end mt-2">
-                                        <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
-                                          ₹{property.price.toLocaleString()}
-                                        </p>
-                                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600" />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </Link>
-                              ))
-                            )}
-                          </div>
+                        <div
+                          key={partIdx}
+                          className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${
+                            message.role === 'user'
+                              ? 'bg-emerald-600 text-white rounded-tr-sm'
+                              : 'bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
+                          }`}
+                        >
+                          {part.text}
                         </div>
                       )
                     }
-                    
-                    // Show a loading state for the tool call
-                    if (state !== 'result') {
+
+                    if (part.type === 'tool-extract_filters') {
+                      if (part.state === 'output-available') {
+                        const properties = part.output?.properties ?? []
+
+                        return (
+                          <div key={partIdx} className="space-y-3 mt-2">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">
+                              Found {properties.length} matches
+                            </p>
+                            <div className="flex flex-col gap-3">
+                              {properties.length === 0 ? (
+                                <div className="bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl text-sm text-gray-500 border border-dashed">
+                                  No exact matches found for your criteria. Try broadening your search!
+                                </div>
+                              ) : (
+                                properties.map((property: any) => (
+                                  <Link key={property.id} href={`/properties/${property.slug}`}>
+                                    <div className="bg-white dark:bg-zinc-800 border border-gray-100/60 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex group">
+                                      <div className="w-24 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0 flex items-center justify-center">
+                                        <span className="text-xs text-emerald-600/50 font-medium">Image</span>
+                                      </div>
+                                      <div className="p-3 flex-1 flex flex-col justify-between">
+                                        <div>
+                                          <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                                            {property.title}
+                                          </h4>
+                                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{property.location_address}</p>
+                                        </div>
+                                        <div className="flex justify-between items-end mt-2">
+                                          <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                                            ₹{property.price.toLocaleString()}
+                                          </p>
+                                          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </Link>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      if (part.state === 'output-error') {
+                        return (
+                          <div key={partIdx} className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm">
+                            Couldn&apos;t search properties right now — try again in a moment.
+                          </div>
+                        )
+                      }
+
+                      // input-streaming / input-available — still working on the search
                       return (
-                        <div key={toolCallId} className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl text-sm text-gray-500 flex items-center gap-2 animate-pulse">
+                        <div key={partIdx} className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl text-sm text-gray-500 flex items-center gap-2 animate-pulse">
                           <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                           Searching database...
                         </div>
                       )
                     }
+
+                    return null
                   })}
                 </div>
               </div>

@@ -52,6 +52,20 @@ export default function SearchPage() {
     doSearch(query);
   };
 
+  // Prefill + auto-run from a shared/deep link (e.g. the home page's
+  // "Nearby Properties" button passing the user's detected locality). Reads
+  // window.location directly rather than useSearchParams so this page
+  // doesn't need a Suspense boundary just to support one query param.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) {
+      setQuery(q);
+      doSearch(q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="bg-background min-h-screen max-w-7xl mx-auto pb-8">
       {/* Header with Search (Sticks right below main header) */}

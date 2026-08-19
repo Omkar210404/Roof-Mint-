@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, MapPin, X, LocateFixed, Loader2, LogIn, Bot } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { LoginPromptModal } from "@/components/login-prompt-modal";
 import { NotificationBell } from "@/components/notification-bell";
 import { RoofmintLogo } from "@/components/roofmint-logo";
 import { ThemeImage } from "@/components/theme-image";
 import { SplashScreen } from "@/components/splash-screen";
+import { ChatInterface } from "@/components/chat-interface";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -30,6 +31,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showFirstVisitPrompt, setShowFirstVisitPrompt] = useState(false);
   const [showSessionExpired, setShowSessionExpired] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -260,15 +262,9 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             </button>
           </div>
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
-            {/* Already on Search? Its own search bar makes this redundant. */}
-            {pathname !== '/search' && (
-              <Link
-                href="/search"
-                className="hidden md:flex items-center gap-1.5 h-9 px-3.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-primary text-xs font-bold rounded-lg transition-colors"
-              >
-                <Search className="w-3.5 h-3.5" /> Find Verified Properties
-              </Link>
-            )}
+            {/* Search now lives only in the bottom nav (mobile) / rail
+                (desktop) — having it here too was a second, redundant entry
+                point to the same page. */}
             <button
               onClick={() => detectLocation(true)}
               className="hidden md:flex w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 dark:bg-navy-800 items-center justify-center hover:bg-gray-100 transition-colors"
@@ -276,15 +272,6 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             >
               <MapPin className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </button>
-            {pathname !== '/search' && (
-              <Link
-                href="/search"
-                className="md:hidden w-9 h-9 rounded-full bg-gray-50 dark:bg-navy-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"
-                title="Search properties"
-              >
-                <Search className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              </Link>
-            )}
             <NotificationBell />
             {isLoggedIn === false && (
               <Link
@@ -431,6 +418,38 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         title="Session Expired"
         message="You were logged out after 20 minutes of inactivity. Please log in again to continue."
       />
+
+      {/* AI Concierge — floating launcher, available from every page. Left
+          side deliberately: the home page's own "Ask AI" matchmaker button
+          (a different feature — the guided onboarding flow) already lives
+          bottom-right. */}
+      {!showChat && (
+        <button
+          onClick={() => setShowChat(true)}
+          className="fixed z-40 bottom-20 left-4 md:bottom-6 md:left-6 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl flex items-center justify-center transition-transform hover:scale-105"
+          title="AI Concierge"
+          aria-label="Open AI Concierge chat"
+        >
+          <Bot className="w-6 h-6" />
+        </button>
+      )}
+
+      {showChat && (
+        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4">
+          <div className="w-full md:max-w-2xl h-[85vh] md:h-auto relative">
+            <button
+              onClick={() => setShowChat(false)}
+              className="absolute -top-2 -right-2 md:-top-3 md:-right-3 z-10 w-9 h-9 rounded-full bg-white dark:bg-navy-800 shadow-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700"
+              aria-label="Close AI Concierge chat"
+            >
+              <X className="w-4.5 h-4.5" />
+            </button>
+            <div className="h-full md:h-auto overflow-hidden rounded-t-2xl md:rounded-2xl">
+              <ChatInterface />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
