@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { deleteUserProfile, updateUserRole } from './actions';
+import { deleteUserProfile, updateUserRole, logDataExport } from './actions';
 import { isSuspiciousPhone } from '@/lib/suspicious-phone';
 import { SuspiciousPhoneBadge } from '@/components/suspicious-phone-badge';
 
@@ -264,11 +264,13 @@ export function UsersClientWrapper({ initialUsers }: { initialUsers: any[] }) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    logDataExport('csv', filteredUsers.length);
   };
 
   // Download PDF / Print
   const handlePrintPDF = () => {
     window.print();
+    logDataExport('pdf', filteredUsers.length);
   };
 
   return (

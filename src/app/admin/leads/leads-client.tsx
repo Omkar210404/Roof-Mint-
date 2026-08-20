@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead, setLeadAgentVisibility, setLeadAgentMessage } from './actions'
+import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead, setLeadAgentVisibility, setLeadAgentMessage, logDataExport } from './actions'
 import { AddLeadModal } from './add-lead-modal'
 import {
   Table,
@@ -309,6 +309,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     a.download = `roofmint-leads-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+    logDataExport('csv', filteredSorted.length)
   }
 
   const exportPDF = async () => {
@@ -344,6 +345,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     })
 
     doc.save(`roofmint-leads-${new Date().toISOString().slice(0, 10)}.pdf`)
+    logDataExport('pdf', filteredSorted.length)
   }
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (

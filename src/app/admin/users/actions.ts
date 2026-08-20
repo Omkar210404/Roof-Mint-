@@ -79,6 +79,23 @@ export async function deleteUserProfile(id: string) {
   return { success: true }
 }
 
+// activity_log only ever captured writes (role changes, deletions) — an
+// admin exporting every user's name/phone/preferences to a CSV moved real
+// PII out of the system and left no trace of who did it or when. This is
+// the one read-only action worth auditing specifically, since it's the
+// one that actually leaves the system.
+export async function logDataExport(exportType: 'csv' | 'pdf', recordCount: number) {
+  const { authorized, supabase, user } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  await logActivity(supabase, user!.id, 'export_user_data', 'profile', null, {
+    format: exportType,
+    record_count: recordCount,
+  })
+
+  return { success: true }
+}
+
 export async function updateUserRole(id: string, role: string) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }

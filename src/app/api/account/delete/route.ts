@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/utils/supabase/server';
+import { isRateLimited, isSameOrigin } from '@/lib/rate-limit';
 
-export async function POST() {
+export async function POST(req: Request) {
+  // This is the one irreversible, destructive action reachable via a raw
+  // API route (Server Actions get Next.js's built-in same-origin check for
+  // free; plain Route Handlers like this one don't) — it had neither this
+  // check nor a rate limit, so it was protected less than a chat message.
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     // 1. Get the authenticated user from the session cookie
     const supabase = await createServerClient();
@@ -13,6 +22,14 @@ export async function POST() {
     }
 
     const userId = user.id;
+
+    // Keyed on the account itself rather than IP — this only matters once
+    // authenticated, and the real threat here isn't volume, it's a single
+    // unwanted cross-site-triggered request; the origin check above is the
+    // main defense. This just stops a retry-loop from hammering it.
+    if (isRateLimited(`account-delete:${userId}`, 3, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many requests — please try again later.' }, { status: 429 });
+    }
 
     // 2. Delete the user's own personal data — but NOT their enquiries.
     // Enquiries are business lead records (an agent may already be

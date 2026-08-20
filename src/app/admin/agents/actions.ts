@@ -248,3 +248,17 @@ export async function updateAgent(id: string, formData: FormData) {
   revalidatePath('/admin/agents')
   return { success: true }
 }
+
+// Same reasoning as the user-data and leads exports — this moves agent
+// contact/commission info out of the system, worth its own audit trail.
+export async function logDataExport(exportType: 'csv' | 'pdf', recordCount: number) {
+  const { authorized, supabase, user } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  await logActivity(supabase, user!.id, 'export_agents', 'agent', null, {
+    format: exportType,
+    record_count: recordCount,
+  })
+
+  return { success: true }
+}

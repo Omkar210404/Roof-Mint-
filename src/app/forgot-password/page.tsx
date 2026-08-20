@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { RoofmintLogo } from '@/components/roofmint-logo';
+import { checkForgotPasswordRateLimit } from '../login/rate-limit-actions';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -16,6 +17,13 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+
+    const { limited } = await checkForgotPasswordRateLimit();
+    if (limited) {
+      setError('Too many reset requests from this network. Please wait a few minutes and try again.');
+      setIsLoading(false);
+      return;
+    }
 
     const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {

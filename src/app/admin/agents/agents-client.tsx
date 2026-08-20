@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, resetAgentMfa, revokeAgentAccess, setAgentPlan } from './actions';
+import { createAgent, updateAgent, deleteAgent, grantAgentAccess, resetAgentPassword, resetAgentMfa, revokeAgentAccess, setAgentPlan, logDataExport } from './actions';
 import { computePlanStatus, formatPlanPrice, formatPlanDuration, findTier, type AgentPlanTier } from '@/lib/agent-plans';
 import { PlanManagerModal } from './plan-manager-modal';
 
@@ -117,6 +117,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
     a.download = `roofmint-agents-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+    logDataExport('csv', filteredSorted.length)
   }
 
   const exportPDF = async () => {
@@ -150,6 +151,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
     })
 
     doc.save(`roofmint-agents-${new Date().toISOString().slice(0, 10)}.pdf`)
+    logDataExport('pdf', filteredSorted.length)
   }
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
