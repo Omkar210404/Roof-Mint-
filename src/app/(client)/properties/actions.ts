@@ -1,6 +1,8 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
+import { isRateLimited } from '@/lib/rate-limit'
 
 export async function getPublicProperties(limit?: number) {
   const supabase = await createClient()
@@ -138,26 +140,51 @@ export async function submitEnquiry(formData: FormData) {
   }
 }
 
-// Fired when a logged-in user clicks "WhatsApp Us" on a property — WhatsApp
-// clicks are gated behind login already, so we always know who it was, and
-// can log it as a real lead the same way the enquiry form does. Deduped
-// against only the last couple of minutes — just enough to absorb an
-// accidental double-click/double-tap on the button itself. A 24-hour dedupe
-// used to sit here, which meant a genuine second visit later the same day —
-// exactly the "they're interested again" signal admin wants to see — got
-// silently swallowed with no new lead and no indication anything happened.
-// The RPC's own phone-based throttle (max 3 enquiries in 10 minutes, across
-// all sources) is the real anti-spam backstop; this is only about not
-// double-logging one physical click.
+// Fired when someone clicks "WhatsApp Us" on a property. Logged-in users are
+// handled below with their real profile identity. Anonymous visitors no
+// longer need to log in at all — WhatsApp itself hands Roofmint their phone
+// number the moment they hit send in that chat, so gating on login (or
+// asking for a phone on this end) was pure friction with no data-capture
+// upside. They're asked for just a name in a one-field popup first; that's
+// nameOverride below. Because there's no phone to key a per-visitor dedupe
+// or the RPC's own anti-spam throttle on, this path is rate-limited by IP
+// instead (see isRateLimited call below).
 //
-// phoneOverride is passed when the profile had no usable phone on file (e.g.
-// Google sign-in never collects one) and the visitor was asked for it in a
-// quick popup before being sent to WhatsApp — in that case we also save it
-// to their profile so future visits already have it.
-export async function logWhatsAppLead(propertyId: string, phoneOverride?: string) {
+// phoneOverride is passed for a logged-in user whose profile had no usable
+// phone on file (e.g. Google sign-in never collects one) and who was asked
+// for it in a quick popup before being sent to WhatsApp — in that case we
+// also save it to their profile so future visits already have it.
+export async function logWhatsAppLead(propertyId: string, phoneOverride?: string, nameOverride?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { skipped: true }
+
+  if (!user) {
+    const name = nameOverride?.trim()
+    if (!name) return { skipped: true }
+
+    const hdrs = await headers()
+    const forwarded = hdrs.get('x-forwarded-for')
+    const ip = forwarded ? forwarded.split(',')[0].trim() : hdrs.get('x-real-ip') || 'unknown'
+    if (isRateLimited(`whatsapp-lead:${ip}`, 5, 10 * 60 * 1000)) {
+      return { error: 'Too many requests — please try again in a few minutes.' }
+    }
+
+    const { error } = await supabase.rpc('submit_public_enquiry', {
+      p_property_id: propertyId,
+      p_name: name,
+      p_phone: '',
+      p_email: '',
+      p_budget_hint: null,
+      p_message: 'Contacted via WhatsApp',
+      p_source: 'whatsapp',
+    })
+
+    if (error) {
+      console.warn('logWhatsAppLead (anonymous) error:', error.message)
+      return { error: error.message }
+    }
+    return { success: true }
+  }
 
   const since = new Date(Date.now() - 2 * 60 * 1000).toISOString()
   const { data: existing } = await supabase

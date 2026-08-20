@@ -91,6 +91,9 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   const [whatsappPhoneInput, setWhatsappPhoneInput] = useState('');
   const [whatsappPhoneError, setWhatsappPhoneError] = useState<string | null>(null);
   const [whatsappSubmitting, setWhatsappSubmitting] = useState(false);
+  const [showWhatsAppNameModal, setShowWhatsAppNameModal] = useState(false);
+  const [whatsappNameInput, setWhatsappNameInput] = useState('');
+  const [whatsappNameError, setWhatsappNameError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -118,9 +121,11 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
     });
   }, []);
 
-  // Enquire and WhatsApp contact require a logged-in account so leads
-  // are always tied to a real user we can follow up with. Returns true
-  // (and pops the login prompt) when the action should be blocked.
+  // Enquire (the callback-request form) requires a logged-in account so the
+  // lead is tied to a real user we can follow up with. WhatsApp used to be
+  // gated the same way, but that was pure friction with no benefit — see
+  // handleWhatsAppClick. Returns true (and pops the login prompt) when the
+  // action should be blocked.
   const requireLogin = () => {
     if (isLoggedIn === false) {
       setShowLoginGate(true);
@@ -292,16 +297,25 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
     setSubmitting(false);
   };
 
-  const getWaLink = () =>
-    `https://wa.me/917096867438?text=${encodeURIComponent(`Hi Roofmint, I'm interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`;
+  const getWaLink = (name?: string) =>
+    `https://wa.me/917096867438?text=${encodeURIComponent(`Hi Roofmint, I'm${name ? ` ${name},` : ''} interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`;
 
-  // We can only log a WhatsApp click as a lead with a real number to give
-  // an agent — if the profile has none (common for Google sign-ins, which
-  // never collect a phone), ask for it in a one-field popup first instead
-  // of silently creating an unreachable lead.
+  // WhatsApp doesn't require login — the moment someone hits send in that
+  // chat, their number lands in Roofmint's WhatsApp inbox automatically, so
+  // there's no data-capture reason to gate this like Enquire. Logged-in
+  // visitors go straight through (using their profile phone, or a one-field
+  // phone popup if the profile has none — e.g. Google sign-in). Anonymous
+  // visitors are asked for just a name first, both to personalize the
+  // message and to log a lightweight lead against this property/agent.
   const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    if (requireLogin()) return;
+
+    if (!isLoggedIn) {
+      setWhatsappNameInput('');
+      setWhatsappNameError(null);
+      setShowWhatsAppNameModal(true);
+      return;
+    }
 
     const phoneDigits = enquiryPrefill.phone.replace(/[\s-]/g, '');
     if (/^(\+?91)?[6-9]\d{9}$/.test(phoneDigits)) {
@@ -312,6 +326,24 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
       setWhatsappPhoneError(null);
       setShowWhatsAppPhoneModal(true);
     }
+  };
+
+  const handleWhatsAppNameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const name = whatsappNameInput.trim();
+    if (name.length < 2) {
+      setWhatsappNameError('Please enter your name.');
+      return;
+    }
+    setWhatsappSubmitting(true);
+    const result = await logWhatsAppLead(property.id, undefined, name);
+    setWhatsappSubmitting(false);
+    if (result?.error) {
+      setWhatsappNameError(result.error);
+      return;
+    }
+    setShowWhatsAppNameModal(false);
+    window.open(getWaLink(name), '_blank', 'noopener,noreferrer');
   };
 
   const handleWhatsAppPhoneSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -759,6 +791,46 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
               />
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowWhatsAppPhoneModal(false)}
+                  className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800">Cancel</button>
+                <button type="submit" disabled={whatsappSubmitting}
+                  className="flex-1 h-12 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
+                  {whatsappSubmitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                  {whatsappSubmitting ? 'Continuing...' : 'Continue to WhatsApp'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Anonymous WhatsApp contact — just a name, no login, no phone. Your
+          number reaches Roofmint the normal way once you actually send the
+          WhatsApp message, so there's nothing else to ask for here. */}
+      {showWhatsAppNameModal && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <h2 className="text-lg font-bold text-navy dark:text-white mb-1">One quick thing</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">What&apos;s your name? We&apos;ll open WhatsApp right after — no login needed.</p>
+            {whatsappNameError && (
+              <div className="mb-3 p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-xl border border-red-200 dark:border-red-900">
+                {whatsappNameError}
+              </div>
+            )}
+            <form onSubmit={handleWhatsAppNameSubmit} className="space-y-3">
+              <input
+                id="whatsapp-name"
+                name="name"
+                autoFocus
+                type="text"
+                autoComplete="name"
+                maxLength={60}
+                value={whatsappNameInput}
+                onChange={(e) => setWhatsappNameInput(e.target.value)}
+                placeholder="Your Name *"
+                className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setShowWhatsAppNameModal(false)}
                   className="flex-1 h-12 border border-gray-200/60 dark:border-gray-800/60 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-800">Cancel</button>
                 <button type="submit" disabled={whatsappSubmitting}
                   className="flex-1 h-12 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
