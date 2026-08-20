@@ -13,6 +13,17 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // Old admin paths from before the Technical Panel became its own
+      // top-level route — anyone with these bookmarked, or a stale link,
+      // hit the default 404 instead of landing anywhere useful.
+      { source: '/admin/security', destination: '/technical/security', permanent: true },
+      { source: '/admin/technical', destination: '/technical', permanent: true },
+      { source: '/admin/technical/usage', destination: '/technical/usage', permanent: true },
+      { source: '/admin/technical/security', destination: '/technical/security', permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
