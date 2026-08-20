@@ -420,11 +420,16 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         message="You were logged out after 20 minutes of inactivity. Please log in again to continue."
       />
 
-      {/* AI Concierge — floating launcher, available from every page. */}
+      {/* AI Concierge — floating launcher, available from every page. Property
+          detail pages add their own sticky Enquire/WhatsApp bar (mobile
+          only) directly above the bottom nav, so the launcher needs to sit
+          higher there specifically or it lands right on top of WhatsApp. */}
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="fixed z-40 bottom-20 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-white dark:bg-navy-900 border border-teal-400/30 shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom overflow-hidden"
+          className={`fixed z-40 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-white dark:bg-navy-900 border border-teal-400/30 shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom overflow-hidden ${
+            pathname.startsWith('/properties/') ? 'bottom-40' : 'bottom-20'
+          }`}
           title="AI Concierge"
           aria-label="Open AI Concierge chat"
         >
