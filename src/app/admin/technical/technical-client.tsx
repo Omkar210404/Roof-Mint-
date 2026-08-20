@@ -62,7 +62,9 @@ const ROW_COUNT_LABELS: Record<string, string> = {
   bills: 'Bills',
 }
 
-export function TechnicalUsageClient({ data }: { data: { db_size_bytes: number; row_counts: Record<string, number>; daily_usage: { day: string; metric: string; count: number }[] } | null }) {
+type TechnicalUsageData = { db_size_bytes: number; row_counts: Record<string, number>; daily_usage: { day: string; metric: string; count: number }[] }
+
+function useUsageAggregates(data: TechnicalUsageData | null) {
   const todayStr = new Date().toISOString().slice(0, 10)
   const sevenDaysAgo = useMemo(() => {
     const d = new Date()
@@ -70,7 +72,7 @@ export function TechnicalUsageClient({ data }: { data: { db_size_bytes: number; 
     return d.toISOString().slice(0, 10)
   }, [])
 
-  const { today, last7d, last30d, allMetrics } = useMemo(() => {
+  return useMemo(() => {
     const today = new Map<string, number>()
     const last7d = new Map<string, number>()
     const last30d = new Map<string, number>()
@@ -85,14 +87,12 @@ export function TechnicalUsageClient({ data }: { data: { db_size_bytes: number; 
 
     return { today, last7d, last30d, allMetrics: Array.from(allMetrics).sort() }
   }, [data, sevenDaysAgo, todayStr])
+}
 
-  if (!data) {
-    return (
-      <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-8 text-center text-sm text-gray-400 dark:text-gray-500">
-        Couldn&apos;t load technical usage data.
-      </div>
-    )
-  }
+// Shared between the Technical Dashboard overview and the full Usage &
+// Limits page, so the headline numbers always match exactly.
+export function TechnicalStatCards({ data }: { data: TechnicalUsageData }) {
+  const { today, allMetrics } = useUsageAggregates(data)
 
   const dbPct = Math.min(100, (data.db_size_bytes / SUPABASE_DB_LIMIT_BYTES) * 100)
   const aiCallsToday = today.get('ai_chat_calls') || 0
@@ -102,44 +102,59 @@ export function TechnicalUsageClient({ data }: { data: { db_size_bytes: number; 
     .reduce((sum, m) => sum + (today.get(m) || 0), 0)
 
   return (
-    <div className="space-y-6">
-      {/* At-a-glance stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-            <Database className="w-3.5 h-3.5" /> Database Size
-          </div>
-          <p className="text-2xl font-bold text-navy dark:text-white mt-1">{formatBytes(data.db_size_bytes)}</p>
-          <div className="w-full h-1.5 bg-gray-100 dark:bg-navy-800 rounded-full mt-2 overflow-hidden">
-            <div className={`h-full rounded-full ${dbPct > 80 ? 'bg-red-500' : dbPct > 50 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${Math.max(dbPct, 1)}%` }} />
-          </div>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{dbPct.toFixed(1)}% of 500MB free-tier cap</p>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+          <Database className="w-3.5 h-3.5" /> Database Size
         </div>
-
-        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-            <MessageSquare className="w-3.5 h-3.5" /> AI Calls Today
-          </div>
-          <p className="text-2xl font-bold text-navy dark:text-white mt-1">{aiCallsToday}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Gemini free-tier limit resets fast (short window) — watch this one closest</p>
+        <p className="text-2xl font-bold text-navy dark:text-white mt-1">{formatBytes(data.db_size_bytes)}</p>
+        <div className="w-full h-1.5 bg-gray-100 dark:bg-navy-800 rounded-full mt-2 overflow-hidden">
+          <div className={`h-full rounded-full ${dbPct > 80 ? 'bg-red-500' : dbPct > 50 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${Math.max(dbPct, 1)}%` }} />
         </div>
-
-        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-            <AlertTriangle className="w-3.5 h-3.5" /> AI Errors Today
-          </div>
-          <p className={`text-2xl font-bold mt-1 ${aiErrorsToday > 0 ? 'text-red-600 dark:text-red-400' : 'text-navy dark:text-white'}`}>{aiErrorsToday}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Spikes here usually mean the Gemini quota was hit</p>
-        </div>
-
-        <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-            <ShieldAlert className="w-3.5 h-3.5" /> Rate Limits Hit Today
-          </div>
-          <p className={`text-2xl font-bold mt-1 ${rateLimitHitsToday > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-navy dark:text-white'}`}>{rateLimitHitsToday}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Across login, signup, chat, WhatsApp, etc.</p>
-        </div>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{dbPct.toFixed(1)}% of 500MB free-tier cap</p>
       </div>
+
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+          <MessageSquare className="w-3.5 h-3.5" /> AI Calls Today
+        </div>
+        <p className="text-2xl font-bold text-navy dark:text-white mt-1">{aiCallsToday}</p>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Gemini free-tier limit resets fast (short window) — watch this one closest</p>
+      </div>
+
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+          <AlertTriangle className="w-3.5 h-3.5" /> AI Errors Today
+        </div>
+        <p className={`text-2xl font-bold mt-1 ${aiErrorsToday > 0 ? 'text-red-600 dark:text-red-400' : 'text-navy dark:text-white'}`}>{aiErrorsToday}</p>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Spikes here usually mean the Gemini quota was hit</p>
+      </div>
+
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+          <ShieldAlert className="w-3.5 h-3.5" /> Rate Limits Hit Today
+        </div>
+        <p className={`text-2xl font-bold mt-1 ${rateLimitHitsToday > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-navy dark:text-white'}`}>{rateLimitHitsToday}</p>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Across login, signup, chat, WhatsApp, etc.</p>
+      </div>
+    </div>
+  )
+}
+
+export function TechnicalUsageClient({ data }: { data: TechnicalUsageData | null }) {
+  const { last7d, last30d, allMetrics } = useUsageAggregates(data)
+
+  if (!data) {
+    return (
+      <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-8 text-center text-sm text-gray-400 dark:text-gray-500">
+        Couldn&apos;t load technical usage data.
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <TechnicalStatCards data={data} />
 
       {/* Vendor reference */}
       <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm overflow-hidden">
