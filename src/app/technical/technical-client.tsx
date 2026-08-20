@@ -287,9 +287,9 @@ export function TechnicalUsageClient({ data }: { data: TechnicalUsageData | null
                 href={v.dashboardUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 h-9 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-xs font-semibold text-navy dark:text-white flex items-center gap-1.5 whitespace-nowrap"
+                className="w-full md:w-auto md:shrink-0 py-2 md:h-9 md:py-0 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-navy-800 text-xs font-semibold text-navy dark:text-white flex items-center gap-1.5 whitespace-normal md:whitespace-nowrap"
               >
-                <ExternalLink className="w-3.5 h-3.5" /> {v.dashboardLabel}
+                <ExternalLink className="w-3.5 h-3.5 shrink-0" /> {v.dashboardLabel}
               </a>
             </div>
           ))}
