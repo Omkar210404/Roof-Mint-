@@ -848,7 +848,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
                 maxLength={13}
                 value={whatsappNameOptPhoneInput}
                 onChange={(e) => setWhatsappNameOptPhoneInput(e.target.value)}
-                placeholder="Mobile Number (optional, for a callback)"
+                placeholder="Mobile Number (optional)"
                 className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
               <div className="flex gap-3 pt-1">
