@@ -35,7 +35,7 @@ export default function NotFound() {
         The link might be old, mistyped, or the page may have moved.
       </p>
 
-      <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full max-w-xs sm:max-w-none">
+      <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full max-w-xs sm:w-auto sm:max-w-none">
         <Link
           href={primaryAction.href}
           className="h-11 px-6 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
