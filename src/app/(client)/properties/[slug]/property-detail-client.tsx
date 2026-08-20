@@ -93,6 +93,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   const [whatsappSubmitting, setWhatsappSubmitting] = useState(false);
   const [showWhatsAppNameModal, setShowWhatsAppNameModal] = useState(false);
   const [whatsappNameInput, setWhatsappNameInput] = useState('');
+  const [whatsappNameOptPhoneInput, setWhatsappNameOptPhoneInput] = useState('');
   const [whatsappNameError, setWhatsappNameError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -312,6 +313,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
 
     if (!isLoggedIn) {
       setWhatsappNameInput('');
+      setWhatsappNameOptPhoneInput('');
       setWhatsappNameError(null);
       setShowWhatsAppNameModal(true);
       return;
@@ -335,8 +337,15 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
       setWhatsappNameError('Please enter your name.');
       return;
     }
+
+    const phoneDigits = whatsappNameOptPhoneInput.replace(/[\s-]/g, '');
+    if (phoneDigits && !/^(\+?91)?[6-9]\d{9}$/.test(phoneDigits)) {
+      setWhatsappNameError('That doesn\'t look like a valid 10-digit mobile number — leave it blank if you\'d rather skip it.');
+      return;
+    }
+
     setWhatsappSubmitting(true);
-    const result = await logWhatsAppLead(property.id, undefined, name);
+    const result = await logWhatsAppLead(property.id, phoneDigits || undefined, name);
     setWhatsappSubmitting(false);
     if (result?.error) {
       setWhatsappNameError(result.error);
@@ -803,9 +812,10 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* Anonymous WhatsApp contact — just a name, no login, no phone. Your
-          number reaches Roofmint the normal way once you actually send the
-          WhatsApp message, so there's nothing else to ask for here. */}
+      {/* Anonymous WhatsApp contact — name required, phone optional, no
+          login. Your number reaches Roofmint the normal way once you
+          actually send the WhatsApp message; the optional field here is
+          only for people who'd rather also get a direct callback. */}
       {showWhatsAppNameModal && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
@@ -827,6 +837,18 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
                 value={whatsappNameInput}
                 onChange={(e) => setWhatsappNameInput(e.target.value)}
                 placeholder="Your Name *"
+                className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              <input
+                id="whatsapp-name-phone"
+                name="phone"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                maxLength={13}
+                value={whatsappNameOptPhoneInput}
+                onChange={(e) => setWhatsappNameOptPhoneInput(e.target.value)}
+                placeholder="Mobile Number (optional, for a callback)"
                 className="w-full h-11 px-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
               <div className="flex gap-3 pt-1">

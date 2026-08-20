@@ -143,17 +143,20 @@ export async function submitEnquiry(formData: FormData) {
 // Fired when someone clicks "WhatsApp Us" on a property. Logged-in users are
 // handled below with their real profile identity. Anonymous visitors no
 // longer need to log in at all — WhatsApp itself hands Roofmint their phone
-// number the moment they hit send in that chat, so gating on login (or
-// asking for a phone on this end) was pure friction with no data-capture
-// upside. They're asked for just a name in a one-field popup first; that's
-// nameOverride below. Because there's no phone to key a per-visitor dedupe
-// or the RPC's own anti-spam throttle on, this path is rate-limited by IP
-// instead (see isRateLimited call below).
+// number the moment they hit send in that chat, so gating on login was pure
+// friction with no data-capture upside. They're asked for a name (required)
+// and phone (optional, for people who'd rather also get a direct callback
+// instead of relying on the WhatsApp thread) in a small popup first — that's
+// nameOverride/phoneOverride below for the anonymous branch. Because there's
+// often no phone to key a per-visitor dedupe or the RPC's own anti-spam
+// throttle on, this path is rate-limited by IP instead (see isRateLimited
+// call below).
 //
-// phoneOverride is passed for a logged-in user whose profile had no usable
-// phone on file (e.g. Google sign-in never collects one) and who was asked
-// for it in a quick popup before being sent to WhatsApp — in that case we
-// also save it to their profile so future visits already have it.
+// phoneOverride serves a second purpose for a logged-in user whose profile
+// had no usable phone on file (e.g. Google sign-in never collects one) and
+// who was asked for it in a quick popup before being sent to WhatsApp — in
+// that case we also save it to their profile so future visits already have
+// it (see the logged-in branch further down).
 export async function logWhatsAppLead(propertyId: string, phoneOverride?: string, nameOverride?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -172,7 +175,7 @@ export async function logWhatsAppLead(propertyId: string, phoneOverride?: string
     const { error } = await supabase.rpc('submit_public_enquiry', {
       p_property_id: propertyId,
       p_name: name,
-      p_phone: '',
+      p_phone: phoneOverride || '',
       p_email: '',
       p_budget_hint: null,
       p_message: 'Contacted via WhatsApp',
