@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useState } from "react";
-import { LayoutDashboard, Gauge, KeyRound, LogOut, Menu, X, Building2 } from "lucide-react";
+import { LayoutDashboard, Gauge, KeyRound, LogOut, Menu, X } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoofmintLogo } from "@/components/roofmint-logo";
@@ -58,17 +58,6 @@ export default function TechnicalLayout({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
-
-          {/* Switch back to Business Admin — same login, separate area */}
-          <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
-            <Link
-              href="/admin"
-              className="flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg transition-colors text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-navy"
-            >
-              <Building2 className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-              Business Admin
-            </Link>
-          </div>
         </nav>
 
         {/* Bottom Actions */}
@@ -138,17 +127,6 @@ export default function TechnicalLayout({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
-
-              <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="flex items-center gap-2.5 h-11 px-3 text-sm font-medium rounded-lg transition-colors text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 hover:text-navy dark:hover:text-white"
-                >
-                  <Building2 className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                  Business Admin
-                </Link>
-              </div>
             </nav>
             <div className="p-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center gap-2 shrink-0">
               <ThemeToggle />

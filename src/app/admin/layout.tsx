@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, History, Menu, X, Receipt, Gauge } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, History, Menu, X, Receipt } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoofmintLogo } from "@/components/roofmint-logo";
@@ -105,12 +105,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/activity", icon: History, label: "Activity Log" },
   ];
 
-  // Its own switch, not just another item in the list — Security (moved
-  // here from a standalone nav item) and Technical Usage both live inside
-  // this panel now, reached from the main sidebar as one deliberate step
-  // out of day-to-day business admin, same login either way.
-  const technicalPanelItem = { href: "/technical", icon: Gauge, label: "Technical Panel" };
-
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -147,20 +141,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
-
-          {/* Switch into the Technical Panel — same login, separate area */}
-          <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
-            <Link
-              href={technicalPanelItem.href}
-              className={`flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg transition-colors ${pathname.startsWith(technicalPanelItem.href)
-                ? "bg-teal-50 dark:bg-teal-950/40 text-primary"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-navy"
-                }`}
-            >
-              <Gauge className={`w-5 h-5 ${pathname.startsWith(technicalPanelItem.href) ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
-              {technicalPanelItem.label}
-            </Link>
-          </div>
         </nav>
 
         {/* Bottom Actions */}
@@ -232,21 +212,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
-
-              {/* Switch into the Technical Panel — same login, separate area */}
-              <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
-                <Link
-                  href={technicalPanelItem.href}
-                  onClick={() => setMobileNavOpen(false)}
-                  className={`flex items-center gap-2.5 h-11 px-3 text-sm font-medium rounded-lg transition-colors ${pathname.startsWith(technicalPanelItem.href)
-                    ? "bg-teal-50 dark:bg-teal-950/40 text-primary"
-                    : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 hover:text-navy dark:hover:text-white"
-                    }`}
-                >
-                  <Gauge className={`w-5 h-5 ${pathname.startsWith(technicalPanelItem.href) ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
-                  {technicalPanelItem.label}
-                </Link>
-              </div>
             </nav>
             <div className="p-3 border-t border-gray-100/60 dark:border-gray-800/60 flex items-center gap-2 shrink-0">
               <ThemeToggle />
