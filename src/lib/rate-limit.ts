@@ -1,3 +1,5 @@
+import { createClient } from '@/utils/supabase/server';
+
 // Best-effort in-memory rate limiter for API routes that call a paid AI
 // service and have no login gate (they're meant to work for anonymous
 // visitors). This is per-instance state — on serverless it resets on cold
@@ -13,11 +15,25 @@ export function isRateLimited(key: string, limit: number, windowMs: number): boo
   const recent = (buckets.get(key) || []).filter(t => now - t < windowMs);
   if (recent.length >= limit) {
     buckets.set(key, recent);
+    trackRateLimitHit(key);
     return true;
   }
   recent.push(now);
   buckets.set(key, recent);
   return false;
+}
+
+// Fire-and-forget telemetry for the admin "Technical Usage" panel — must
+// never affect (or delay) the actual rate-limit decision above, hence no
+// await anywhere in the call chain. The key's prefix (everything before the
+// first ':', e.g. "chat" from "chat:1.2.3.4") becomes the tracked metric
+// name, so every current and future isRateLimited() call site gets counted
+// automatically with no per-call-site wiring.
+function trackRateLimitHit(key: string) {
+  const prefix = key.split(':')[0];
+  createClient()
+    .then(supabase => supabase.rpc('increment_technical_usage', { p_metric: `rate_limited:${prefix}` }))
+    .catch(() => {});
 }
 
 export function getClientIp(req: Request): string {

@@ -8,12 +8,24 @@ import { isRateLimited, getClientIp, isSameOrigin } from '@/lib/rate-limit'
 export const maxDuration = 30
 
 export async function POST(req: Request) {
+  const supabase = await createClient()
+
   if (!isSameOrigin(req)) {
     return new Response('Forbidden', { status: 403 })
   }
   if (isRateLimited(`chat:${getClientIp(req)}`, 20, 10 * 60 * 1000)) {
+    // isRateLimited itself tracks this hit (metric "rate_limited:chat") for
+    // the admin Technical Usage panel — no separate call needed here.
     return new Response('Too many requests — please try again in a few minutes.', { status: 429 })
   }
+
+  // Self-tracked for the admin "Technical Usage" panel — Google doesn't
+  // expose free-tier quota consumption via API, so this is our own count of
+  // how close this route is running to its own (app-level) limit. Supabase
+  // query builders are lazy thenables — calling .rpc() without awaiting (or
+  // chaining .then()) never actually sends the request, so this is awaited
+  // even though the result itself doesn't matter.
+  await supabase.rpc('increment_technical_usage', { p_metric: 'ai_chat_calls' })
 
   const { messages: allMessages }: { messages: UIMessage[] } = await req.json()
 
@@ -86,6 +98,18 @@ export async function POST(req: Request) {
           }
         },
       } as any),
+    },
+    onError: ({ error }) => {
+      // This is the signal that actually matters for the free-tier ceiling
+      // — a spike here (vs. ai_chat_calls) means the model itself is
+      // rejecting requests (e.g. RESOURCE_EXHAUSTED), not just our own
+      // app-level rate limiter.
+      console.error('chat streamText error:', error)
+      // Not awaited here (this callback likely isn't awaited by the SDK
+      // either way) — .then() is what actually triggers the underlying
+      // request on Supabase's lazy query-builder thenable, a bare
+      // `supabase.rpc(...)` call with no .then()/await never fires at all.
+      supabase.rpc('increment_technical_usage', { p_metric: 'ai_chat_errors' }).then(() => {}, () => {})
     },
   })
 

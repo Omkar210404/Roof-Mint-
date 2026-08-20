@@ -186,6 +186,9 @@ export async function logWhatsAppLead(propertyId: string, phoneOverride?: string
       console.warn('logWhatsAppLead (anonymous) error:', error.message)
       return { error: error.message }
     }
+    // Supabase's query builder is a lazy thenable — a bare call with no
+    // .then()/await never actually sends the request.
+    await supabase.rpc('increment_technical_usage', { p_metric: 'whatsapp_lead_anonymous' })
     return { success: true }
   }
 

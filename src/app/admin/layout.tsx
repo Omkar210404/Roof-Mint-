@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History, Menu, X, Receipt } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, KeyRound, History, Menu, X, Receipt, Gauge } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoofmintLogo } from "@/components/roofmint-logo";
@@ -104,6 +104,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
     { href: "/admin/activity", icon: History, label: "Activity Log" },
     { href: "/admin/security", icon: KeyRound, label: "Security" },
+    { href: "/admin/technical", icon: Gauge, label: "Technical Usage" },
   ];
 
   const handleLogout = async () => {
