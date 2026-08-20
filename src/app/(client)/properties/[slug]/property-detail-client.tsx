@@ -95,6 +95,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   const [whatsappNameInput, setWhatsappNameInput] = useState('');
   const [whatsappNameOptPhoneInput, setWhatsappNameOptPhoneInput] = useState('');
   const [whatsappNameError, setWhatsappNameError] = useState<string | null>(null);
+  const [showShortlistPrompt, setShowShortlistPrompt] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -121,6 +122,33 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
       setHasPriorEnquiry(!!count && count > 0);
     });
   }, []);
+
+  // Soft nudge, not a wall: browsing stays completely free, but once an
+  // anonymous visitor has looked at a few properties in this session we
+  // show one dismissible "save your shortlist" prompt. Session-scoped (not
+  // permanent) and shown at most once — this is a suggestion, not a gate.
+  useEffect(() => {
+    // Record the view as soon as the property is known, independent of
+    // whether the login check has resolved yet — isLoggedIn starts out
+    // null for a moment on every page load, and gating the recording on
+    // isLoggedIn === false (rather than just deciding whether to *show*
+    // the prompt) meant the view could lose that race and go uncounted,
+    // pushing the prompt to the wrong page.
+    if (!property) return;
+    try {
+      if (sessionStorage.getItem('roofmint_shortlist_prompt_seen') === 'true') return;
+
+      const stored = sessionStorage.getItem('roofmint_session_viewed_properties');
+      const viewed: string[] = stored ? JSON.parse(stored) : [];
+      const updated = viewed.includes(property.id) ? viewed : [...viewed, property.id];
+      sessionStorage.setItem('roofmint_session_viewed_properties', JSON.stringify(updated));
+
+      if (updated.length >= 3 && isLoggedIn === false) {
+        sessionStorage.setItem('roofmint_shortlist_prompt_seen', 'true');
+        setShowShortlistPrompt(true);
+      }
+    } catch {}
+  }, [property, isLoggedIn]);
 
   // Enquire (the callback-request form) requires a logged-in account so the
   // lead is tied to a real user we can follow up with. WhatsApp used to be
@@ -768,6 +796,14 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
         onClose={() => setShowLoginGate(false)}
         title="Login to Enquire"
         message="So our agents can follow up with you directly, please login or create a free account before contacting them about this property."
+        returnTo={`/properties/${slug}`}
+      />
+
+      <LoginPromptModal
+        open={showShortlistPrompt}
+        onClose={() => setShowShortlistPrompt(false)}
+        title="Save your shortlist"
+        message="Looking at a few options? Create a free account to keep your shortlist and enquiry history across visits and devices — no need to start over each time."
         returnTo={`/properties/${slug}`}
       />
 

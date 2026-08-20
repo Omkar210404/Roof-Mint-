@@ -1,9 +1,18 @@
-import { MessageSquare, Clock, ArrowRight, Building2 } from 'lucide-react';
+import { MessageSquare, Clock, ArrowRight, Building2, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { getUserEnquiries } from '../properties/actions';
+import { createClient } from '@/utils/supabase/server';
 
 export default async function EnquiriesPage() {
-  const enquiries = await getUserEnquiries();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  // getUserEnquiries() also returns [] for a logged-out visitor, which is
+  // indistinguishable from "logged in with zero enquiries" — that's
+  // misleading now that WhatsApp leads can happen anonymously (they're
+  // real, just not tied to any account, so there's nothing to list here
+  // without logging in). Check auth separately so the empty state can
+  // actually say which situation it is.
+  const enquiries = user ? await getUserEnquiries() : [];
 
   const statusColors: Record<string, string> = {
     new: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40',
@@ -33,7 +42,20 @@ export default async function EnquiriesPage() {
           <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-0.5">{enquiries.length} enquiries made</p>
         </div>
 
-        {enquiries.length === 0 ? (
+        {!user ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center">
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center mb-4">
+              <LogIn className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+            </div>
+            <h3 className="text-base md:text-lg font-bold text-navy dark:text-white mb-1">Log in to see your enquiries</h3>
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 max-w-xs md:max-w-sm mb-6">
+              A WhatsApp message you sent without logging in still reaches our agents, but it isn&apos;t tied to an account — log in or create one to track requests here going forward.
+            </p>
+            <Link href={`/login?next=${encodeURIComponent('/enquiries')}`} className="h-10 md:h-11 px-6 bg-primary text-white text-xs md:text-sm font-bold rounded-xl hover:bg-teal-700 transition-colors flex items-center justify-center">
+              Login
+            </Link>
+          </div>
+        ) : enquiries.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center">
             <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center mb-4">
               <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-primary" />
