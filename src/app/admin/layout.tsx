@@ -109,7 +109,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // here from a standalone nav item) and Technical Usage both live inside
   // this panel now, reached from the main sidebar as one deliberate step
   // out of day-to-day business admin, same login either way.
-  const technicalPanelItem = { href: "/admin/technical", icon: Gauge, label: "Technical Panel" };
+  const technicalPanelItem = { href: "/technical", icon: Gauge, label: "Technical Panel" };
 
   const handleLogout = async () => {
     const supabase = createClient();

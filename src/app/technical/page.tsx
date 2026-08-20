@@ -26,7 +26,7 @@ export default async function TechnicalDashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
-          href="/admin/technical/usage"
+          href="/technical/usage"
           className="group bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-5 flex items-center gap-4 hover:border-primary/40 transition-colors"
         >
           <div className="w-11 h-11 rounded-xl bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center shrink-0">
@@ -40,7 +40,7 @@ export default async function TechnicalDashboardPage() {
         </Link>
 
         <Link
-          href="/admin/technical/security"
+          href="/technical/security"
           className="group bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-5 flex items-center gap-4 hover:border-primary/40 transition-colors"
         >
           <div className="w-11 h-11 rounded-xl bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center shrink-0">

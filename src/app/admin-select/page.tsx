@@ -69,7 +69,7 @@ export default function AdminSelectPage() {
         </Link>
 
         <Link
-          href="/admin/technical"
+          href="/technical"
           className="group bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all p-6 flex flex-col"
         >
           <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center mb-4">
