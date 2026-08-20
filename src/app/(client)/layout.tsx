@@ -59,7 +59,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       if (!data.user) return;
       const { data: profile } = await supabase.from('profiles').select('role, terms_accepted_at').eq('id', data.user.id).single();
       if (profile?.role === 'admin') {
-        window.location.href = '/admin';
+        window.location.href = '/admin-select';
         return;
       } else if (profile?.role === 'agent') {
         window.location.href = '/agent';

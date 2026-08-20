@@ -24,7 +24,7 @@ export default function MfaVerifyPage() {
       return;
     }
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    if (profile?.role === 'admin') router.replace('/admin');
+    if (profile?.role === 'admin') router.replace('/admin-select');
     else if (profile?.role === 'agent') router.replace('/agent');
     else router.replace('/');
   };

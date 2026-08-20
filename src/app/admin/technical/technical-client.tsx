@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Database, Gauge, AlertTriangle, ShieldAlert, ExternalLink, MessageSquare } from 'lucide-react'
+import { Database, Gauge, AlertTriangle, ShieldAlert, ExternalLink, MessageSquare, TrendingUp } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 const SUPABASE_DB_LIMIT_BYTES = 500 * 1024 * 1024 // Free tier: 500MB
 
@@ -87,6 +88,114 @@ function useUsageAggregates(data: TechnicalUsageData | null) {
 
     return { today, last7d, last30d, allMetrics: Array.from(allMetrics).sort() }
   }, [data, sevenDaysAgo, todayStr])
+}
+
+function ChartTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-lg rounded-xl p-3 text-sm">
+        <p className="font-semibold text-navy dark:text-white mb-1">{label}</p>
+        {payload.map((entry: any, i: number) => (
+          <p key={i} className="text-gray-600 dark:text-gray-300">
+            <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: entry.color }} />
+            {entry.name}: <span className="font-semibold text-navy dark:text-white">{entry.value}</span>
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
+// Real day-by-day series from technical_usage_daily — unlike the mock
+// charts on the business Dashboard, this is genuine self-tracked usage.
+// Fills in every day of the last 30 (even zero-activity ones) so the
+// chart reads as a continuous timeline, not just the days something
+// happened.
+function useDailySeries(dailyUsage: { day: string; metric: string; count: number }[]) {
+  return useMemo(() => {
+    const byDay = new Map<string, { ai_chat_calls: number; ai_chat_errors: number; rate_limited: number }>()
+
+    for (const row of dailyUsage) {
+      const entry = byDay.get(row.day) || { ai_chat_calls: 0, ai_chat_errors: 0, rate_limited: 0 }
+      if (row.metric === 'ai_chat_calls') entry.ai_chat_calls += row.count
+      else if (row.metric === 'ai_chat_errors') entry.ai_chat_errors += row.count
+      else if (row.metric.startsWith('rate_limited:')) entry.rate_limited += row.count
+      byDay.set(row.day, entry)
+    }
+
+    const days: { dateLabel: string; ai_chat_calls: number; ai_chat_errors: number; rate_limited: number }[] = []
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().slice(0, 10)
+      const entry = byDay.get(key) || { ai_chat_calls: 0, ai_chat_errors: 0, rate_limited: 0 }
+      days.push({ dateLabel: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), ...entry })
+    }
+    return days
+  }, [dailyUsage])
+}
+
+export function TechnicalUsageChart({ data }: { data: TechnicalUsageData }) {
+  const days = useDailySeries(data.daily_usage)
+  const hasAnyActivity = days.some(d => d.ai_chat_calls > 0 || d.ai_chat_errors > 0 || d.rate_limited > 0)
+
+  return (
+    <div className="rounded-xl border border-gray-100/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-sm font-bold text-navy dark:text-white flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-primary" /> USAGE TREND
+        </h2>
+        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full">Last 30 days</span>
+      </div>
+      {!hasAnyActivity ? (
+        <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 text-center px-6">
+          No activity tracked yet in the last 30 days — this fills in as the AI concierge and rate limits get used.
+        </div>
+      ) : (
+        <>
+          <div className="h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={days} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="callsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="errorsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="rateLimitGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.20} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="dateLabel" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={Math.ceil(days.length / 8) - 1} />
+                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="ai_chat_calls" stroke="#0d9488" strokeWidth={2.5} fill="url(#callsGrad)" name="AI Calls" />
+                <Area type="monotone" dataKey="ai_chat_errors" stroke="#ef4444" strokeWidth={2.5} fill="url(#errorsGrad)" name="AI Errors" />
+                <Area type="monotone" dataKey="rate_limited" stroke="#f59e0b" strokeWidth={2.5} fill="url(#rateLimitGrad)" name="Rate Limits" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex gap-6 mt-4 justify-center flex-wrap">
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="w-3 h-3 rounded-full bg-primary" /> AI Calls
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="w-3 h-3 rounded-full bg-red-500" /> AI Errors
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="w-3 h-3 rounded-full bg-amber-500" /> Rate Limits
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 // Shared between the Technical Dashboard overview and the full Usage &

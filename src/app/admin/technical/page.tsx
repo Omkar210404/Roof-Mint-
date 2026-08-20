@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Gauge, KeyRound, ArrowRight } from 'lucide-react';
 import { getTechnicalUsage } from './actions';
-import { TechnicalStatCards } from './technical-client';
+import { TechnicalStatCards, TechnicalUsageChart } from './technical-client';
 
 export default async function TechnicalDashboardPage() {
   const data = await getTechnicalUsage();
@@ -14,7 +14,10 @@ export default async function TechnicalDashboardPage() {
       </div>
 
       {data ? (
-        <TechnicalStatCards data={data} />
+        <>
+          <TechnicalStatCards data={data} />
+          <TechnicalUsageChart data={data} />
+        </>
       ) : (
         <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm p-8 text-center text-sm text-gray-400 dark:text-gray-500">
           Couldn&apos;t load technical usage data.

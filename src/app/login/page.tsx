@@ -54,7 +54,7 @@ export default function LoginPage() {
       .single();
 
     if (profile?.role === 'admin') {
-      router.push('/admin');
+      router.push('/admin-select');
     } else if (profile?.role === 'agent') {
       router.push('/agent');
     } else if (!profile?.profile_completed) {
