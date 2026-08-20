@@ -147,7 +147,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
             <Link
               href="/admin-select"
-              className="flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-navy dark:hover:text-white transition-colors"
+              className="flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 hover:text-navy dark:hover:text-white transition-colors"
             >
               <ArrowLeftRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               Switch Panel
