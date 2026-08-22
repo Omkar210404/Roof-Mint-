@@ -39,12 +39,15 @@ export function AppreciationPredictor({ property }: PropertyProps) {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to load AI predictions');
       const result = await res.json();
+      if (!res.ok) {
+        if (res.status === 429) throw new Error(result?.error || "You've hit the analysis limit for now — try again in a few minutes.");
+        throw new Error(result?.error || 'Failed to load AI predictions');
+      }
       setData(result);
     } catch (err: any) {
       console.error(err);
-      setError('Could not connect to AI service. Please try again.');
+      setError(err?.message && err.message !== 'Failed to fetch' ? err.message : 'Could not connect to AI service. Please try again.');
     } finally {
       setLoading(false);
     }

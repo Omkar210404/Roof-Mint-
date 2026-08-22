@@ -36,8 +36,11 @@ const VENDOR_LIMITS = [
 const METRIC_LABELS: Record<string, string> = {
   ai_chat_calls: 'AI concierge calls made',
   ai_chat_errors: 'AI concierge errors (model rejected/failed)',
+  predict_calls: '5-Year Price Predictor calls made',
+  predict_errors: '5-Year Price Predictor errors (model rejected/failed)',
   whatsapp_lead_anonymous: 'Anonymous WhatsApp leads captured',
   'rate_limited:chat': 'AI concierge — rate limit hit',
+  'rate_limited:predict': '5-Year Price Predictor — rate limit hit',
   'rate_limited:login': 'Login — rate limit hit',
   'rate_limited:signup': 'Signup — rate limit hit',
   'rate_limited:forgot-password': 'Password reset — rate limit hit',
