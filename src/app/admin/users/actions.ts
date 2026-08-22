@@ -56,6 +56,28 @@ export async function deleteUserProfile(id: string) {
 
   const { data: target } = await supabase.from('profiles').select('full_name').eq('id', id).single()
 
+  // Nothing enforces agents.user_id -> profiles.id at the DB level, so a
+  // delete here would silently succeed while leaving that agent's row
+  // pointing at a user that no longer exists — breaking their portal login
+  // and password/2FA reset later with no error at the time of THIS delete.
+  const { data: linkedAgent } = await supabase.from('agents').select('id').eq('user_id', id).maybeSingle()
+  if (linkedAgent) {
+    return { error: `${target?.full_name || 'This account'} is linked to an agent profile — remove them from the Agents page instead, which also reassigns their listings and leads.` }
+  }
+
+  // activity_log.admin_id -> profiles.id is NO ACTION on purpose (not
+  // CASCADE/SET NULL), so the audit trail never gets rewritten by a delete.
+  // That means any account that has ever acted as admin (current or former)
+  // can't be deleted while that history exists — surfaced here as a clear
+  // explanation instead of a raw FK-violation error bubbling up from below.
+  const { count: actedCount } = await supabase
+    .from('activity_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('admin_id', id)
+  if (actedCount && actedCount > 0) {
+    return { error: `${target?.full_name || 'This account'} has ${actedCount} ${actedCount === 1 ? 'entry' : 'entries'} in the Activity Log as the actor and can't be deleted — that would erase who did those actions. This is permanent as long as that history exists.` }
+  }
+
   // activity_log.admin_id has a FK to profiles.id — deleting the actor's own
   // row first would make the log insert below fail silently (logActivity is
   // fire-and-forget), losing the audit trail for exactly the self-delete
