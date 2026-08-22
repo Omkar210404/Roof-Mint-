@@ -38,6 +38,18 @@ export const HEADER_LABELS: Record<(typeof CSV_HEADERS)[number], string> = {
   image_urls: 'Image URLs (; separated, optional)',
 };
 
+// Fixed value sets — shared so the .xlsx template's dropdown lists (server
+// side) and the review screen's <select> options (client side) can never
+// drift apart from each other or from what createProperty actually accepts.
+export const PROPERTY_TYPES = ['Apartment', 'Villa', 'Plot', 'Penthouse', 'Commercial', 'Row House'];
+export const LISTING_TYPES = ['Sale', 'Rent', 'Resale'];
+export const OWNERSHIPS = ['1st Owner', '2nd Owner', '3rd Owner', '4th+ Owner'];
+export const FURNISHINGS = ['Unfurnished', 'Semi', 'Full'];
+export const PRICE_TYPES = ['fixed', 'negotiable', 'starting_from'];
+export const STATUSES = ['available', 'sold', 'reserved', 'coming_soon'];
+export const DEMAND_TAGS = ['high', 'moderate', 'low'];
+export const BHKS = ['1', '2', '3', '4', '5'];
+
 // Maps a header cell's text back to the internal field key. Includes both
 // the human-readable label ("Property Type") used by the current template
 // and the raw key itself ("property_type") so a file downloaded before this

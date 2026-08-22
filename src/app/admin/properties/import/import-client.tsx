@@ -9,23 +9,17 @@ import {
   ArrowLeft, Download, Upload, ChevronDown, ChevronUp, Trash2, Plus, X,
   Check, AlertCircle, AlertTriangle, Loader2, Image as ImageIcon, Film, RotateCcw, ShieldCheck,
 } from 'lucide-react';
-import { createProperty, getAgentsForSelect } from '../actions';
+import { createProperty, getAgentsForSelect, getExistingPropertyTitles } from '../actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
-import { LABEL_TO_KEY } from './template-shape';
+import {
+  LABEL_TO_KEY, PROPERTY_TYPES, LISTING_TYPES, OWNERSHIPS, FURNISHINGS,
+  PRICE_TYPES, STATUSES, DEMAND_TAGS, BHKS,
+} from './template-shape';
 
 // ── Shared styles (mirrors property-form.tsx) ──────────────────────────────
 const input = "w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400";
 const textarea = "w-full px-3 py-2 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400 resize-none";
 const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1";
-
-const PROPERTY_TYPES = ['Apartment', 'Villa', 'Plot', 'Penthouse', 'Commercial', 'Row House'];
-const LISTING_TYPES = ['Sale', 'Rent', 'Resale'];
-const OWNERSHIPS = ['1st Owner', '2nd Owner', '3rd Owner', '4th+ Owner'];
-const FURNISHINGS = ['Unfurnished', 'Semi', 'Full'];
-const PRICE_TYPES = ['fixed', 'negotiable', 'starting_from'];
-const STATUSES = ['available', 'sold', 'reserved', 'coming_soon'];
-const DEMAND_TAGS = ['high', 'moderate', 'low'];
-const BHKS = ['1', '2', '3', '4', '5'];
 
 // Both the .xlsx template and a hand-typed .csv can use either the
 // human-readable column labels ("Property Type") or the raw field names
@@ -167,11 +161,24 @@ function rowErrors(row: ImportRow): string[] {
   return errs;
 }
 
+// Doesn't block saving (two genuinely different properties can share a
+// name), but flagged loudly — this is the safeguard for "I re-uploaded the
+// same file / left old rows in it" rather than a hard rule.
+function duplicateReason(row: ImportRow, existingTitles: Set<string>, allRows: ImportRow[]): string | null {
+  const title = row.fields.title.trim().toLowerCase();
+  if (!title) return null;
+  if (existingTitles.has(title)) return 'A property with this exact title already exists in your listings.';
+  const dupeInFile = allRows.some(r => r.key !== row.key && r.fields.title.trim().toLowerCase() === title);
+  if (dupeInFile) return 'Another row in this same file has the same title.';
+  return null;
+}
+
 export function ImportClient() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [agents, setAgents] = useState<{ id: string; name: string; company: string }[]>([]);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
+  const [existingTitles, setExistingTitles] = useState<Set<string>>(new Set());
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -179,6 +186,7 @@ export function ImportClient() {
 
   useEffect(() => {
     getAgentsForSelect().then(a => { setAgents(a); setAgentsLoaded(true); });
+    getExistingPropertyTitles().then(titles => setExistingTitles(new Set(titles.map(t => t.trim().toLowerCase()))));
   }, []);
 
   const applyParsedRows = (rawRows: Record<string, string>[]) => {
@@ -402,11 +410,13 @@ export function ImportClient() {
             <div className="space-y-3">
               {rows.map(row => {
                 const errs = rowErrors(row);
+                const dupe = duplicateReason(row, existingTitles, rows);
                 return (
                   <RowCard
                     key={row.key}
                     row={row}
                     errors={errs}
+                    duplicateReason={dupe}
                     agents={agents}
                     onToggle={() => toggleExpanded(row.key)}
                     onRemove={() => removeRow(row.key)}
@@ -448,12 +458,13 @@ export function ImportClient() {
 }
 
 function RowCard({
-  row, errors, agents, onToggle, onRemove, onChange,
+  row, errors, duplicateReason, agents, onToggle, onRemove, onChange,
   onUploadImages, onUploadVideos, onClearImageUploads, onClearVideoUploads,
   onRemoveUploadedImage, onRemoveCsvImage,
 }: {
   row: ImportRow;
   errors: string[];
+  duplicateReason: string | null;
   agents: { id: string; name: string; company: string }[];
   onToggle: () => void;
   onRemove: () => void;
@@ -481,7 +492,7 @@ function RowCard({
     : <span className="h-6 px-2 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-[11px] font-bold">{errors.length} issue{errors.length > 1 ? 's' : ''}</span>;
 
   return (
-    <div className={`rounded-xl border ${ready ? 'border-gray-200/60 dark:border-gray-800/60' : 'border-red-200 dark:border-red-900'} overflow-hidden`}>
+    <div className={`rounded-xl border ${!ready ? 'border-red-200 dark:border-red-900' : duplicateReason ? 'border-amber-300 dark:border-amber-800' : 'border-gray-200/60 dark:border-gray-800/60'} overflow-hidden`}>
       <div
         role="button"
         tabIndex={0}
@@ -494,6 +505,11 @@ function RowCard({
         <span className="hidden sm:block text-xs text-gray-500 dark:text-gray-400 shrink-0">{row.fields.price ? `₹${row.fields.price}` : '—'}</span>
         <span className="hidden md:block text-xs text-gray-500 dark:text-gray-400 shrink-0">{row.fields.city || '—'}</span>
         <span className="hidden sm:flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 shrink-0"><ImageIcon className="w-3.5 h-3.5" /> {totalPhotos}</span>
+        {duplicateReason && (
+          <span className="h-6 px-2 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[11px] font-bold flex items-center gap-1 shrink-0">
+            <AlertTriangle className="w-3 h-3" /> Possible duplicate
+          </span>
+        )}
         {statusBadge}
         <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }} className="w-7 h-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-gray-400 hover:text-red-500 flex items-center justify-center shrink-0">
           <Trash2 className="w-3.5 h-3.5" />
@@ -503,6 +519,11 @@ function RowCard({
 
       {row.expanded && (
         <div className="p-4 border-t border-gray-100/60 dark:border-gray-800/60 space-y-4">
+          {duplicateReason && (
+            <div className="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-xs rounded-lg border border-amber-200 dark:border-amber-900">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {duplicateReason} Saving will still create a new, separate listing — remove this row if that&apos;s not what you want.
+            </div>
+          )}
           {(errors.length > 0 || row.warnings.length > 0) && (
             <div className="space-y-1.5">
               {errors.map((e, i) => (

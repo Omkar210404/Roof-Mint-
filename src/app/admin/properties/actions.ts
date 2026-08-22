@@ -49,8 +49,18 @@ export async function getAgentsForSelect() {
     .from('agents')
     .select('id, name, company')
     .order('name')
-  
+
   return data || []
+}
+
+// Just titles, for the bulk-import review screen to flag "a property with
+// this title already exists" before an admin accidentally re-saves rows
+// from a CSV/xlsx they already imported once.
+export async function getExistingPropertyTitles() {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return []
+  const { data } = await supabase.from('properties').select('title')
+  return (data || []).map(p => p.title as string)
 }
 
 export async function createProperty(formData: FormData) {
