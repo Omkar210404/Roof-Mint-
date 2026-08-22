@@ -14,6 +14,7 @@ import {
 import { Search, ShieldCheck, Briefcase, ChevronDown, X } from 'lucide-react'
 
 const actionLabels: Record<string, string> = {
+  create_agent: 'Added agent',
   delete_agent: 'Deleted agent',
   grant_agent_access: 'Granted portal access',
   revoke_agent_access: 'Revoked portal access',
@@ -76,6 +77,9 @@ function describeActivity(entry: any): string {
       break
     case 'update_plan_tier':
       if (d.id) return `${actor} edited the "${d.id}" plan tier`
+      break
+    case 'create_agent':
+      if (d.agent_name) return `${actor} added a new agent, ${d.agent_name}`
       break
     case 'delete_agent':
       if (d.agent_name) return `${actor} deleted agent ${d.agent_name}`

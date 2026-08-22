@@ -7,7 +7,7 @@ import { validatePassword } from '@/lib/password-policy'
 import { revalidatePath } from 'next/cache'
 
 export async function createAgent(formData: FormData) {
-  const { authorized, supabase } = await requireAdmin()
+  const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
   const name = formData.get('name') as string
@@ -16,18 +16,20 @@ export async function createAgent(formData: FormData) {
   const company = formData.get('company') as string
   const commission_notes = formData.get('commission_notes') as string
 
-  const { error } = await supabase.from('agents').insert({
+  const { data: agent, error } = await supabase.from('agents').insert({
     name,
     phone,
     email,
     company,
     commission_notes
-  })
+  }).select('id').single()
 
   if (error) {
     console.error('createAgent error:', error.message)
     return
   }
+
+  await logActivity(supabase, user!.id, 'create_agent', 'agent', agent.id, { agent_name: name })
 
   revalidatePath('/admin/agents')
 }
