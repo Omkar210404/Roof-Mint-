@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload, FileSpreadsheet, FileText } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { getProperties, deleteProperty, updatePropertyStatus, assignPropertyAgent } from './actions'
+import { getProperties, deleteProperty, updatePropertyStatus, assignPropertyAgent, logDataExport } from './actions'
 
 const statusStyles: Record<string, string> = {
   available: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700',
@@ -123,6 +123,70 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
     }
   }
 
+  const exportCSV = () => {
+    const header = ['Title', 'Type', 'BHK', 'Listing Type', 'Ownership', 'Price', 'Address', 'City', 'Locality', 'Status', 'Agent', 'Created']
+    const rows = filteredSorted.map(p => [
+      p.title || '',
+      p.property_type || '',
+      p.bhk ? `${p.bhk} BHK` : '',
+      p.listing_type || 'Sale',
+      p.ownership || '1st Owner',
+      p.price ?? '',
+      p.location_address || '',
+      p.city || '',
+      p.locality || '',
+      p.status || 'available',
+      p.primary_agent?.name || 'Unassigned',
+      p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN') : '',
+    ])
+    const escape = (val: unknown) => {
+      const s = String(val ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const csv = [header, ...rows].map(r => r.map(escape).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `roofmint-properties-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    logDataExport('csv', filteredSorted.length)
+  }
+
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const doc = new jsPDF({ orientation: 'landscape' })
+
+    doc.setFontSize(16)
+    doc.text('Roofmint — Properties', 14, 16)
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(
+      `Generated ${new Date().toLocaleString('en-IN')} · ${filteredSorted.length} propert${filteredSorted.length === 1 ? 'y' : 'ies'}`,
+      14, 22
+    )
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Title', 'Type', 'Price', 'Address', 'Status', 'Agent']],
+      body: filteredSorted.map(p => [
+        p.title || '',
+        `${p.bhk ? p.bhk + ' BHK ' : ''}${p.property_type || ''}`,
+        p.price ? `Rs. ${p.price.toLocaleString()}` : '',
+        p.location_address || '',
+        p.status || 'available',
+        p.primary_agent?.name || 'Unassigned',
+      ]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [13, 148, 136] },
+    })
+
+    doc.save(`roofmint-properties-${new Date().toISOString().slice(0, 10)}.pdf`)
+    logDataExport('pdf', filteredSorted.length)
+  }
+
   const totalPages = Math.ceil(filteredSorted.length / pageSize) || 1
   const paginatedProperties = filteredSorted.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
@@ -202,7 +266,21 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Properties</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={exportCSV}
+            disabled={filteredSorted.length === 0}
+            className="h-10 px-3 rounded-lg text-xs md:text-sm font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" /> Export CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={filteredSorted.length === 0}
+            className="h-10 px-3 rounded-lg text-xs md:text-sm font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+          >
+            <FileText className="w-3.5 h-3.5" /> Export PDF
+          </button>
           <Link href="/admin/properties/import">
             <button className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 text-navy dark:text-white font-semibold rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-navy-800 flex items-center gap-2 text-sm">
               <Upload className="w-4 h-4" />
@@ -356,7 +434,7 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
                     </div>
                   </TableCell>
                   <TableCell className="text-gray-500 dark:text-gray-400 text-xs">{property.location_address}</TableCell>
-                  <TableCell className="font-medium text-sm">₹{property.price?.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium text-sm">₹{property.price?.toLocaleString('en-IN')}</TableCell>
                   <TableCell>
                     <select
                       value={property.status || 'available'}

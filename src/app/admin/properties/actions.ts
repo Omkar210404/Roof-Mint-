@@ -63,6 +63,20 @@ export async function getExistingPropertyTitles() {
   return (data || []).map(p => p.title as string)
 }
 
+// Same reasoning as the agents/user-data exports — this moves listing data
+// out of the system, worth its own audit trail.
+export async function logDataExport(exportType: 'csv' | 'pdf', recordCount: number) {
+  const { authorized, supabase, user } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  await logActivity(supabase, user!.id, 'export_properties', 'property', null, {
+    format: exportType,
+    record_count: recordCount,
+  })
+
+  return { success: true }
+}
+
 export async function createProperty(formData: FormData) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }

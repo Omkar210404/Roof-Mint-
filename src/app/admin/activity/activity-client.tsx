@@ -14,6 +14,7 @@ import {
 import { Search, ShieldCheck, Briefcase, ChevronDown, X } from 'lucide-react'
 
 const actionLabels: Record<string, string> = {
+  export_properties: 'Exported properties',
   create_agent: 'Added agent',
   delete_agent: 'Deleted agent',
   grant_agent_access: 'Granted portal access',
