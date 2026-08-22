@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -202,12 +202,20 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Properties</h1>
-        <Link href="/admin/properties/new">
-          <button className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 text-sm">
-            <Plus className="w-4 h-4" />
-            Add Property
-          </button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/properties/import">
+            <button className="h-10 px-4 border border-gray-200/60 dark:border-gray-800/60 text-navy dark:text-white font-semibold rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-navy-800 flex items-center gap-2 text-sm">
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </button>
+          </Link>
+          <Link href="/admin/properties/new">
+            <button className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 text-sm">
+              <Plus className="w-4 h-4" />
+              Add Property
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Search + Filter Bar */}
