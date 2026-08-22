@@ -4,55 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import {
   ArrowLeft, Download, Upload, ChevronDown, ChevronUp, Trash2, Plus, X,
-  Check, AlertCircle, AlertTriangle, Loader2, Image as ImageIcon, Film,
+  Check, AlertCircle, AlertTriangle, Loader2, Image as ImageIcon, Film, RotateCcw, ShieldCheck,
 } from 'lucide-react';
 import { createProperty, getAgentsForSelect } from '../actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
+import { LABEL_TO_KEY } from './template-shape';
 
 // ── Shared styles (mirrors property-form.tsx) ──────────────────────────────
 const input = "w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400";
 const textarea = "w-full px-3 py-2 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400 resize-none";
 const labelCls = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1";
-
-// ── CSV shape ────────────────────────────────────────────────────────────
-const CSV_HEADERS = [
-  'title', 'description', 'property_type', 'listing_type', 'ownership', 'bhk',
-  'furnishing', 'carpet_area', 'built_up_area', 'floor', 'possession', 'price',
-  'price_type', 'location_address', 'city', 'locality', 'rera_number',
-  'demand_tag', 'status', 'primary_agent', 'amenities', 'highlights',
-  'nearby_places', 'video_urls', 'youtube_url', 'image_urls',
-];
-
-const TEMPLATE_EXAMPLE_ROW = {
-  title: 'Prestige Lakeside Habitat',
-  description: 'Spacious 3BHK with lake views, close to tech parks.',
-  property_type: 'Apartment',
-  listing_type: 'Sale',
-  ownership: '1st Owner',
-  bhk: '3',
-  furnishing: 'Semi',
-  carpet_area: '1200',
-  built_up_area: '1450',
-  floor: '12th of 24',
-  possession: 'Dec 2025',
-  price: '12800000',
-  price_type: 'fixed',
-  location_address: 'ITPL Main Road, Whitefield, Bangalore - 560066',
-  city: 'Bangalore',
-  locality: 'Whitefield',
-  rera_number: 'PRM/KA/RERA/1234/...',
-  demand_tag: 'moderate',
-  status: 'available',
-  primary_agent: 'Exact name of an agent already in Agents',
-  amenities: 'Covered Parking;24/7 Security;Gym & Pool',
-  highlights: 'Near Metro Station;Gated Community',
-  nearby_places: 'ITPL Tech Park:0.5 km;Metro Station:1.2 km',
-  video_urls: '',
-  youtube_url: '',
-  image_urls: '',
-};
 
 const PROPERTY_TYPES = ['Apartment', 'Villa', 'Plot', 'Penthouse', 'Commercial', 'Row House'];
 const LISTING_TYPES = ['Sale', 'Rent', 'Resale'];
@@ -63,17 +27,17 @@ const STATUSES = ['available', 'sold', 'reserved', 'coming_soon'];
 const DEMAND_TAGS = ['high', 'moderate', 'low'];
 const BHKS = ['1', '2', '3', '4', '5'];
 
-function downloadCsvTemplate() {
-  const csv = Papa.unparse({ fields: CSV_HEADERS, data: [CSV_HEADERS.map(h => (TEMPLATE_EXAMPLE_ROW as any)[h] ?? '')] });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'roofmint-properties-template.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+// Both the .xlsx template and a hand-typed .csv can use either the
+// human-readable column labels ("Property Type") or the raw field names
+// ("property_type") as the header row — this maps whichever text is there
+// back to the field key the rest of this file works with.
+function remapHeaders(raw: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    const mapped = LABEL_TO_KEY[key.trim().toLowerCase()] || LABEL_TO_KEY[key.trim()];
+    out[mapped || key] = value;
+  }
+  return out;
 }
 
 function splitList(value: string): string[] {
@@ -217,12 +181,38 @@ export function ImportClient() {
     getAgentsForSelect().then(a => { setAgents(a); setAgentsLoaded(true); });
   }, []);
 
+  const applyParsedRows = (rawRows: Record<string, string>[]) => {
+    const data = rawRows
+      .map(remapHeaders)
+      .filter(r => Object.values(r).some(v => (v || '').trim()));
+    if (!data.length) {
+      setParseError('No property rows found in that file.');
+      return;
+    }
+    setRows(data.map((raw, i) => buildRow(raw, i + 2, agents)));
+  };
+
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     setParseError(null);
     setSaveSummary(null);
+
+    const isExcel = /\.xlsx$/i.test(file.name) || file.type.includes('spreadsheetml');
+    if (isExcel) {
+      file.arrayBuffer().then(buffer => {
+        try {
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: '', raw: false });
+          applyParsedRows(data);
+        } catch {
+          setParseError("Couldn't read that Excel file — make sure it's a .xlsx saved from the downloaded template.");
+        }
+      }).catch(() => setParseError("Couldn't read that file."));
+      return;
+    }
 
     Papa.parse<Record<string, string>>(file, {
       header: true,
@@ -232,15 +222,16 @@ export function ImportClient() {
           setParseError(results.errors[0].message);
           return;
         }
-        const data = results.data.filter(r => Object.values(r).some(v => (v || '').trim()));
-        if (!data.length) {
-          setParseError('No property rows found in that file.');
-          return;
-        }
-        setRows(data.map((raw, i) => buildRow(raw, i + 2, agents)));
+        applyParsedRows(results.data);
       },
       error: (err) => setParseError(err.message),
     });
+  };
+
+  const handleClear = () => {
+    setRows([]);
+    setParseError(null);
+    setSaveSummary(null);
   };
 
   // Re-resolve agent matches if the CSV was parsed before agents finished loading.
@@ -365,27 +356,32 @@ export function ImportClient() {
       {/* Step 1: template */}
       <Card title="1. Download the template">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          One row per property. Lists (amenities, highlights, video/image URLs) go in a single cell separated by
-          <span className="font-mono text-navy dark:text-white"> ; </span>
+          One row per property. It downloads as a formatted Excel file — bold header row, columns already sized —
+          so you can just open it and start typing, no manual formatting. Lists (amenities, highlights, video/image URLs)
+          go in a single cell separated by <span className="font-mono text-navy dark:text-white">;</span>
           — e.g. <span className="font-mono">Gym;Pool;24x7 Security</span>. Nearby landmarks use
           <span className="font-mono text-navy dark:text-white"> Name:Distance</span> pairs separated by <span className="font-mono">;</span>.
-          <span className="font-medium text-navy dark:text-white"> primary_agent</span> must exactly match a name already in Agents.
-          Photos don&apos;t have to go in the CSV — leave <span className="font-mono">image_urls</span> blank and upload the actual files per property in the review step below.
+          <span className="font-medium text-navy dark:text-white"> Primary Agent</span> must exactly match a name already in Agents.
+          Photos don&apos;t have to go in the file — leave <span className="font-mono">Image URLs</span> blank and upload the actual files per property in the review step below.
         </p>
-        <button onClick={downloadCsvTemplate} className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-all inline-flex items-center gap-2">
-          <Download className="w-4 h-4" /> Download CSV template
-        </button>
+        <a href="/api/admin/properties/import-template" className="h-10 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-all inline-flex items-center gap-2 w-fit">
+          <Download className="w-4 h-4" /> Download template (.xlsx)
+        </a>
       </Card>
 
       {/* Step 2: upload */}
       <div className="mt-5">
-        <Card title="2. Upload your filled CSV">
-          <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileSelected} />
+        <Card title="2. Upload your filled file">
+          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={handleFileSelected} />
           <button onClick={() => fileInputRef.current?.click()}
             className="w-full h-20 rounded-lg border-2 border-dashed border-gray-200/60 dark:border-gray-800/60 hover:border-primary hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors">
             <Upload className="w-5 h-5" />
-            <span className="text-xs font-medium">Click to choose the filled CSV file</span>
+            <span className="text-xs font-medium">Click to choose the filled .xlsx or .csv file</span>
           </button>
+          <p className="mt-2.5 flex items-start gap-1.5 text-[11px] text-gray-400 dark:text-gray-500">
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            This file is read entirely in your browser — it&apos;s never uploaded to or stored on our servers. Only the property details you confirm below get saved.
+          </p>
           {parseError && (
             <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm rounded-lg border border-red-200 dark:border-red-900 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" /> {parseError}
@@ -398,6 +394,11 @@ export function ImportClient() {
       {rows.length > 0 && (
         <div className="mt-5">
           <Card title={`3. Review & verify — ${rows.length} propert${rows.length === 1 ? 'y' : 'ies'} parsed, ${readyCount} ready`}>
+            <div className="flex justify-end mb-3">
+              <button type="button" onClick={handleClear} className="text-xs font-semibold text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1.5">
+                <RotateCcw className="w-3.5 h-3.5" /> Clear & start over
+              </button>
+            </div>
             <div className="space-y-3">
               {rows.map(row => {
                 const errs = rowErrors(row);
