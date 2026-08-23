@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { formatPrice } from '@/lib/format-price'
 
 export async function checkProfileComplete() {
   const supabase = await createClient()
@@ -233,11 +234,4 @@ export async function getAIFilteredProperties(guestFilters?: AIPreferenceFilters
   })
 
   return { properties: formatted, filters: profile }
-}
-
-function formatPrice(price: number): string {
-  if (!price) return '₹0'
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`
-  if (price >= 100000) return `₹${(price / 100000).toFixed(0)} L`
-  return `₹${price.toLocaleString()}`
 }

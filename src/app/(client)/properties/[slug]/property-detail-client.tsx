@@ -628,18 +628,19 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
             </div>
           </div>
 
-          {/* Specs Grid */}
+          {/* Specs Grid — a spec with nothing entered is left out entirely
+              rather than shown as an empty "—" tile */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
             {[
               { icon: Building2, label: 'Config', value: property.bhkLabel },
               { icon: Maximize, label: 'Super Area', value: property.areaLabel },
               { icon: Tag, label: 'Purpose', value: property.listingTypeLabel || 'For Sale' },
               { icon: UserCheck, label: 'Ownership', value: property.ownershipLabel || '1st Owner' },
-              { icon: Layers, label: 'Floor', value: property.floor || '—' },
-              { icon: Calendar, label: 'Possession', value: property.possession || '—' },
-              { icon: Home, label: 'Furnishing', value: property.furnishing || '—' },
-              { icon: Ruler, label: 'Carpet Area', value: property.carpet_area ? `${Number(property.carpet_area).toLocaleString()} sq.ft.` : '—' },
-            ].map((spec) => (
+              { icon: Layers, label: 'Floor', value: property.floor },
+              { icon: Calendar, label: 'Possession', value: property.possession },
+              { icon: Home, label: 'Furnishing', value: property.furnishing },
+              { icon: Ruler, label: 'Carpet Area', value: property.carpet_area ? `${Number(property.carpet_area).toLocaleString()} sq.ft.` : '' },
+            ].filter(spec => spec.value).map((spec) => (
               <div key={spec.label} className="bg-gray-50 dark:bg-navy-800 rounded-xl p-2.5 md:p-3 text-center shadow-sm border border-gray-100/60 dark:border-gray-800/60">
                 <spec.icon className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1 md:mb-1.5" />
                 <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mb-0.5 uppercase tracking-wide font-medium">{spec.label}</p>

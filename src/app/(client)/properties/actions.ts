@@ -3,6 +3,7 @@
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { isRateLimited } from '@/lib/rate-limit'
+import { formatPrice } from '@/lib/format-price'
 
 export async function getPublicProperties(limit?: number) {
   const supabase = await createClient()
@@ -288,11 +289,4 @@ export async function searchProperties(query: string) {
     listingTypeLabel: p.listing_type === 'Rent' ? 'For Rent' : p.listing_type === 'Resale' ? 'Resale' : 'For Sale',
     ownershipLabel: p.ownership || '1st Owner',
   }))
-}
-
-function formatPrice(price: number): string {
-  if (!price) return '₹0'
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`
-  if (price >= 100000) return `₹${(price / 100000).toFixed(0)} L`
-  return `₹${price.toLocaleString()}`
 }
