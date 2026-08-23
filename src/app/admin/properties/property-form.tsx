@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Plus, X, Video, MapPin,
   Car, Wifi, Droplets, Zap, Trees, Dumbbell, ShieldCheck, Building2,
-  Upload, Trash2, Check, Loader2, AlertCircle, Image as ImageIcon, Film
+  Upload, Trash2, Check, Loader2, AlertCircle, Image as ImageIcon, Film, GripVertical
 } from 'lucide-react';
 import { createProperty, updateProperty, getAgentsForSelect } from './actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
@@ -73,6 +73,8 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const [newImageUrl, setNewImageUrl] = useState('');
   const [bulkUrls, setBulkUrls] = useState('');
   const [showBulk, setShowBulk] = useState(false);
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null);
   const [videoUrls, setVideoUrls] = useState<string[]>(() =>
     (initialData?.property_media || []).filter((m: any) => m.media_type === 'video').map((m: any) => m.url)
   );
@@ -416,15 +418,36 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
             )}
           </div>
 
-          {/* Preview grid */}
+          {/* Preview grid — drag to reorder; first tile is always the cover photo */}
           {imageUrls.length > 0 && (
             <div className="mt-4">
-              <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2">{imageUrls.length} image(s) • First = cover photo</p>
+              <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2">{imageUrls.length} image(s) • Drag to reorder • First = cover photo</p>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                 {imageUrls.map((url, i) => (
-                  <div key={i} className="relative group rounded-lg overflow-hidden border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 aspect-[4/3]">
-                    <img src={url} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div
+                    key={url}
+                    draggable
+                    onDragStart={() => setDraggedImageIndex(i)}
+                    onDragOver={(e) => { e.preventDefault(); if (dragOverImageIndex !== i) setDragOverImageIndex(i) }}
+                    onDragLeave={() => setDragOverImageIndex(prev => prev === i ? null : prev)}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      if (draggedImageIndex === null || draggedImageIndex === i) { setDraggedImageIndex(null); setDragOverImageIndex(null); return }
+                      const next = [...imageUrls]
+                      const [moved] = next.splice(draggedImageIndex, 1)
+                      next.splice(i, 0, moved)
+                      setImageUrls(next)
+                      setDraggedImageIndex(null)
+                      setDragOverImageIndex(null)
+                    }}
+                    onDragEnd={() => { setDraggedImageIndex(null); setDragOverImageIndex(null) }}
+                    className={`relative group rounded-lg overflow-hidden border bg-gray-50 dark:bg-navy-800 aspect-[4/3] cursor-grab active:cursor-grabbing transition-opacity ${dragOverImageIndex === i && draggedImageIndex !== i ? 'border-primary ring-2 ring-primary/40' : 'border-gray-200/60 dark:border-gray-800/60'} ${draggedImageIndex === i ? 'opacity-40' : ''}`}
+                  >
+                    <img src={url} alt="" draggable={false} className="w-full h-full object-cover pointer-events-none" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     {i === 0 && <span className="absolute top-1 left-1 bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
+                    <div className="absolute bottom-1 left-1 w-5 h-5 bg-black/50 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <GripVertical className="w-3 h-3" />
+                    </div>
                     <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, j) => j !== i))}
                       className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="w-3 h-3" />
