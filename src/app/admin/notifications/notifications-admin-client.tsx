@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { sendNotificationToUser, broadcastNotificationToAll, deleteNotificationLog } from './actions';
+import { AiEnhanceButton } from '@/components/ai-enhance-button';
 
 const MAX_LIST_ROWS = 100;
 const CUSTOM_TYPE_VALUE = '__custom__';
@@ -396,7 +397,10 @@ export function NotificationsAdminClientWrapper({
 
               {/* Notification Message */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Notification Message *</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Notification Message *</label>
+                  <AiEnhanceButton getValue={() => messageText} setValue={setMessageText} fieldType="notification" />
+                </div>
                 <textarea
                   required
                   rows={4}

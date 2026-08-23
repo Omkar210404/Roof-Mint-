@@ -11,6 +11,7 @@ import {
 import { createProperty, updateProperty, getAgentsForSelect } from './actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
 import { deriveCaptionFromFilename } from '@/lib/derive-caption';
+import { AiEnhanceButton } from '@/components/ai-enhance-button';
 
 function Youtube({ className }: { className?: string }) {
   return (
@@ -103,6 +104,12 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Title/Description are plain uncontrolled inputs (read via FormData at
+  // submit time, like the rest of Basic Info) — these refs just let the AI
+  // Enhance button read/replace their value without restructuring the form.
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   // Direct upload state
   const [imageUploads, setImageUploads] = useState<UploadItem[]>([]);
@@ -253,12 +260,26 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
         <Card title="Basic Information">
           <div className="grid grid-cols-6 gap-x-4 gap-y-4">
             <div className="col-span-6">
-              <label className={labelCls + reqDot}>Title</label>
-              <input name="title" required defaultValue={initialData?.title} placeholder="Prestige Lakeside Habitat" className={input} />
+              <div className="flex items-center justify-between mb-1">
+                <label className={labelCls + reqDot + " mb-0"}>Title</label>
+                <AiEnhanceButton
+                  getValue={() => titleInputRef.current?.value || ''}
+                  setValue={(text) => { if (titleInputRef.current) titleInputRef.current.value = text; }}
+                  fieldType="title"
+                />
+              </div>
+              <input ref={titleInputRef} name="title" required defaultValue={initialData?.title} placeholder="Prestige Lakeside Habitat" className={input} />
             </div>
             <div className="col-span-6">
-              <label className={labelCls}>Description</label>
-              <textarea name="description" rows={3} defaultValue={initialData?.description} placeholder="Describe the property..." className={textarea} />
+              <div className="flex items-center justify-between mb-1">
+                <label className={labelCls + " mb-0"}>Description</label>
+                <AiEnhanceButton
+                  getValue={() => descriptionRef.current?.value || ''}
+                  setValue={(text) => { if (descriptionRef.current) descriptionRef.current.value = text; }}
+                  fieldType="description"
+                />
+              </div>
+              <textarea ref={descriptionRef} name="description" rows={3} defaultValue={initialData?.description} placeholder="Describe the property..." className={textarea} />
             </div>
             <div className="col-span-3 md:col-span-2">
               <label className={labelCls}>Type</label>
