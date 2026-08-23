@@ -107,6 +107,7 @@ export async function createProperty(formData: FormData) {
   const amenities = JSON.parse(formData.get('amenities') as string || '[]')
   const highlights = JSON.parse(formData.get('highlights') as string || '[]')
   const image_urls = JSON.parse(formData.get('image_urls') as string || '[]')
+  const image_captions = JSON.parse(formData.get('image_captions') as string || '[]')
   const nearby_places = JSON.parse(formData.get('nearby_places') as string || '[]')
   const video_urls = JSON.parse(formData.get('video_urls') as string || '[]')
   const youtube_url = formData.get('youtube_url') as string
@@ -152,7 +153,8 @@ export async function createProperty(formData: FormData) {
       url,
       media_type: 'image',
       is_cover: i === 0,
-      sort_order: i
+      sort_order: i,
+      caption: image_captions[i] || null
     }))
     await supabase.from('property_media').insert(mediaRows)
   }
@@ -222,6 +224,7 @@ export async function updateProperty(id: string, formData: FormData) {
   const amenities = JSON.parse(formData.get('amenities') as string || '[]')
   const highlights = JSON.parse(formData.get('highlights') as string || '[]')
   const image_urls = JSON.parse(formData.get('image_urls') as string || '[]')
+  const image_captions = JSON.parse(formData.get('image_captions') as string || '[]')
   const nearby_places = JSON.parse(formData.get('nearby_places') as string || '[]')
   const video_urls = JSON.parse(formData.get('video_urls') as string || '[]')
   const youtube_url = formData.get('youtube_url') as string
@@ -269,7 +272,8 @@ export async function updateProperty(id: string, formData: FormData) {
       url,
       media_type: 'image',
       is_cover: i === 0,
-      sort_order: i
+      sort_order: i,
+      caption: image_captions[i] || null
     }))
     await supabase.from('property_media').insert(mediaRows)
   }

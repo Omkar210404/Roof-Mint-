@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = property.description
     ? property.description.slice(0, 155)
     : `${configBit || 'Property'} for ${property.listingTypeLabel || 'Sale'} in ${locationBit || 'India'} at ${property.formattedPrice} — verified listing on Roofmint.`;
-  const image = property.images?.[0];
+  const image = property.images?.[0]?.url;
 
   return {
     title,

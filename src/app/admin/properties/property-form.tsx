@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { createProperty, updateProperty, getAgentsForSelect } from './actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
+import { deriveCaptionFromFilename } from '@/lib/derive-caption';
 
 function Youtube({ className }: { className?: string }) {
   return (
@@ -70,6 +71,17 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
       .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       .map((m: any) => m.url)
   );
+  // Which room/area each photo shows (e.g. "Master Bedroom", "Attached
+  // Washroom") — keyed by URL so it survives reordering. Auto-suggested
+  // from the uploaded file's own name (admins already name their photos
+  // meaningfully), but always editable.
+  const [imageCaptions, setImageCaptions] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const m of initialData?.property_media || []) {
+      if (m.media_type === 'image' && m.caption) map[m.url] = m.caption;
+    }
+    return map;
+  });
   const [newImageUrl, setNewImageUrl] = useState('');
   const [bulkUrls, setBulkUrls] = useState('');
   const [showBulk, setShowBulk] = useState(false);
@@ -142,7 +154,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const uploadFiles = async (
     files: FileList,
     setUploads: React.Dispatch<React.SetStateAction<UploadItem[]>>,
-    onUrl: (url: string) => void,
+    onUrl: (url: string, fileName: string) => void,
     expectedType: 'image' | 'video'
   ) => {
     const items: UploadItem[] = Array.from(files).map(f => ({ id: crypto.randomUUID(), name: f.name, status: 'uploading' }));
@@ -152,7 +164,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
       const item = items[i];
       try {
         const url = await uploadPropertyMedia(file, expectedType);
-        onUrl(url);
+        onUrl(url, file.name);
         setUploads(prev => prev.map(u => u.id === item.id ? { ...u, status: 'done' } : u));
       } catch (err) {
         const message = err instanceof UploadError ? err.message : 'Upload failed';
@@ -164,7 +176,11 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const handleImageFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length) {
-      uploadFiles(files, setImageUploads, url => setImageUrls(prev => [...prev, url]), 'image');
+      uploadFiles(files, setImageUploads, (url, fileName) => {
+        setImageUrls(prev => [...prev, url]);
+        const suggested = deriveCaptionFromFilename(fileName);
+        if (suggested) setImageCaptions(prev => ({ ...prev, [url]: suggested }));
+      }, 'image');
     }
     e.target.value = '';
   };
@@ -184,6 +200,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
 
     const fd = new FormData(e.currentTarget);
     fd.append('image_urls', JSON.stringify(imageUrls));
+    fd.append('image_captions', JSON.stringify(imageUrls.map(url => imageCaptions[url] || '')));
     fd.append('video_urls', JSON.stringify(videoUrls));
     fd.append('youtube_url', youtubeUrl);
     fd.append('amenities', JSON.stringify(selectedAmenities));
@@ -421,7 +438,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
           {/* Preview grid — drag to reorder; first tile is always the cover photo */}
           {imageUrls.length > 0 && (
             <div className="mt-4">
-              <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2">{imageUrls.length} image(s) • Drag to reorder • First = cover photo</p>
+              <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2">{imageUrls.length} image(s) • Drag to reorder • First = cover photo • Label each photo (e.g. "Master Bedroom") so visitors know what they're looking at</p>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                 {imageUrls.map((url, i) => (
                   <div
@@ -441,17 +458,28 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
                       setDragOverImageIndex(null)
                     }}
                     onDragEnd={() => { setDraggedImageIndex(null); setDragOverImageIndex(null) }}
-                    className={`relative group rounded-lg overflow-hidden border bg-gray-50 dark:bg-navy-800 aspect-[4/3] cursor-grab active:cursor-grabbing transition-opacity ${dragOverImageIndex === i && draggedImageIndex !== i ? 'border-primary ring-2 ring-primary/40' : 'border-gray-200/60 dark:border-gray-800/60'} ${draggedImageIndex === i ? 'opacity-40' : ''}`}
+                    className={`group rounded-lg overflow-hidden border bg-gray-50 dark:bg-navy-800 cursor-grab active:cursor-grabbing transition-opacity ${dragOverImageIndex === i && draggedImageIndex !== i ? 'border-primary ring-2 ring-primary/40' : 'border-gray-200/60 dark:border-gray-800/60'} ${draggedImageIndex === i ? 'opacity-40' : ''}`}
                   >
-                    <img src={url} alt="" draggable={false} className="w-full h-full object-cover pointer-events-none" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    {i === 0 && <span className="absolute top-1 left-1 bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
-                    <div className="absolute bottom-1 left-1 w-5 h-5 bg-black/50 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <GripVertical className="w-3 h-3" />
+                    <div className="relative aspect-[4/3]">
+                      <img src={url} alt="" draggable={false} className="w-full h-full object-cover pointer-events-none" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      {i === 0 && <span className="absolute top-1 left-1 bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
+                      <div className="absolute bottom-1 left-1 w-5 h-5 bg-black/50 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <GripVertical className="w-3 h-3" />
+                      </div>
+                      <button type="button" onClick={() => {
+                        setImageUrls(imageUrls.filter((_, j) => j !== i))
+                        setImageCaptions(prev => { const next = { ...prev }; delete next[url]; return next })
+                      }}
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
-                    <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, j) => j !== i))}
-                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <input
+                      value={imageCaptions[url] || ''}
+                      onChange={e => setImageCaptions(prev => ({ ...prev, [url]: e.target.value }))}
+                      placeholder="e.g. Master Bedroom"
+                      className="w-full px-1.5 py-1 text-[10px] bg-transparent border-t border-gray-200/60 dark:border-gray-800/60 focus:outline-none focus:bg-white dark:focus:bg-navy-900 text-navy dark:text-white placeholder:text-gray-400"
+                    />
                   </div>
                 ))}
               </div>

@@ -76,7 +76,7 @@ export async function getPropertyBySlug(slug: string) {
     .from('properties')
     .select(`
       *,
-      media:property_media(url, is_cover, sort_order, media_type),
+      media:property_media(url, is_cover, sort_order, media_type, caption),
       nearby:nearby_places(name, distance, category)
     `)
     .eq('slug', slug)
@@ -89,7 +89,7 @@ export async function getPropertyBySlug(slug: string) {
   const images = data.media
     ?.filter((m: any) => m.media_type === 'image' || !m.media_type)
     ?.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
-    ?.map((m: any) => m.url) || ['/images/property1.png']
+    ?.map((m: any) => ({ url: m.url, caption: m.caption || '' })) || [{ url: '/images/property1.png', caption: '' }]
 
   const videos = data.media
     ?.filter((m: any) => m.media_type === 'video' || m.media_type === 'video_youtube')

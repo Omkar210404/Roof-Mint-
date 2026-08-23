@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { createProperty, getAgentsForSelect, getExistingPropertyTitles } from '../actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
+import { deriveCaptionFromFilename } from '@/lib/derive-caption';
 import {
   LABEL_TO_KEY, PROPERTY_TYPES, LISTING_TYPES, OWNERSHIPS, FURNISHINGS,
   PRICE_TYPES, STATUSES, DEMAND_TAGS, BHKS,
@@ -72,6 +73,7 @@ type ImportRow = {
   fields: Fields;
   warnings: string[];
   uploadedImageUrls: string[];
+  imageCaptions: Record<string, string>;
   uploadedVideoUrls: string[];
   imageUploads: UploadItem[];
   videoUploads: UploadItem[];
@@ -143,6 +145,7 @@ function buildRow(raw: Record<string, string>, rowNumber: number, agents: { id: 
     },
     warnings,
     uploadedImageUrls: [],
+    imageCaptions: {},
     uploadedVideoUrls: [],
     imageUploads: [],
     videoUploads: [],
@@ -281,9 +284,11 @@ export function ImportClient() {
         setRows(prev => prev.map(r => {
           if (r.key !== rowKey) return r;
           const urlsKey = kind === 'image' ? 'uploadedImageUrls' : 'uploadedVideoUrls';
+          const suggestedCaption = kind === 'image' ? deriveCaptionFromFilename(file.name) : '';
           return {
             ...r,
             [urlsKey]: [...r[urlsKey], url],
+            imageCaptions: suggestedCaption ? { ...r.imageCaptions, [url]: suggestedCaption } : r.imageCaptions,
             [uploadsKey]: r[uploadsKey].map(u => u.id === item.id ? { ...u, status: 'done' as const } : u),
           };
         }));
@@ -331,6 +336,10 @@ export function ImportClient() {
       fd.set('amenities', JSON.stringify(row.fields.amenities));
       fd.set('highlights', JSON.stringify(row.fields.highlights));
       fd.set('image_urls', JSON.stringify([...row.fields.csvImageUrls, ...row.uploadedImageUrls]));
+      fd.set('image_captions', JSON.stringify([
+        ...row.fields.csvImageUrls.map(() => ''),
+        ...row.uploadedImageUrls.map(url => row.imageCaptions[url] || ''),
+      ]));
       fd.set('video_urls', JSON.stringify([...row.fields.csvVideoUrls, ...row.uploadedVideoUrls]));
       fd.set('youtube_url', row.fields.youtube_url);
       fd.set('nearby_places', JSON.stringify(row.fields.nearbyPlaces));
@@ -427,6 +436,7 @@ export function ImportClient() {
                     onClearVideoUploads={() => setRows(prev => prev.map(r => r.key === row.key ? { ...r, videoUploads: r.videoUploads.filter(u => u.status === 'uploading') } : r))}
                     onRemoveUploadedImage={(url) => setRows(prev => prev.map(r => r.key === row.key ? { ...r, uploadedImageUrls: r.uploadedImageUrls.filter(u => u !== url) } : r))}
                     onRemoveCsvImage={(url) => updateRow(row.key, { csvImageUrls: row.fields.csvImageUrls.filter(u => u !== url) })}
+                    onCaptionChange={(url, caption) => setRows(prev => prev.map(r => r.key === row.key ? { ...r, imageCaptions: { ...r.imageCaptions, [url]: caption } } : r))}
                   />
                 );
               })}
@@ -460,7 +470,7 @@ export function ImportClient() {
 function RowCard({
   row, errors, duplicateReason, agents, onToggle, onRemove, onChange,
   onUploadImages, onUploadVideos, onClearImageUploads, onClearVideoUploads,
-  onRemoveUploadedImage, onRemoveCsvImage,
+  onRemoveUploadedImage, onRemoveCsvImage, onCaptionChange,
 }: {
   row: ImportRow;
   errors: string[];
@@ -475,6 +485,7 @@ function RowCard({
   onClearVideoUploads: () => void;
   onRemoveUploadedImage: (url: string) => void;
   onRemoveCsvImage: (url: string) => void;
+  onCaptionChange: (url: string, caption: string) => void;
 }) {
   const imageFileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
@@ -694,11 +705,19 @@ function RowCard({
                   </div>
                 ))}
                 {row.uploadedImageUrls.map((url, i) => (
-                  <div key={`up-${i}`} className="relative group rounded-lg overflow-hidden border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 aspect-[4/3]">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => onRemoveUploadedImage(url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <X className="w-3 h-3" />
-                    </button>
+                  <div key={`up-${i}`} className="rounded-lg overflow-hidden border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800">
+                    <div className="relative group aspect-[4/3]">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => onRemoveUploadedImage(url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <input
+                      value={row.imageCaptions[url] || ''}
+                      onChange={e => onCaptionChange(url, e.target.value)}
+                      placeholder="e.g. Master Bedroom"
+                      className="w-full px-1.5 py-1 text-[10px] bg-transparent border-t border-gray-200/60 dark:border-gray-800/60 focus:outline-none focus:bg-white dark:focus:bg-navy-900 text-navy dark:text-white placeholder:text-gray-400"
+                    />
                   </div>
                 ))}
               </div>

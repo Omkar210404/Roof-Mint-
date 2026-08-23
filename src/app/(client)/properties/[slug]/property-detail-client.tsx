@@ -415,7 +415,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
     );
   }
 
-  const images = property.images?.length > 0 ? property.images : ['/images/property1.png'];
+  const images: { url: string; caption: string }[] = property.images?.length > 0 ? property.images : [{ url: '/images/property1.png', caption: '' }];
 
   const goToPrevImage = () => setCurrentImage(i => (i - 1 + images.length) % images.length);
   const goToNextImage = () => setCurrentImage(i => (i + 1) % images.length);
@@ -505,7 +505,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
           onTouchStart={handleGalleryTouchStart}
           onTouchEnd={handleGalleryTouchEnd}
         >
-          <Image src={images[currentImage]} alt={property.title} fill className="object-cover" priority />
+          <Image src={images[currentImage].url} alt={images[currentImage].caption || property.title} fill className="object-cover" priority />
           {images.length > 1 && (
             <>
               <button
@@ -545,24 +545,34 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
           <div className="absolute top-4 md:top-6 left-16 md:left-20 flex items-center gap-1.5 bg-primary/90 backdrop-blur-sm text-white text-[10px] md:text-xs font-semibold px-2.5 py-1 md:px-3 md:py-1.5 rounded-full">
             <CheckCircle className="w-3 h-3 md:w-4 md:h-4" /> Roofmint Verified
           </div>
+          {images[currentImage].caption && (
+            <div className="absolute bottom-3 left-3 md:bottom-6 md:left-6 bg-black/60 text-white text-[11px] md:text-sm font-semibold px-2.5 py-1 md:px-4 md:py-1.5 rounded-full backdrop-blur-sm">
+              {images[currentImage].caption}
+            </div>
+          )}
           <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 bg-black/60 text-white text-[11px] md:text-sm font-medium px-2.5 py-1 md:px-4 md:py-1.5 rounded-full backdrop-blur-sm">
             {currentImage + 1}/{images.length}
           </div>
           {images.length > 1 && images.length <= 10 && (
             <div className="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-              {images.map((_: string, idx: number) => (
+              {images.map((_, idx: number) => (
                 <span key={idx} className={`h-1.5 rounded-full transition-all ${currentImage === idx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
               ))}
             </div>
           )}
         </div>
         <div className="flex md:flex-col gap-2 md:gap-4 px-4 md:px-0 py-3 md:py-0 overflow-x-auto md:overflow-y-auto md:h-[500px] no-scrollbar">
-          {images.map((img: string, idx: number) => (
-            <button key={idx} onClick={() => setCurrentImage(idx)}
+          {images.map((img, idx: number) => (
+            <button key={idx} onClick={() => setCurrentImage(idx)} title={img.caption || undefined}
               className={`relative w-16 h-12 md:w-full md:flex-1 md:min-h-[120px] rounded-lg md:rounded-xl overflow-hidden flex-shrink-0 transition-all ${
                 currentImage === idx ? 'ring-2 md:ring-4 ring-primary ring-offset-1 md:ring-offset-2' : 'opacity-60 hover:opacity-100'
               }`}>
-              <Image src={img} alt={`View ${idx + 1}`} fill className="object-cover" />
+              <Image src={img.url} alt={img.caption || `View ${idx + 1}`} fill className="object-cover" />
+              {img.caption && (
+                <span className="hidden md:block absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 truncate text-left">
+                  {img.caption}
+                </span>
+              )}
             </button>
           ))}
         </div>
