@@ -21,7 +21,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "exceljs": "^4.4.0",
-    "heic2any": "^0.0.4",
+    "heic-to": "^1.5.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.30.0",

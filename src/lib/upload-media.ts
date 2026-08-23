@@ -17,25 +17,24 @@ function safeFileName(name: string) {
 // iPhones shoot photos as HEIC by default. No mainstream browser other than
 // Safari can actually display a HEIC <img> — Chrome, Firefox, and Edge all
 // just show a broken image — so this isn't a missing entry to add to
-// ALLOWED_TYPES, the file has to become a JPEG before it's stored. iOS often
-// reports an empty file.type for HEIC picked via the Photos picker, so the
-// extension is checked too.
+// ALLOWED_TYPES, the file has to become a JPEG before it's stored.
+//
+// heic2any (the first library tried here) bundles an old, frozen libheif
+// WASM build that fails on real iPhone photos — they use tiled HEVC
+// encoding plus HDR gain maps that heic2any's decoder doesn't understand,
+// even though it works fine on simple test files. heic-to bundles a current
+// libheif build and is actively maintained specifically to track new HEIC
+// variants; the /next entry point is what its own docs point Next.js apps
+// at (inlines the WASM instead of relying on Next's asset pipeline for it).
 const HEIC_EXTENSION = /\.(heic|heif)$/i
-const HEIC_TYPES = ['image/heic', 'image/heif']
 
 async function convertHeicIfNeeded(file: File): Promise<File> {
-  if (!HEIC_TYPES.includes(file.type) && !HEIC_EXTENSION.test(file.name)) return file
+  const { isHeic, heicTo } = await import('heic-to/next')
 
-  let heic2any: (opts: { blob: Blob; toType?: string; quality?: number }) => Promise<Blob | Blob[]>
-  try {
-    heic2any = (await import('heic2any')).default
-  } catch {
-    throw new UploadError(`"${file.name}" is a HEIC photo and couldn't be converted — try exporting it as JPEG first.`)
-  }
+  if (!(await isHeic(file))) return file
 
   try {
-    const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
-    const converted = Array.isArray(result) ? result[0] : result
+    const converted = await heicTo({ blob: file, type: 'image/jpeg', quality: 0.9 })
     const newName = file.name.replace(HEIC_EXTENSION, '.jpg')
     return new File([converted], newName, { type: 'image/jpeg' })
   } catch {
