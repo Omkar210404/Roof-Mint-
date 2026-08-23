@@ -111,6 +111,13 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
+  // Controlled (not defaultValue) because the agent list itself loads
+  // async — on first render there's no <option> matching a saved agent's
+  // id yet, so defaultValue silently picks "— Select —" and never
+  // retroactively corrects itself once the real options arrive a moment
+  // later, even though the property really does have an agent saved.
+  const [primaryAgentId, setPrimaryAgentId] = useState(initialData?.primary_agent_id || '');
+
   // Direct upload state
   const [imageUploads, setImageUploads] = useState<UploadItem[]>([]);
   const [videoUploads, setVideoUploads] = useState<UploadItem[]>([]);
@@ -365,7 +372,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
             </div>
             <div className="col-span-6 md:col-span-3">
               <label className={labelCls + reqDot}>Primary Agent</label>
-              <select name="primary_agent_id" required defaultValue={initialData?.primary_agent_id || ''} className={input}>
+              <select name="primary_agent_id" required value={primaryAgentId} onChange={e => setPrimaryAgentId(e.target.value)} className={input}>
                 <option value="">— Select —</option>
                 {agents.map(agent => (
                   <option key={agent.id} value={agent.id}>
