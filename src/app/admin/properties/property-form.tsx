@@ -358,6 +358,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
               <select name="status" defaultValue={initialData?.status || 'available'} className={input}>
                 <option value="available">Available</option><option value="sold">Sold</option>
                 <option value="reserved">Reserved</option><option value="coming_soon">Coming Soon</option>
+                <option value="on_hold">On Hold (not shown on site)</option>
               </select>
             </div>
             <div className="col-span-3 md:col-span-2">

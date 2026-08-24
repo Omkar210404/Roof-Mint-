@@ -46,7 +46,7 @@ export const LISTING_TYPES = ['Sale', 'Rent', 'Resale'];
 export const OWNERSHIPS = ['1st Owner', '2nd Owner', '3rd Owner', '4th+ Owner'];
 export const FURNISHINGS = ['Unfurnished', 'Semi', 'Full'];
 export const PRICE_TYPES = ['fixed', 'negotiable', 'starting_from'];
-export const STATUSES = ['available', 'sold', 'reserved', 'coming_soon'];
+export const STATUSES = ['available', 'sold', 'reserved', 'coming_soon', 'on_hold'];
 export const DEMAND_TAGS = ['high', 'moderate', 'low'];
 export const BHKS = ['1', '2', '3', '4', '5'];
 
