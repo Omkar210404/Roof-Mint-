@@ -10,8 +10,8 @@ export default function OnboardingPage() {
   const [selectedMode, setSelectedMode] = useState<'ai' | 'browse' | null>('ai');
 
   return (
-    <div className="bg-white dark:bg-navy-900 min-h-[calc(100vh-4rem)] flex items-center justify-center p-0 md:p-6">
-      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 border-0 md:border md:border-gray-200/60 md:rounded-3xl md:shadow-md overflow-hidden flex flex-col md:flex-row md:min-h-[520px]">
+    <div className="bg-white dark:bg-navy-900 h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] overflow-hidden flex items-center justify-center p-0 md:p-6">
+      <div className="w-full max-w-[480px] md:max-w-5xl h-full bg-white dark:bg-navy-900 border-0 md:border md:border-gray-200/60 md:rounded-3xl md:shadow-md overflow-hidden flex flex-col md:flex-row md:h-auto md:min-h-[520px]">
         {/* Left Side (Desktop Hero - Clean White Theme) */}
         <div className="hidden md:flex md:w-1/2 bg-white dark:bg-navy-900 p-10 flex-col justify-between border-b md:border-b-0 md:border-r border-gray-100/60 dark:border-gray-800/60 relative">
           <div>
@@ -59,8 +59,8 @@ export default function OnboardingPage() {
         </div>
 
         {/* Right Side / Selection Options */}
-        <div className="px-6 pb-6 md:p-10 md:w-1/2 flex flex-col justify-between bg-white dark:bg-navy-900">
-          <div>
+        <div className="px-6 pb-6 md:p-10 md:w-1/2 flex-1 md:flex-none min-h-0 flex flex-col justify-between bg-white dark:bg-navy-900 overflow-hidden">
+          <div className="min-h-0 overflow-y-auto">
             <h2 className="text-lg md:text-2xl font-bold text-navy dark:text-white mb-1">Select Search Mode</h2>
             <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-6">Choose how you&apos;d like to start exploring properties</p>
 

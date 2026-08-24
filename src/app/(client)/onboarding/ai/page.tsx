@@ -223,8 +223,8 @@ export default function AIQuestionnairePage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] bg-white dark:bg-navy-900 md:bg-gray-50/50 flex items-start md:items-center justify-center p-0 md:p-6 md:overflow-hidden">
-      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 md:rounded-2xl md:border md:border-gray-100/60 md:shadow-sm overflow-hidden flex flex-col md:flex-row md:h-full md:max-h-[540px]">
+    <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] bg-white dark:bg-navy-900 md:bg-gray-50/50 flex items-start md:items-center justify-center p-0 md:p-6 overflow-hidden">
+      <div className="w-full max-w-[480px] md:max-w-5xl bg-white dark:bg-navy-900 md:rounded-2xl md:border md:border-gray-100/60 md:shadow-sm overflow-hidden flex flex-col md:flex-row h-full md:max-h-[540px]">
         {/* Left Side (Desktop Progress & Assistant Info) */}
         <div className="hidden md:flex w-1/3 bg-teal-50/40 dark:bg-teal-950/40 p-8 text-navy dark:text-white flex-col justify-between relative overflow-hidden border-r border-gray-100/60 dark:border-gray-800/60">
           <div>
@@ -277,7 +277,7 @@ export default function AIQuestionnairePage() {
         {/* Right Side (Active Question & Options) */}
         <div className="flex-1 flex flex-col justify-between p-4 md:p-6 overflow-hidden">
           {/* Header */}
-          <div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() => {

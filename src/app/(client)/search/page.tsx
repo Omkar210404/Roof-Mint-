@@ -149,6 +149,24 @@ export default function SearchPage() {
         ) : (
           /* Pre-search UI (Desktop 2-column grid) */
           <div className="space-y-6 md:space-y-8">
+            {/* AI Banner — kept first so it's the most prominent thing on
+                screen right below the search bar, not buried under
+                Recent Searches. */}
+            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white/20 dark:bg-navy-900 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base md:text-lg font-bold">Try Roofmint AI Property Finder</h3>
+                  <p className="text-xs md:text-sm text-teal-100 mt-0.5">Let our AI match properties to your exact budget, BHK, and location preferences.</p>
+                </div>
+              </div>
+              <Link href="/onboarding/ai" className="h-10 px-5 bg-white dark:bg-navy-900 text-primary text-xs md:text-sm font-bold rounded-xl hover:bg-teal-50 transition-colors flex items-center gap-2 flex-shrink-0">
+                Launch AI Search ✨
+              </Link>
+            </div>
+
             {/* Recent Searches */}
             {recentSearches.length > 0 && (
               <div className="bg-white dark:bg-navy-900 rounded-2xl p-5 border border-gray-100/60 dark:border-gray-800/60 shadow-sm md:max-w-md">
@@ -174,22 +192,6 @@ export default function SearchPage() {
                 </div>
               </div>
             )}
-
-            {/* AI Banner */}
-            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-white/20 dark:bg-navy-900 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base md:text-lg font-bold">Try Roofmint AI Property Finder</h3>
-                  <p className="text-xs md:text-sm text-teal-100 mt-0.5">Let our AI match properties to your exact budget, BHK, and location preferences.</p>
-                </div>
-              </div>
-              <Link href="/onboarding/ai" className="h-10 px-5 bg-white dark:bg-navy-900 text-primary text-xs md:text-sm font-bold rounded-xl hover:bg-teal-50 transition-colors flex items-center gap-2 flex-shrink-0">
-                Launch AI Search ✨
-              </Link>
-            </div>
           </div>
         )}
       </div>
