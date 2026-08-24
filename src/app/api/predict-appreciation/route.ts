@@ -6,6 +6,21 @@ import { createClient } from '@/utils/supabase/server';
 
 export const maxDuration = 30;
 
+// Vercel kills a function that runs past maxDuration and returns its own
+// plain-text error page ("An error occurred with your deployment /
+// FUNCTION_INVOCATION_TIMEOUT") instead of JSON — which is what actually
+// broke the frontend (res.json() choked trying to parse it), not a bug in
+// the JSON handling itself. Racing against a shorter internal timeout means
+// a slow/stuck Gemini call hits our own catch block and returns the normal
+// fallback response well before the platform ever kills the function.
+const AI_TIMEOUT_MS = 20000;
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI request timed out')), ms)),
+  ]);
+}
+
 export async function POST(req: Request) {
   if (!isSameOrigin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -52,10 +67,10 @@ Respond ONLY with a valid JSON object matching this exact TypeScript structure:
 
 Do not include markdown formatting, backticks, or extra commentary outside the JSON.`;
 
-    const { text } = await generateText({
+    const { text } = await withTimeout(generateText({
       model: google('gemini-flash-latest') as any,
       prompt,
-    });
+    }), AI_TIMEOUT_MS);
 
     // Clean JSON text response
     const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
