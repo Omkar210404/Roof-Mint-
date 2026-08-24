@@ -59,6 +59,11 @@ Respond ONLY with a valid JSON object matching this exact TypeScript structure:
 Do not include markdown formatting, backticks, or extra commentary outside the JSON.`;
 }
 
+// Used only when the live Gemini call fails/times out — it has no idea
+// what's actually near this specific property, so it deliberately avoids
+// naming any specific project (metro line, bullet train, etc.). Naming a
+// specific project here would be a flat guess dressed up as analysis; that's
+// exactly the kind of claim this feature got called out for making.
 export function fallbackAppreciationResult(price: number): AppreciationResult {
   const fallbackPrice = Number(price || 10000000);
   const estimated5Yr = Math.round(fallbackPrice * 1.42);
@@ -67,7 +72,7 @@ export function fallbackAppreciationResult(price: number): AppreciationResult {
     estimatedPriceFormatted: estimated5Yr >= 10000000 ? `₹${(estimated5Yr / 10000000).toFixed(2)} Cr` : `₹${(estimated5Yr / 100000).toFixed(0)} L`,
     growthPercentage: 42,
     cagr: "7.2% - 8.5% p.a.",
-    keyDrivers: ["Metro Connectivity Expansion", "Upcoming Tech Hubs", "Infrastructure Appreciation"],
-    insights: `Properties in this corridor have historically shown steady 7-8% annual capital appreciation. With ongoing infrastructure and commercial expansions, this property is projected to appreciate by ~42% over the next 5 years.`,
+    keyDrivers: ["General Market Demand", "Historical Price Trends", "Regional Development Activity"],
+    insights: `This is a generic estimate based on typical Indian residential appreciation trends (~7-8% annual), not a live analysis of this specific location — try regenerating in a few minutes for a real AI-researched forecast.`,
   };
 }

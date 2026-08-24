@@ -174,6 +174,16 @@ export function AppreciationPredictor({ property }: PropertyProps) {
             </div>
           )}
 
+          {/* AI estimates can be wrong — grounded in what a model believes
+              about the area's infrastructure timeline, not a guarantee of
+              it. Says so plainly rather than presenting the number as fact. */}
+          <div className="flex items-start gap-1.5 pt-1 border-t border-slate-700/50">
+            <ShieldAlert className="w-3.5 h-3.5 text-amber-400/80 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              AI-generated estimate for guidance only, not a guarantee. Actual appreciation depends on real infrastructure execution, market conditions, and other factors, and can differ significantly from this projection.
+            </p>
+          </div>
+
           {/* This is a cached/point-in-time analysis, not a live feed — say
               so plainly rather than implying it's recalculated on every
               visit. */}

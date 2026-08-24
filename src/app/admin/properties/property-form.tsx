@@ -424,6 +424,9 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
               Generated once and cached — visitors see this instantly instead of waiting on a live AI call. Regenerate any time (e.g. after changing the price or address).
             </p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-2 mb-3">
+              This is an AI-generated estimate, not a guarantee — it can be wrong, and actual appreciation depends on real infrastructure execution and market conditions. A disclaimer to this effect is shown to visitors alongside it.
+            </p>
             {forecastData && (
               <div className="mb-3 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900 text-sm">
                 <div className="flex items-center gap-2 font-semibold text-navy dark:text-white">
