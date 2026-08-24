@@ -12,7 +12,7 @@ export default function TermsPage() {
   const partHeading = "text-lg md:text-xl font-extrabold text-navy dark:text-white";
 
   return (
-    <div className="bg-background min-h-screen pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-start sm:items-center gap-3 min-w-0">

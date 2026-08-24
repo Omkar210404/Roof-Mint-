@@ -90,7 +90,7 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="bg-background min-h-screen pb-12">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] pb-12">
       {/* Top Bar */}
       <div className="sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 px-4 py-3 md:px-8">
         <div className="flex items-center justify-between">
@@ -214,7 +214,7 @@ export default function ComparePage() {
               <div className="grid grid-cols-4 p-4 gap-4 items-center">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Super Area</span>
                 {comparedProperties.map(p => (
-                  <span key={p.id} className="text-sm font-semibold text-gray-700 dark:text-gray-300">{p.areaLabel || '—'}</span>
+                  <span key={p.id} className="text-sm font-semibold text-gray-700 dark:text-gray-300">{p.built_up_area ? `${Number(p.built_up_area).toLocaleString()} sq.ft.` : '—'}</span>
                 ))}
               </div>
 

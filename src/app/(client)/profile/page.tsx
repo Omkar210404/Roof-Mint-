@@ -139,7 +139,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="bg-background min-h-screen pb-24 md:pb-12 max-w-6xl mx-auto md:px-8 md:pt-6">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] pb-24 md:pb-12 max-w-6xl mx-auto md:px-8 md:pt-6">
       <div className="md:grid md:grid-cols-2 md:gap-6 space-y-4 md:space-y-0">
         {/* Left Column: Profile Card, Stats & Preferences */}
         <div className="space-y-4">

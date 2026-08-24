@@ -768,7 +768,7 @@ function CreateBillModal({ agents, planTiers, onClose, onCreated }: { agents: Ag
                 </div>
                 <div className="space-y-1">
                   <label className={labelCls}>Phone</label>
-                  <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className={inputCls} />
+                  <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98XXX XXXXX" className={inputCls} />
                 </div>
                 <div className="space-y-1">
                   <label className={labelCls}>Email</label>

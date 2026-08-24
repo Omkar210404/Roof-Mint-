@@ -394,7 +394,7 @@ export function AgentsClientWrapper({ initialAgents, initialPlanTiers }: { initi
                 <input
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 98XXX XXXXX"
                   className="w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>

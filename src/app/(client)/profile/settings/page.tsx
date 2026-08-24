@@ -121,7 +121,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                   autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 98XXX XXXXX"
                   className={inputCls}
                 />
               </div>

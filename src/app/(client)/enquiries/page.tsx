@@ -35,7 +35,7 @@ export default async function EnquiriesPage() {
   };
 
   return (
-    <div className="bg-background min-h-[calc(100vh-4rem)] flex flex-col justify-between">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] flex flex-col justify-between">
       <div className="flex-1 flex flex-col">
         <div className="px-4 pt-4 pb-3 md:px-8 md:pt-6">
           <h1 className="text-lg md:text-2xl font-bold text-navy dark:text-white">My Enquiries</h1>

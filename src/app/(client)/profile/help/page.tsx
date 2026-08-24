@@ -92,7 +92,7 @@ export default function HelpPage() {
   );
 
   return (
-    <div className="bg-background min-h-screen pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] pb-16 max-w-4xl mx-auto px-4 pt-4 md:px-8 md:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -236,7 +236,7 @@ export default function HelpPage() {
                     required
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="+91 99887 76655"
+                    placeholder="+91 98XXX XXXXX"
                     className="w-full h-10 px-3.5 rounded-xl border border-gray-200/60 dark:border-gray-800/60 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>

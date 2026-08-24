@@ -453,7 +453,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   };
 
   return (
-    <div className="bg-white dark:bg-navy-900 min-h-screen max-w-[480px] md:max-w-none xl:max-w-7xl mx-auto relative pb-32 md:pb-12 md:pt-6">
+    <div className="bg-white dark:bg-navy-900 min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] max-w-[480px] md:max-w-none xl:max-w-7xl mx-auto relative pb-32 md:pb-12 md:pt-6">
       {/* Enquiry Modal */}
       {showEnquiryModal && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -725,11 +725,12 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
             {[
               { icon: Building2, label: 'Config', value: property.bhkLabel },
-              { icon: Maximize, label: 'Super Area', value: property.areaLabel },
+              { icon: Maximize, label: 'Super Area', value: property.built_up_area ? `${Number(property.built_up_area).toLocaleString()} sq.ft.` : '' },
               { icon: Tag, label: 'Purpose', value: property.listingTypeLabel || 'For Sale' },
               { icon: UserCheck, label: 'Ownership', value: property.ownershipLabel || '1st Owner' },
               { icon: Layers, label: 'Floor', value: property.floor },
               { icon: Calendar, label: 'Possession', value: property.possession },
+              { icon: CheckCircle, label: 'Construction Status', value: property.construction_status === 'ready_to_move' ? 'Ready to Move' : property.construction_status === 'under_construction' ? 'Under Construction' : '' },
               { icon: Home, label: 'Furnishing', value: property.furnishing },
               { icon: Ruler, label: 'Carpet Area', value: property.carpet_area ? `${Number(property.carpet_area).toLocaleString()} sq.ft.` : '' },
             ].filter(spec => spec.value).map((spec) => (

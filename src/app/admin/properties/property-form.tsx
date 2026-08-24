@@ -370,6 +370,14 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
               <input name="possession" defaultValue={initialData?.possession} placeholder="Dec 2025" className={input} />
             </div>
             <div className="col-span-3 md:col-span-1">
+              <label className={labelCls}>Construction Status</label>
+              <select name="construction_status" defaultValue={initialData?.construction_status || ''} className={input}>
+                <option value="">Not specified</option>
+                <option value="ready_to_move">Ready to Move</option>
+                <option value="under_construction">Under Construction</option>
+              </select>
+            </div>
+            <div className="col-span-3 md:col-span-1">
               <label className={labelCls}>Furnishing</label>
               <select name="furnishing" defaultValue={initialData?.furnishing || 'Unfurnished'} className={input}>
                 <option>Unfurnished</option><option value="Semi">Semi</option><option value="Full">Fully</option>

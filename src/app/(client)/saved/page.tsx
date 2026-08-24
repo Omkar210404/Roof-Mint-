@@ -44,7 +44,7 @@ export default function SavedPage() {
   }
 
   return (
-    <div className="bg-background min-h-[calc(100vh-4rem)] flex flex-col">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] flex flex-col">
       <div className="px-4 pt-4 pb-3 md:px-8 md:pt-6 flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-lg md:text-2xl font-bold text-navy dark:text-white">Saved Properties</h1>

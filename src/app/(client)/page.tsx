@@ -25,7 +25,7 @@ export default async function HomePage() {
   const hasCompletedAiMatch = profileStatus.loggedIn && profileStatus.complete;
 
   return (
-    <div className="bg-background min-h-screen relative">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] relative">
       {/* 🌟 TOP AI Search Hero Banner — only for people who haven't already
           set their AI preferences, so it doesn't keep pitching the same
           thing to someone who's already done it. */}

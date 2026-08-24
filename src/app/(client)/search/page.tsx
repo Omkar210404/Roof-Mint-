@@ -67,7 +67,7 @@ export default function SearchPage() {
   }, []);
 
   return (
-    <div className="bg-background min-h-screen max-w-7xl mx-auto pb-8">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] max-w-7xl mx-auto pb-8">
       {/* Header with Search (Sticks right below main header) */}
       <div className="sticky top-14 md:top-16 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 px-4 py-3 md:px-8 shadow-xs">
         <form onSubmit={handleSubmit} className="flex items-center gap-3 max-w-4xl mx-auto">

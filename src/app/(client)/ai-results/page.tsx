@@ -35,7 +35,7 @@ export default async function AIResultsPage({ searchParams }: { searchParams: Pr
   ].filter(Boolean) : [];
 
   return (
-    <div className="bg-background min-h-screen max-w-[480px] md:max-w-none mx-auto pb-6">
+    <div className="bg-background min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-4rem)] max-w-[480px] md:max-w-none mx-auto pb-6">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 px-4 py-3">
         <div className="flex items-center gap-3">

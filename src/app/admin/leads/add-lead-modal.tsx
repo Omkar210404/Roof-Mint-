@@ -64,7 +64,7 @@ export function AddLeadModal({ agents, properties, onClose, onAdded }: {
             </div>
             <div className="col-span-2 sm:col-span-1 space-y-1">
               <label className={labelCls}>Phone *</label>
-              <input name="phone" required placeholder="+91 98765 43210" className={inputCls} />
+              <input name="phone" required placeholder="+91 98XXX XXXXX" className={inputCls} />
             </div>
             <div className="col-span-2 space-y-1">
               <label className={labelCls}>Email</label>
