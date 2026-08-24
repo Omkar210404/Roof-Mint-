@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import {
   ArrowLeft, Heart, Share2, MapPin, CheckCircle, Sparkles, Phone,
   Building2, Maximize, Layers, Calendar, Tag, UserCheck, Home, Ruler,
-  Car, Trees, Dumbbell, Wifi, Droplets, Zap, ShieldCheck, ChevronLeft, ChevronRight
+  Car, Trees, Dumbbell, Wifi, Droplets, Zap, ShieldCheck, ChevronLeft, ChevronRight,
+  X
 } from 'lucide-react';
 import { getPropertyBySlug, submitEnquiry, logWhatsAppLead } from '../actions';
 import { EMICalculator } from '@/components/emi-calculator';
@@ -70,6 +71,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [showFullAbout, setShowFullAbout] = useState(false);
@@ -96,6 +98,26 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   const [whatsappNameOptPhoneInput, setWhatsappNameOptPhoneInput] = useState('');
   const [whatsappNameError, setWhatsappNameError] = useState<string | null>(null);
   const [showShortlistPrompt, setShowShortlistPrompt] = useState(false);
+
+  // Lightbox: lock page scroll while open, and let Escape/arrow keys drive
+  // it like a native image viewer would. `images` itself isn't computed
+  // until after this component's early-return checks further down, so the
+  // count is read straight off `property` here instead.
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const imageCount = property?.images?.length > 0 ? property.images.length : 1;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false);
+      else if (e.key === 'ArrowLeft') setCurrentImage(i => (i - 1 + imageCount) % imageCount);
+      else if (e.key === 'ArrowRight') setCurrentImage(i => (i + 1) % imageCount);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lightboxOpen, property]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -505,7 +527,14 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
           onTouchStart={handleGalleryTouchStart}
           onTouchEnd={handleGalleryTouchEnd}
         >
-          <Image src={images[currentImage].url} alt={images[currentImage].caption || property.title} fill className="object-cover" priority />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            aria-label="View full-size photo"
+            className="absolute inset-0 w-full h-full cursor-zoom-in"
+          >
+            <Image src={images[currentImage].url} alt={images[currentImage].caption || property.title} fill className="object-cover" priority />
+          </button>
           {images.length > 1 && (
             <>
               <button
@@ -577,6 +606,59 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
           ))}
         </div>
       </div>
+
+      {/* Fullscreen photo lightbox */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+          onClick={() => setLightboxOpen(false)}
+          onTouchStart={handleGalleryTouchStart}
+          onTouchEnd={handleGalleryTouchEnd}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+            aria-label="Close"
+            className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
+          >
+            <X className="w-5 h-5 md:w-6 md:h-6" />
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToPrevImage(); }}
+                aria-label="Previous image"
+                className="hidden md:flex absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 items-center justify-center text-white transition-colors z-10"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToNextImage(); }}
+                aria-label="Next image"
+                className="hidden md:flex absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 items-center justify-center text-white transition-colors z-10"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <div className="relative w-full h-full max-w-5xl max-h-[80vh] m-4" onClick={(e) => e.stopPropagation()}>
+            <Image src={images[currentImage].url} alt={images[currentImage].caption || property.title} fill className="object-contain" />
+          </div>
+
+          {images[currentImage].caption && (
+            <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 bg-white/10 text-white text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm">
+              {images[currentImage].caption}
+            </div>
+          )}
+          <div className="absolute bottom-5 md:bottom-6 left-1/2 -translate-x-1/2 text-white/60 text-xs md:text-sm font-medium">
+            {currentImage + 1} / {images.length}
+          </div>
+        </div>
+      )}
 
       {/* Property Video(s) */}
       {property.videos?.length > 0 && (
