@@ -1,8 +1,18 @@
 'use server'
 
+import { google } from '@ai-sdk/google'
+import { generateText } from 'ai'
 import { requireAdmin } from '@/utils/supabase/admin-guard'
 import { logActivity } from '@/utils/supabase/activity-log'
 import { revalidatePath } from 'next/cache'
+import { buildAppreciationPrompt, fallbackAppreciationResult } from '@/lib/appreciation-prompt'
+import { withTimeout } from '@/lib/with-timeout'
+
+// A 'use server' actions file can only export async functions — maxDuration
+// can't live here. It's set instead on the edit page that invokes
+// generatePriceForecast (admin/properties/[id]/edit/page.tsx), since a
+// Server Action's execution ceiling comes from the route that calls it.
+const AI_TIMEOUT_MS = 20000
 
 export async function getProperties() {
   const { authorized, supabase } = await requireAdmin()
@@ -40,6 +50,53 @@ export async function getPropertyById(id: string) {
   }
 
   return data
+}
+
+// Generates the 5-Year Price Predictor's result once, up front, and caches
+// it on the property row — visitors then see it instantly instead of
+// waiting on a live Gemini call (and instead of every single visitor
+// re-spending free-tier quota on the same property). Same shared prompt as
+// the public route's live fallback, so the two paths can't drift apart.
+export async function generatePriceForecast(id: string) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { data: property, error: fetchError } = await supabase
+    .from('properties')
+    .select('title, location_address, locality, city, price, property_type, bhk')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !property) {
+    return { error: 'Could not load this property.' }
+  }
+
+  try {
+    const prompt = buildAppreciationPrompt(property)
+    const { text } = await withTimeout(generateText({
+      model: google('gemini-flash-latest') as any,
+      prompt,
+    }), AI_TIMEOUT_MS, 'AI request timed out')
+
+    const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim()
+    const data = JSON.parse(cleanText)
+
+    const generatedAt = new Date().toISOString()
+    const { error: updateError } = await supabase
+      .from('properties')
+      .update({ ai_prediction: data, ai_prediction_generated_at: generatedAt })
+      .eq('id', id)
+
+    if (updateError) return { error: updateError.message }
+
+    await supabase.rpc('increment_technical_usage', { p_metric: 'predict_calls' })
+    revalidatePath('/admin/properties')
+    return { success: true, data, generatedAt }
+  } catch (error: any) {
+    console.error('generatePriceForecast error:', error.message)
+    supabase.rpc('increment_technical_usage', { p_metric: 'predict_errors' }).then(() => {}, () => {})
+    return { error: 'Could not reach the AI service — please try again in a moment.' }
+  }
 }
 
 export async function getAgentsForSelect() {

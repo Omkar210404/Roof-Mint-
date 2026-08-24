@@ -6,9 +6,10 @@ import Link from 'next/link';
 import {
   ArrowLeft, Plus, X, Video, MapPin,
   Car, Wifi, Droplets, Zap, Trees, Dumbbell, ShieldCheck, Building2,
-  Upload, Trash2, Check, Loader2, AlertCircle, Image as ImageIcon, Film, GripVertical
+  Upload, Trash2, Check, Loader2, AlertCircle, Image as ImageIcon, Film, GripVertical,
+  Sparkles, ArrowUpRight
 } from 'lucide-react';
-import { createProperty, updateProperty, getAgentsForSelect } from './actions';
+import { createProperty, updateProperty, getAgentsForSelect, generatePriceForecast } from './actions';
 import { uploadPropertyMedia, UploadError } from '@/lib/upload-media';
 import { deriveCaptionFromFilename } from '@/lib/derive-caption';
 import { AiEnhanceButton } from '@/components/ai-enhance-button';
@@ -117,6 +118,27 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
   // retroactively corrects itself once the real options arrive a moment
   // later, even though the property really does have an agent saved.
   const [primaryAgentId, setPrimaryAgentId] = useState(initialData?.primary_agent_id || '');
+
+  // Cached 5-Year Price Forecast — generated on demand here (not live on
+  // every visitor click) so the property page can show it instantly.
+  const [forecastData, setForecastData] = useState<any>(initialData?.ai_prediction || null);
+  const [forecastGeneratedAt, setForecastGeneratedAt] = useState<string | null>(initialData?.ai_prediction_generated_at || null);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [forecastError, setForecastError] = useState<string | null>(null);
+
+  const handleGenerateForecast = async () => {
+    if (!propertyId) return;
+    setForecastLoading(true);
+    setForecastError(null);
+    const result = await generatePriceForecast(propertyId);
+    if (result?.error) {
+      setForecastError(result.error);
+    } else {
+      setForecastData(result.data);
+      setForecastGeneratedAt(result.generatedAt || new Date().toISOString());
+    }
+    setForecastLoading(false);
+  };
 
   // Direct upload state
   const [imageUploads, setImageUploads] = useState<UploadItem[]>([]);
@@ -384,6 +406,39 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
             </div>
           </div>
         </Card>
+
+        {/* ═══ 5-YEAR PRICE FORECAST — generated here, cached on the
+            property, shown instantly to visitors instead of a live call
+            per visit. Only possible in edit mode, since it needs a real
+            saved property (id, price, address) to analyze. ═══════════ */}
+        {mode === 'edit' && (
+          <Card title="5-Year Price Forecast">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Generated once and cached — visitors see this instantly instead of waiting on a live AI call. Regenerate any time (e.g. after changing the price or address).
+            </p>
+            {forecastData && (
+              <div className="mb-3 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900 text-sm">
+                <div className="flex items-center gap-2 font-semibold text-navy dark:text-white">
+                  <ArrowUpRight className="w-4 h-4 text-primary" />
+                  Est. {forecastData.estimatedPriceFormatted} by 2031 <span className="text-primary">(+{forecastData.growthPercentage}%)</span>
+                </div>
+                {forecastGeneratedAt && (
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                    Generated {new Date(forecastGeneratedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
+              </div>
+            )}
+            {forecastError && (
+              <div className="mb-3 p-2 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs rounded-lg">{forecastError}</div>
+            )}
+            <button type="button" onClick={handleGenerateForecast} disabled={forecastLoading}
+              className="h-9 px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg text-xs transition-all disabled:opacity-60 inline-flex items-center gap-1.5">
+              {forecastLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {forecastLoading ? 'Generating…' : forecastData ? 'Regenerate Forecast' : 'Generate Forecast'}
+            </button>
+          </Card>
+        )}
 
         {/* ═══ SECTION 2: LOCATION ════════════════════════════════════ */}
         <Card title="Location">

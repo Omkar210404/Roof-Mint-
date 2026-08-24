@@ -3,6 +3,8 @@ import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp, isSameOrigin } from '@/lib/rate-limit';
 import { createClient } from '@/utils/supabase/server';
+import { buildAppreciationPrompt, fallbackAppreciationResult } from '@/lib/appreciation-prompt';
+import { withTimeout } from '@/lib/with-timeout';
 
 export const maxDuration = 30;
 
@@ -14,13 +16,15 @@ export const maxDuration = 30;
 // a slow/stuck Gemini call hits our own catch block and returns the normal
 // fallback response well before the platform ever kills the function.
 const AI_TIMEOUT_MS = 20000;
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI request timed out')), ms)),
-  ]);
-}
 
+// This route is now the *fallback* path — properties normally show a
+// pre-generated forecast an admin already cached (see
+// admin/properties/actions.ts's generatePriceForecast), so most visitors
+// never hit Gemini live at all. This still exists for properties nobody's
+// generated one for yet. When it succeeds and the caller passes a
+// propertyId, the result is written back so the NEXT visitor to that
+// property also gets the instant cached version instead of calling this
+// live again.
 export async function POST(req: Request) {
   if (!isSameOrigin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -36,45 +40,31 @@ export async function POST(req: Request) {
   // API — same pattern as /api/chat's ai_chat_calls/ai_chat_errors.
   await supabase.rpc('increment_technical_usage', { p_metric: 'predict_calls' });
 
-  const { title, location_address, locality, city, price, property_type, bhk } = await req.json();
+  const { title, location_address, locality, city, price, property_type, bhk, propertyId } = await req.json();
 
   try {
     if (!price || (!locality && !city && !location_address)) {
       return NextResponse.json({ error: 'Missing required property parameters' }, { status: 400 });
     }
 
-    const areaName = locality || city || location_address || 'Bangalore';
-    const currentPrice = Number(price);
-
-    const prompt = `You are a senior real estate market analyst specializing in Indian real estate appreciation trends.
-Analyze the following property and predict its estimated market value after 5 years (2031) based on local infrastructure developments, metro projects, IT corridors, and historical CAGR trends in ${areaName}.
-
-Property Details:
-- Title: ${title}
-- Location: ${location_address} (${locality}, ${city})
-- Property Type: ${bhk ? `${bhk} BHK ` : ''}${property_type || 'Residential Property'}
-- Current Price: ₹${currentPrice.toLocaleString('en-IN')} (₹${(currentPrice / 10000000).toFixed(2)} Cr / ₹${(currentPrice / 100000).toFixed(0)} Lakhs)
-
-Respond ONLY with a valid JSON object matching this exact TypeScript structure:
-{
-  "estimatedPrice5Yr": number (numeric value in rupees after 5 years appreciation, e.g. 18200000),
-  "estimatedPriceFormatted": string (e.g. "₹1.82 Cr"),
-  "growthPercentage": number (total percentage increase over 5 years, e.g. 42),
-  "cagr": string (annual growth rate range, e.g. "7.5% - 9.0% p.a."),
-  "keyDrivers": string[] (3 key local growth drivers, e.g. ["Metro Corridor Expansion", "Tech Park Proximity", "Rental Yield Demand"]),
-  "insights": string (a 2-3 sentence executive market summary explaining the location's appreciation potential over the next 5 years)
-}
-
-Do not include markdown formatting, backticks, or extra commentary outside the JSON.`;
+    const prompt = buildAppreciationPrompt({ title, location_address, locality, city, price, property_type, bhk });
 
     const { text } = await withTimeout(generateText({
       model: google('gemini-flash-latest') as any,
       prompt,
-    }), AI_TIMEOUT_MS);
+    }), AI_TIMEOUT_MS, 'AI request timed out');
 
     // Clean JSON text response
     const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
     const data = JSON.parse(cleanText);
+
+    if (propertyId) {
+      supabase
+        .from('properties')
+        .update({ ai_prediction: data, ai_prediction_generated_at: new Date().toISOString() })
+        .eq('id', propertyId)
+        .then(() => {}, () => {});
+    }
 
     return NextResponse.json(data);
   } catch (error: any) {
@@ -84,16 +74,6 @@ Do not include markdown formatting, backticks, or extra commentary outside the J
     // ai_chat_errors, since Supabase's query builder is a lazy thenable and
     // a bare unfired call would silently never send.
     supabase.rpc('increment_technical_usage', { p_metric: 'predict_errors' }).then(() => {}, () => {});
-    // Fallback calculation if AI API rate-limits or fails
-    const fallbackPrice = Number(price || 10000000);
-    const estimated5Yr = Math.round(fallbackPrice * 1.42);
-    return NextResponse.json({
-      estimatedPrice5Yr: estimated5Yr,
-      estimatedPriceFormatted: estimated5Yr >= 10000000 ? `₹${(estimated5Yr / 10000000).toFixed(2)} Cr` : `₹${(estimated5Yr / 100000).toFixed(0)} L`,
-      growthPercentage: 42,
-      cagr: "7.2% - 8.5% p.a.",
-      keyDrivers: ["Metro Connectivity Expansion", "Upcoming Tech Hubs", "Infrastructure Appreciation"],
-      insights: `Properties in this corridor have historically shown steady 7-8% annual capital appreciation. With ongoing metro connectivity and commercial expansions, this property is projected to appreciate by ~42% over the next 5 years.`
-    });
+    return NextResponse.json(fallbackAppreciationResult(price));
   }
 }
