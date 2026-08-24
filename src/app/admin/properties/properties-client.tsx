@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload, FileSpreadsheet, FileText, Pin } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { getProperties, deleteProperty, updatePropertyStatus, assignPropertyAgent, logDataExport } from './actions'
+import { getProperties, deleteProperty, updatePropertyStatus, togglePropertyPin, assignPropertyAgent, logDataExport } from './actions'
 
 const statusStyles: Record<string, string> = {
   available: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700',
@@ -88,6 +88,16 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
     await updatePropertyStatus(id, newStatus)
   }
 
+  // Pinning is the manual "reposition it myself" escape hatch — pinned
+  // properties always float to the top (most recently pinned first, so
+  // pinning/unpinning in sequence lets an admin arrange a custom order),
+  // above the automatic available-first sort below.
+  const handlePinToggle = async (id: string, currentlyPinned: boolean) => {
+    const now = new Date().toISOString()
+    setProperties(prev => prev.map(p => p.id === id ? { ...p, pinned_at: currentlyPinned ? null : now } : p))
+    await togglePropertyPin(id, !currentlyPinned)
+  }
+
   const filteredSorted = useMemo(() => {
     let result = properties
 
@@ -104,6 +114,19 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
     }
 
     const sorted = [...result].sort((a, b) => {
+      // Pinned rows always float to the top, most-recently-pinned first —
+      // this is the manual override. Below that, Available listings sort
+      // ahead of every other status by default, since those are the ones
+      // actually live for visitors; On Hold/Sold/etc. shouldn't crowd them
+      // out just because they were touched more recently.
+      const aPinned = a.pinned_at ? new Date(a.pinned_at).getTime() : 0
+      const bPinned = b.pinned_at ? new Date(b.pinned_at).getTime() : 0
+      if (aPinned || bPinned) return bPinned - aPinned
+
+      const aAvailable = (a.status || 'available') === 'available' ? 0 : 1
+      const bAvailable = (b.status || 'available') === 'available' ? 0 : 1
+      if (aAvailable !== bAvailable) return aAvailable - bAvailable
+
       let cmp = 0
       if (sortKey === 'date') cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       else if (sortKey === 'price') cmp = (a.price || 0) - (b.price || 0)
@@ -397,6 +420,7 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
                     className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
                   />
                 </TableHead>
+                <TableHead className="w-10" title="Pin to top" />
                 <TableHead><SortHeader label="Title" sortKeyVal="title" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Location</TableHead>
                 <TableHead><SortHeader label="Price" sortKeyVal="price" /></TableHead>
@@ -408,7 +432,7 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
             <TableBody>
               {paginatedProperties.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-400 dark:text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-400 dark:text-gray-500">
                     {properties.length === 0 ? 'No properties found' : 'No properties match your search/filter'}
                   </TableCell>
                 </TableRow>
@@ -421,6 +445,19 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
                       onChange={() => toggleSelectOne(property.id)}
                       className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
                     />
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => handlePinToggle(property.id, !!property.pinned_at)}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+                        property.pinned_at
+                          ? 'text-primary bg-teal-50 dark:bg-teal-950/40'
+                          : 'text-gray-300 dark:text-gray-600 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800'
+                      }`}
+                      title={property.pinned_at ? 'Unpin (return to automatic order)' : 'Pin to top'}
+                    >
+                      <Pin className="w-3.5 h-3.5" fill={property.pinned_at ? 'currentColor' : 'none'} />
+                    </button>
                   </TableCell>
                   <TableCell className="font-medium text-navy dark:text-white">
                     <div>{property.title}</div>
