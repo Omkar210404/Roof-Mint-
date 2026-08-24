@@ -77,7 +77,21 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       // a terms checkbox) will have a null terms_accepted_at and get sent
       // here once. /accept-terms and /profile/terms are excluded so the
       // gate itself and the legal text it links to don't loop.
-      if (!profile?.terms_accepted_at && pathname !== '/accept-terms' && pathname !== '/profile/terms') {
+      //
+      // The sessionStorage flag guards against a real bug: right after
+      // accepting, this same effect re-runs for the page it navigates to
+      // and re-reads terms_accepted_at fresh — if that read ever lands
+      // before the write is visible (a real race we saw happen), it bounced
+      // the user straight back to /accept-terms having just accepted it.
+      // accept-terms/page.tsx sets this the moment its own write succeeds,
+      // so this check can trust "already handled it this session" without
+      // depending on that second read being perfectly timed.
+      if (
+        !profile?.terms_accepted_at &&
+        sessionStorage.getItem('roofmint_terms_accepted') !== '1' &&
+        pathname !== '/accept-terms' &&
+        pathname !== '/profile/terms'
+      ) {
         window.location.href = '/accept-terms';
       }
     });

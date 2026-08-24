@@ -50,6 +50,14 @@ export default function AcceptTermsPage() {
       return;
     }
 
+    // See the matching comment in (client)/layout.tsx — its terms-check
+    // effect re-runs for whatever page we navigate to next and re-reads
+    // terms_accepted_at fresh from the DB; if that read ever lands before
+    // this write is visible, it was bouncing the user straight back here
+    // right after they'd just accepted. This flag lets that check trust
+    // "already handled it this session" instead of racing a second read.
+    sessionStorage.setItem('roofmint_terms_accepted', '1');
+
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = user
