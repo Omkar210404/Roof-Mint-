@@ -13,6 +13,12 @@ import { ThemeImage } from "@/components/theme-image";
 import { SplashScreen } from "@/components/splash-screen";
 import { ChatInterface } from "@/components/chat-interface";
 
+// Turned off deliberately (not deleted) — too few live listings right now
+// for it to have much to actually recommend. Flip back to true once the
+// catalog has grown; everything else (ChatInterface, /api/chat) is untouched
+// and ready to go.
+const AI_CONCIERGE_ENABLED = false;
+
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/search", icon: Search, label: "Search" },
@@ -420,46 +426,50 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         message="You were logged out after 20 minutes of inactivity. Please log in again to continue."
       />
 
-      {/* AI Concierge — floating launcher, available from every page. Property
-          detail pages add their own sticky Enquire/WhatsApp bar (mobile
-          only) directly above the bottom nav, so the launcher needs to sit
-          higher there specifically or it lands right on top of WhatsApp. */}
-      {!showChat && (
-        <button
-          onClick={() => setShowChat(true)}
-          className={`fixed z-40 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-white dark:bg-navy-900 border border-teal-400/30 shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom overflow-hidden ${
-            pathname.startsWith('/properties/') ? 'bottom-40' : 'bottom-20'
-          }`}
-          title="AI Concierge"
-          aria-label="Open AI Concierge chat"
-        >
-          <Image src="/images/roofmintai.png" alt="AI Concierge" width={56} height={56} className="w-full h-full object-contain p-1" />
-        </button>
-      )}
+      {AI_CONCIERGE_ENABLED && (
+        <>
+          {/* AI Concierge — floating launcher, available from every page. Property
+              detail pages add their own sticky Enquire/WhatsApp bar (mobile
+              only) directly above the bottom nav, so the launcher needs to sit
+              higher there specifically or it lands right on top of WhatsApp. */}
+          {!showChat && (
+            <button
+              onClick={() => setShowChat(true)}
+              className={`fixed z-40 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-white dark:bg-navy-900 border border-teal-400/30 shadow-xl flex items-center justify-center transition-transform hover:scale-105 safe-area-bottom overflow-hidden ${
+                pathname.startsWith('/properties/') ? 'bottom-40' : 'bottom-20'
+              }`}
+              title="AI Concierge"
+              aria-label="Open AI Concierge chat"
+            >
+              <Image src="/images/roofmintai.png" alt="AI Concierge" width={56} height={56} className="w-full h-full object-contain p-1" />
+            </button>
+          )}
 
-      {/* Kept mounted (just hidden) rather than conditionally rendered —
-          ChatInterface's conversation lives in its own useChat() state, so
-          unmounting on every close (X button, or navigating away to a
-          property from a result card) would silently wipe it. */}
-      <div
-        className={`fixed inset-0 z-[70] bg-black/50 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 transition-opacity ${
-          showChat ? 'opacity-100' : 'opacity-0'
-        }`}
-        inert={!showChat}
-      >
-        <div className="w-full md:max-w-2xl h-[85vh] md:h-auto relative">
-          <button
-            onClick={() => setShowChat(false)}
-            className="absolute -top-2 -right-2 md:-top-3 md:-right-3 z-10 w-9 h-9 rounded-full bg-white dark:bg-navy-800 shadow-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700"
-            aria-label="Close AI Concierge chat"
+          {/* Kept mounted (just hidden) rather than conditionally rendered —
+              ChatInterface's conversation lives in its own useChat() state, so
+              unmounting on every close (X button, or navigating away to a
+              property from a result card) would silently wipe it. */}
+          <div
+            className={`fixed inset-0 z-[70] bg-black/50 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 transition-opacity ${
+              showChat ? 'opacity-100' : 'opacity-0'
+            }`}
+            inert={!showChat}
           >
-            <X className="w-4.5 h-4.5" />
-          </button>
-          <div className="h-full md:h-auto overflow-hidden rounded-t-2xl md:rounded-2xl">
-            <ChatInterface onNavigate={() => setShowChat(false)} />
+            <div className="w-full md:max-w-2xl h-[85vh] md:h-auto relative">
+              <button
+                onClick={() => setShowChat(false)}
+                className="absolute -top-2 -right-2 md:-top-3 md:-right-3 z-10 w-9 h-9 rounded-full bg-white dark:bg-navy-800 shadow-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700"
+                aria-label="Close AI Concierge chat"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+              <div className="h-full md:h-auto overflow-hidden rounded-t-2xl md:rounded-2xl">
+                <ChatInterface onNavigate={() => setShowChat(false)} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
