@@ -149,7 +149,7 @@ export async function buildBillPdf(bill: BillPdfData) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(...navy)
-  const fromLines = ['Roofmint', 'Yashwant Shrushti, Boisar,', 'Maharashtra - 401501, India', 'support@roofmint.in']
+  const fromLines = ['Roofmint', 'Yashwant Shrushti, Boisar,', 'Maharashtra - 401501, India', '+91 70968 67438']
   fromLines.forEach((line, i) => doc.text(line, margin, colY + 16 + i * 14))
 
   const toLines = [

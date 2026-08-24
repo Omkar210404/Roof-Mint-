@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, HelpCircle, ChevronDown, MessageSquare, Phone, Mail, Clock, CheckCircle2, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, HelpCircle, ChevronDown, MessageSquare, Phone, PhoneCall, Clock, CheckCircle2, Send, Loader2 } from 'lucide-react';
 import { submitFeedback } from './actions';
 
 interface FAQ {
@@ -125,15 +125,15 @@ export default function HelpPage() {
           </a>
 
           <a
-            href="mailto:support@roofmint.in"
+            href="tel:+917096867438"
             className="bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 border border-teal-200 dark:border-teal-800 rounded-2xl p-4 transition-colors flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
-              <Mail className="w-5 h-5" />
+              <PhoneCall className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-teal-950">Email Assistance</p>
-              <p className="text-xs text-teal-700 font-semibold mt-0.5">support@roofmint.in</p>
+              <p className="text-xs font-bold text-teal-950">Call Us</p>
+              <p className="text-xs text-teal-700 font-semibold mt-0.5">+91 70968 67438</p>
             </div>
           </a>
 
