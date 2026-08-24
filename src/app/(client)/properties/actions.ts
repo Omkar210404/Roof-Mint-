@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { isRateLimited } from '@/lib/rate-limit'
 import { formatPrice } from '@/lib/format-price'
+import { resolveAreaLabel } from '@/lib/resolve-area-label'
 
 export async function getPublicProperties(limit?: number) {
   const supabase = await createClient()
@@ -62,7 +63,7 @@ export async function getPublicProperties(limit?: number) {
       formattedPrice: formatPrice(p.price),
       priceLabel: p.price_type === 'starting_from' ? 'Onwards' : p.price_type === 'negotiable' ? 'Negotiable' : '',
       bhkLabel: p.bhk ? `${p.bhk} BHK` : '',
-      areaLabel: p.built_up_area ? `${Number(p.built_up_area).toLocaleString()} sq.ft.` : '',
+      areaLabel: resolveAreaLabel(p),
       listingTypeLabel: p.listing_type === 'Rent' ? 'For Rent' : p.listing_type === 'Resale' ? 'Resale' : 'For Sale',
       ownershipLabel: p.ownership || '1st Owner',
     }
@@ -104,7 +105,7 @@ export async function getPropertyBySlug(slug: string) {
     formattedPrice: formatPrice(data.price),
     priceLabel: data.price_type === 'starting_from' ? 'Onwards' : data.price_type === 'negotiable' ? 'Negotiable' : '',
     bhkLabel: data.bhk ? `${data.bhk} BHK` : '',
-    areaLabel: data.built_up_area ? `${Number(data.built_up_area).toLocaleString()} sq.ft.` : '',
+    areaLabel: resolveAreaLabel(data),
     listingTypeLabel: data.listing_type === 'Rent' ? 'For Rent' : data.listing_type === 'Resale' ? 'Resale' : 'For Sale',
     ownershipLabel: data.ownership || '1st Owner',
   }
@@ -285,7 +286,7 @@ export async function searchProperties(query: string) {
     coverImage: p.media?.find((m: any) => m.is_cover)?.url || p.media?.[0]?.url || '/images/property1.png',
     formattedPrice: formatPrice(p.price),
     bhkLabel: p.bhk ? `${p.bhk} BHK` : '',
-    areaLabel: p.built_up_area ? `${Number(p.built_up_area).toLocaleString()} sq.ft.` : '',
+    areaLabel: resolveAreaLabel(p),
     listingTypeLabel: p.listing_type === 'Rent' ? 'For Rent' : p.listing_type === 'Resale' ? 'Resale' : 'For Sale',
     ownershipLabel: p.ownership || '1st Owner',
   }))

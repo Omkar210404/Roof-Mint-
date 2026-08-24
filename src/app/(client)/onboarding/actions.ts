@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { formatPrice } from '@/lib/format-price'
+import { resolveAreaLabel } from '@/lib/resolve-area-label'
 
 export async function checkProfileComplete() {
   const supabase = await createClient()
@@ -227,7 +228,7 @@ export async function getAIFilteredProperties(guestFilters?: AIPreferenceFilters
       formattedPrice: formatPrice(p.price),
       priceLabel: p.price_type === 'starting_from' ? 'Onwards' : p.price_type === 'negotiable' ? 'Negotiable' : '',
       bhkLabel: p.bhk ? `${p.bhk} BHK` : '',
-      areaLabel: p.built_up_area ? `${Number(p.built_up_area).toLocaleString()} sq.ft.` : '',
+      areaLabel: resolveAreaLabel(p),
       listingTypeLabel: p.listing_type === 'Rent' ? 'For Rent' : p.listing_type === 'Resale' ? 'Resale' : 'For Sale',
       ownershipLabel: p.ownership || '1st Owner',
     }
