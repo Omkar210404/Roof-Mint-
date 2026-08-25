@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Building2, Gauge, LogOut, Loader2, ArrowRight } from 'lucide-react';
+import { Building2, Gauge, Video, LogOut, Loader2, ArrowRight } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { RoofmintLogo } from '@/components/roofmint-logo';
 
@@ -53,7 +53,7 @@ export default function AdminSelectPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Which panel do you want to work in?</p>
       </div>
 
-      <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/admin"
           className="group bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all p-6 flex flex-col"
@@ -63,6 +63,20 @@ export default function AdminSelectPage() {
           </div>
           <h2 className="text-lg font-bold text-navy dark:text-white">Business Admin</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 flex-1">Properties, Leads, User Data, Agents, Billing, Feedback, Activity Log — day-to-day platform operations.</p>
+          <span className="mt-4 text-sm font-semibold text-primary flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
+            Enter <ArrowRight className="w-4 h-4" />
+          </span>
+        </Link>
+
+        <Link
+          href="/social"
+          className="group bg-white dark:bg-navy-900 rounded-2xl border border-gray-100/60 dark:border-gray-800/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all p-6 flex flex-col"
+        >
+          <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center mb-4">
+            <Video className="w-6 h-6 text-primary" />
+          </div>
+          <h2 className="text-lg font-bold text-navy dark:text-white">Social Performance</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 flex-1">Reels and videos across Facebook, Instagram, and YouTube — views, likes, comments, and engagement side by side.</p>
           <span className="mt-4 text-sm font-semibold text-primary flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
             Enter <ArrowRight className="w-4 h-4" />
           </span>

@@ -2,108 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, History, Menu, X, Receipt, ArrowLeftRight } from "lucide-react";
+import { ReactNode, useState } from "react";
+import { Video, LogOut, Menu, X, ArrowLeftRight } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoofmintLogo } from "@/components/roofmint-logo";
 
-// Nav paths that get a "something new" dot, and the table whose latest
-// row decides it. Kept separate from navItems below since it also drives
-// the last-seen bookkeeping in localStorage.
-const WATCHED_NAV: Record<string, string> = {
-  "/admin/leads": "enquiries",
-  "/admin/users": "profiles",
-  "/admin/feedback": "feedback",
-  "/admin/activity": "activity_log",
-};
+// Its own full panel, mirroring /admin/layout.tsx and /technical/layout.tsx —
+// a third choice on the admin-select chooser rather than a tab buried inside
+// Business Admin. Same requireAdmin() gating per page/action as the other
+// two panels; this layout itself has no auth check, same as technical's.
+const socialNavItems = [
+  { href: "/social", icon: Video, label: "Overview" },
+];
 
-function lastSeenKey(table: string) {
-  return `admin_nav_last_seen_${table}`;
-}
-
-function NavDot() {
-  return (
-    <span className="relative ml-auto flex h-2 w-2 shrink-0" aria-label="New activity">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-    </span>
-  );
-}
-
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function SocialLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [hasNew, setHasNew] = useState<Record<string, boolean>>({});
-  const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
-
-  // Check what's new once on mount, then keep it live via realtime — a new
-  // row in any watched table marks its nav item, unless the admin is
-  // already looking at that section.
-  useEffect(() => {
-    const supabase = createClient();
-
-    (async () => {
-      for (const [path, table] of Object.entries(WATCHED_NAV)) {
-        const { data } = await supabase
-          .from(table)
-          .select("created_at")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        const latest = data?.created_at;
-        const seen = localStorage.getItem(lastSeenKey(table));
-        if (latest && (!seen || new Date(latest) > new Date(seen))) {
-          setHasNew(prev => ({ ...prev, [path]: true }));
-        }
-      }
-    })();
-
-    const channels = Object.entries(WATCHED_NAV).map(([path, table]) =>
-      supabase
-        .channel(`admin_nav_${table}`)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table }, () => {
-          if (pathnameRef.current !== path) {
-            setHasNew(prev => ({ ...prev, [path]: true }));
-          }
-        })
-        .subscribe()
-    );
-
-    return () => {
-      channels.forEach(ch => supabase.removeChannel(ch));
-    };
-  }, []);
-
-  // Visiting a watched section clears its dot and records "seen" so it
-  // stays cleared across reloads until something new actually shows up.
-  useEffect(() => {
-    const table = WATCHED_NAV[pathname];
-    if (!table) return;
-    setHasNew(prev => (prev[pathname] ? { ...prev, [pathname]: false } : prev));
-    localStorage.setItem(lastSeenKey(table), new Date().toISOString());
-  }, [pathname]);
-
-  // No idle-timeout auto sign-out — an admin with multiple tabs/windows
-  // open (easy to end up with, e.g. an old forgotten tab) would have each
-  // one running its own independent timer, and Supabase's signOut() is
-  // global by default: whichever tab's timer fired first killed the
-  // session everywhere, including the tab actually being used. 2FA now
-  // covers the account at login time, and the manual Logout button in the
-  // sidebar/header still ends a session on demand.
-
-  const navItems = [
-    { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/properties", icon: Building2, label: "Properties" },
-    { href: "/admin/leads", icon: Users, label: "Leads" },
-    { href: "/admin/users", icon: UserCheck, label: "User Data" },
-    { href: "/admin/notifications", icon: Bell, label: "Send Notifications" },
-    { href: "/admin/agents", icon: Briefcase, label: "Agents" },
-    { href: "/admin/billing", icon: Receipt, label: "Billing" },
-    { href: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
-    { href: "/admin/activity", icon: History, label: "Activity Log" },
-  ];
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -116,14 +31,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="w-56 bg-white dark:bg-navy-900 border-r border-gray-100/60 dark:border-gray-800/60 hidden md:flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-gray-100/60 dark:border-gray-800/60">
-          <Link href="/admin">
+          <Link href="/social">
             <RoofmintLogo width={140} height={40} className="h-12 w-auto" />
           </Link>
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 p-3">
-          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-3 mt-2">Menu</div>
-          {navItems.map((item) => {
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-3 mt-2">Social Panel</div>
+          {socialNavItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
             return (
@@ -137,13 +52,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               >
                 <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
                 {item.label}
-                {hasNew[item.href] && <NavDot />}
               </Link>
             );
           })}
 
-          {/* Back to the panel chooser — not a direct jump into Technical,
-              just returns to the same screen shown right after login. */}
+          {/* Back to the panel chooser — not a direct jump into Business
+              Admin, just returns to the same screen shown right after login. */}
           <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
             <Link
               href="/admin-select"
@@ -171,7 +85,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         <header className="md:hidden sticky top-0 z-40 bg-white dark:bg-navy-900 border-b border-gray-100/60 dark:border-gray-800/60 p-4 flex items-center justify-between">
-          <Link href="/admin">
+          <Link href="/social">
             <RoofmintLogo width={100} height={28} className="h-6 w-auto" />
           </Link>
           <button
@@ -188,8 +102,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </main>
 
-      {/* Mobile Nav Drawer — the sidebar above is desktop-only, so mobile
-          had no way to reach anything beyond whatever page it landed on. */}
+      {/* Mobile Nav Drawer */}
       {mobileNavOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex justify-end">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setMobileNavOpen(false)} />
@@ -205,7 +118,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto flex flex-col gap-1 p-3">
-              {navItems.map((item) => {
+              {socialNavItems.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
                 return (
@@ -220,7 +133,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   >
                     <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"}`} />
                     {item.label}
-                    {hasNew[item.href] && <NavDot />}
                   </Link>
                 );
               })}
