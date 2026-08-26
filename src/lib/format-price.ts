@@ -26,6 +26,6 @@ export function derivePriceLabel(property: { price_type?: string | null; price_a
   if (property.price_type === 'starting_from') parts.push('Onwards')
   else if (property.price_type === 'negotiable') parts.push('Negotiable')
   if (property.price_all_inclusive) parts.push('All Inclusive')
-  else if (property.price_taxes_extra) parts.push('+ Taxes Extra')
+  else if (property.price_taxes_extra) parts.push('+ Taxes')
   return parts.join(' · ')
 }

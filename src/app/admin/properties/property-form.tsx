@@ -357,7 +357,7 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
               {[
                 { value: 'none', label: 'Tax status not specified' },
                 { value: 'all_inclusive', label: 'All-inclusive (GST, society maintenance, etc. included)' },
-                { value: 'taxes_extra', label: '+ Taxes Extra' },
+                { value: 'taxes_extra', label: '+ Taxes' },
               ].map(opt => (
                 <label key={opt.value} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                   <input
