@@ -353,6 +353,12 @@ export function PropertyForm({ mode, propertyId, initialData }: { mode: 'create'
                 <option value="starting_from">Starting From</option>
               </select>
             </div>
+            <div className="col-span-6 md:col-span-2 flex items-center pt-5">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                <input type="checkbox" name="price_all_inclusive" defaultChecked={!!initialData?.price_all_inclusive} className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30" />
+                All-inclusive (GST, society maintenance, etc. included)
+              </label>
+            </div>
             <div className="col-span-3 md:col-span-1">
               <label className={labelCls}>Carpet (sqft)</label>
               <input name="carpet_area" type="number" defaultValue={initialData?.carpet_area} placeholder="1200" className={input} />

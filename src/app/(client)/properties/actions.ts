@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { isRateLimited } from '@/lib/rate-limit'
-import { formatPrice } from '@/lib/format-price'
+import { formatPrice, derivePriceLabel } from '@/lib/format-price'
 import { resolveAreaLabel } from '@/lib/resolve-area-label'
 
 export async function getPublicProperties(limit?: number) {
@@ -22,6 +22,7 @@ export async function getPublicProperties(limit?: number) {
       bhk,
       price,
       price_type,
+      price_all_inclusive,
       carpet_area,
       built_up_area,
       floor,
@@ -61,7 +62,7 @@ export async function getPublicProperties(limit?: number) {
       images,
       photos: p.media?.length || 0,
       formattedPrice: formatPrice(p.price),
-      priceLabel: p.price_type === 'starting_from' ? 'Onwards' : p.price_type === 'negotiable' ? 'Negotiable' : '',
+      priceLabel: derivePriceLabel(p),
       bhkLabel: p.bhk ? `${p.bhk} BHK` : '',
       areaLabel: resolveAreaLabel(p),
       listingTypeLabel: p.listing_type === 'Rent' ? 'For Rent' : p.listing_type === 'Resale' ? 'Resale' : 'For Sale',
@@ -103,7 +104,7 @@ export async function getPropertyBySlug(slug: string) {
     videos,
     photos: data.media?.length || 0,
     formattedPrice: formatPrice(data.price),
-    priceLabel: data.price_type === 'starting_from' ? 'Onwards' : data.price_type === 'negotiable' ? 'Negotiable' : '',
+    priceLabel: derivePriceLabel(data),
     bhkLabel: data.bhk ? `${data.bhk} BHK` : '',
     areaLabel: resolveAreaLabel(data),
     listingTypeLabel: data.listing_type === 'Rent' ? 'For Rent' : data.listing_type === 'Resale' ? 'Resale' : 'For Sale',

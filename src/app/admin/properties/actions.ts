@@ -153,6 +153,7 @@ export async function createProperty(formData: FormData) {
   const construction_status = formData.get('construction_status') as string || null
   const price = parseFloat(formData.get('price') as string)
   const price_type = formData.get('price_type') as string
+  const price_all_inclusive = formData.get('price_all_inclusive') === 'on'
   const location_address = formData.get('location_address') as string
   const city = formData.get('city') as string
   const locality = formData.get('locality') as string
@@ -187,6 +188,7 @@ export async function createProperty(formData: FormData) {
     construction_status,
     price,
     price_type,
+    price_all_inclusive,
     location_address,
     city,
     locality,
@@ -273,6 +275,7 @@ export async function updateProperty(id: string, formData: FormData) {
   const construction_status = formData.get('construction_status') as string || null
   const price = parseFloat(formData.get('price') as string)
   const price_type = formData.get('price_type') as string
+  const price_all_inclusive = formData.get('price_all_inclusive') === 'on'
   const location_address = formData.get('location_address') as string
   const city = formData.get('city') as string
   const locality = formData.get('locality') as string
@@ -306,6 +309,7 @@ export async function updateProperty(id: string, formData: FormData) {
     construction_status,
     price,
     price_type,
+    price_all_inclusive,
     location_address,
     city,
     locality,

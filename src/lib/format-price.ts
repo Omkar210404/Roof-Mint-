@@ -15,3 +15,14 @@ export function formatPrice(price: number): string {
   if (price >= 100000) return formatUnit(price / 100000, 'L')
   return `₹${price.toLocaleString('en-IN')}`
 }
+
+// price_type and price_all_inclusive are independent — a price can be
+// Negotiable *and* all-inclusive at once, so this combines whichever apply
+// instead of the two competing for a single label slot.
+export function derivePriceLabel(property: { price_type?: string | null; price_all_inclusive?: boolean | null }): string {
+  const parts: string[] = []
+  if (property.price_type === 'starting_from') parts.push('Onwards')
+  else if (property.price_type === 'negotiable') parts.push('Negotiable')
+  if (property.price_all_inclusive) parts.push('All Inclusive')
+  return parts.join(' · ')
+}
