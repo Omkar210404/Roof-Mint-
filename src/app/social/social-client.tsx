@@ -3,11 +3,17 @@
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Play, Globe, Camera, Eye, ThumbsUp, MessageCircle, ArrowUp, ArrowDown, ExternalLink, Users } from 'lucide-react'
-import type { SocialStats, SocialVideo } from './actions'
+import { Play, Globe, Camera, Eye, ThumbsUp, MessageCircle, ArrowUp, ArrowDown, ExternalLink, Users, FileText } from 'lucide-react'
+import type { SocialStats, SocialPost } from './actions'
 
 type SortKey = 'date' | 'views' | 'likes' | 'comments'
 type SortDir = 'asc' | 'desc'
+
+const PLATFORM_BADGE: Record<SocialPost['platform'], { label: string; className: string }> = {
+  youtube: { label: 'YouTube', className: 'bg-red-50 text-red-600' },
+  facebook: { label: 'Facebook', className: 'bg-blue-50 text-blue-600' },
+  instagram: { label: 'Instagram', className: 'bg-pink-50 text-pink-600' },
+}
 
 function StatChip({ icon: Icon, value, label }: { icon: any; value: number; label: string }) {
   return (
@@ -45,6 +51,7 @@ function PlatformCard({ icon: Icon, name, iconClass, connected, children }: { ic
 export function SocialClientWrapper({ initialStats }: { initialStats: SocialStats }) {
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [platformFilter, setPlatformFilter] = useState<'all' | SocialPost['platform']>('all')
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -55,18 +62,18 @@ export function SocialClientWrapper({ initialStats }: { initialStats: SocialStat
     }
   }
 
-  const sortedVideos = useMemo(() => {
-    const videos = [...initialStats.youtube.videos]
-    videos.sort((a, b) => {
+  const sortedPosts = useMemo(() => {
+    const posts = platformFilter === 'all' ? [...initialStats.posts] : initialStats.posts.filter(p => p.platform === platformFilter)
+    posts.sort((a, b) => {
       let cmp = 0
       if (sortKey === 'date') cmp = new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime()
-      else if (sortKey === 'views') cmp = a.views - b.views
+      else if (sortKey === 'views') cmp = (a.views ?? -1) - (b.views ?? -1)
       else if (sortKey === 'likes') cmp = a.likes - b.likes
       else cmp = a.comments - b.comments
       return sortDir === 'asc' ? cmp : -cmp
     })
-    return videos
-  }, [initialStats.youtube.videos, sortKey, sortDir])
+    return posts
+  }, [initialStats.posts, platformFilter, sortKey, sortDir])
 
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
@@ -89,24 +96,42 @@ export function SocialClientWrapper({ initialStats }: { initialStats: SocialStat
         <PlatformCard icon={Play} name="YouTube" iconClass="bg-red-50 text-red-600" connected={initialStats.youtube.connected}>
           <StatChip icon={Users} value={initialStats.youtube.subscriberCount || 0} label="subscribers" />
           <StatChip icon={Eye} value={initialStats.youtube.totalViews || 0} label="channel views" />
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-1">{initialStats.youtube.videos.length} video{initialStats.youtube.videos.length === 1 ? '' : 's'} tracked below</p>
         </PlatformCard>
 
-        <PlatformCard icon={Globe} name="Facebook" iconClass="bg-blue-50 text-blue-600" connected={false} />
-        <PlatformCard icon={Camera} name="Instagram" iconClass="bg-pink-50 text-pink-600" connected={false} />
+        <PlatformCard icon={Globe} name="Facebook" iconClass="bg-blue-50 text-blue-600" connected={initialStats.facebook.connected}>
+          <StatChip icon={Users} value={initialStats.facebook.followerCount || 0} label="followers" />
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-1">{initialStats.facebook.pageName}</p>
+        </PlatformCard>
+
+        <PlatformCard icon={Camera} name="Instagram" iconClass="bg-pink-50 text-pink-600" connected={initialStats.instagram.connected}>
+          <StatChip icon={Users} value={initialStats.instagram.followerCount || 0} label="followers" />
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-1">@{initialStats.instagram.username} · {initialStats.instagram.mediaCount || 0} posts</p>
+        </PlatformCard>
       </div>
 
       <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl overflow-hidden">
-        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Reels & Videos</h2>
-          <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-2.5 py-1 rounded-md">
-            {sortedVideos.length} shown
-          </span>
+        <div className="h-12 px-5 border-b border-gray-50 dark:border-gray-800/60 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-navy dark:text-white uppercase tracking-wide">Reels & Posts</h2>
+          <div className="flex items-center gap-2">
+            <select
+              value={platformFilter}
+              onChange={e => setPlatformFilter(e.target.value as any)}
+              className="h-8 px-2 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-xs font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="all">All Platforms</option>
+              <option value="youtube">YouTube</option>
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+            </select>
+            <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-2.5 py-1 rounded-md whitespace-nowrap">
+              {sortedPosts.length} shown
+            </span>
+          </div>
         </div>
 
-        {sortedVideos.length === 0 ? (
+        {sortedPosts.length === 0 ? (
           <div className="text-center py-10 text-sm text-gray-400 dark:text-gray-500">
-            {initialStats.youtube.connected ? 'No videos found on the connected channel yet.' : 'Nothing to show yet — connect a platform above.'}
+            Nothing to show yet — connect a platform above.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -114,6 +139,7 @@ export function SocialClientWrapper({ initialStats }: { initialStats: SocialStat
               <thead>
                 <tr className="border-b border-gray-50 dark:border-gray-800/60">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Content</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Platform</th>
                   <th className="text-left px-3 py-3"><SortHeader label="Posted" sortKeyVal="date" /></th>
                   <th className="text-left px-3 py-3"><SortHeader label="Views" sortKeyVal="views" /></th>
                   <th className="text-left px-3 py-3"><SortHeader label="Likes" sortKeyVal="likes" /></th>
@@ -122,32 +148,45 @@ export function SocialClientWrapper({ initialStats }: { initialStats: SocialStat
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
-                {sortedVideos.map((video: SocialVideo) => (
-                  <tr key={video.id} className="hover:bg-gray-50/50 dark:hover:bg-navy-800/40 transition-colors">
+                {sortedPosts.map((post: SocialPost) => (
+                  <tr key={`${post.platform}-${post.id}`} className="hover:bg-gray-50/50 dark:hover:bg-navy-800/40 transition-colors">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3 max-w-xs">
-                        {video.thumbnail && (
+                        {post.thumbnail ? (
                           <div className="relative w-16 h-10 rounded-md overflow-hidden shrink-0 bg-gray-100 dark:bg-navy-800">
-                            <Image src={video.thumbnail} alt={video.title} fill className="object-cover" unoptimized />
+                            <Image src={post.thumbnail} alt={post.title} fill className="object-cover" unoptimized />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-10 rounded-md shrink-0 bg-gray-100 dark:bg-navy-800 flex items-center justify-center">
+                            <FileText className="w-4 h-4 text-gray-300 dark:text-gray-600" />
                           </div>
                         )}
-                        <span className="text-xs font-medium text-navy dark:text-white line-clamp-2">{video.title}</span>
+                        <span className="text-xs font-medium text-navy dark:text-white line-clamp-2">{post.title}</span>
                       </div>
                     </td>
+                    <td className="px-3 py-3">
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide ${PLATFORM_BADGE[post.platform].className}`}>
+                        {PLATFORM_BADGE[post.platform].label}
+                      </span>
+                    </td>
                     <td className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      {new Date(video.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(post.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-3 py-3 text-xs font-semibold text-navy dark:text-white">
-                      <span className="inline-flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-gray-400" /> {video.views.toLocaleString('en-IN')}</span>
+                      {post.views !== null ? (
+                        <span className="inline-flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-gray-400" /> {post.views.toLocaleString('en-IN')}</span>
+                      ) : (
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-xs font-semibold text-navy dark:text-white">
-                      <span className="inline-flex items-center gap-1"><ThumbsUp className="w-3.5 h-3.5 text-gray-400" /> {video.likes.toLocaleString('en-IN')}</span>
+                      <span className="inline-flex items-center gap-1"><ThumbsUp className="w-3.5 h-3.5 text-gray-400" /> {post.likes.toLocaleString('en-IN')}</span>
                     </td>
                     <td className="px-3 py-3 text-xs font-semibold text-navy dark:text-white">
-                      <span className="inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-gray-400" /> {video.comments.toLocaleString('en-IN')}</span>
+                      <span className="inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-gray-400" /> {post.comments.toLocaleString('en-IN')}</span>
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <Link href={video.url} target="_blank" className="text-primary hover:text-teal-700 inline-flex items-center gap-1 text-xs font-medium">
+                      <Link href={post.url} target="_blank" className="text-primary hover:text-teal-700 inline-flex items-center gap-1 text-xs font-medium">
                         View <ExternalLink className="w-3 h-3" />
                       </Link>
                     </td>
