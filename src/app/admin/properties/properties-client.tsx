@@ -13,6 +13,7 @@ import {
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { getProperties, deleteProperty, updatePropertyStatus, togglePropertyPin, assignPropertyAgent, logDataExport } from './actions'
+import { resolveAreaLabel } from '@/lib/resolve-area-label'
 
 const statusStyles: Record<string, string> = {
   available: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700',
@@ -193,17 +194,19 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
 
     autoTable(doc, {
       startY: 28,
-      head: [['Title', 'Type', 'Price', 'Address', 'Status', 'Agent']],
+      head: [['Title', 'Type', 'Area', 'Price', 'Address', 'Status', 'Agent']],
       body: filteredSorted.map(p => [
         p.title || '',
         `${p.bhk ? p.bhk + ' BHK ' : ''}${p.property_type || ''}`,
+        resolveAreaLabel(p) || '',
         p.price ? `Rs. ${p.price.toLocaleString()}` : '',
         p.location_address || '',
         p.status || 'available',
         p.primary_agent?.name || 'Unassigned',
       ]),
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [13, 148, 136] },
+      styles: { fontSize: 8, cellPadding: 2, textColor: [15, 15, 15] },
+      headStyles: { fillColor: [13, 148, 136], textColor: [255, 255, 255] },
+      theme: 'grid',
     })
 
     doc.save(`roofmint-properties-${new Date().toISOString().slice(0, 10)}.pdf`)
