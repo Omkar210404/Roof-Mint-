@@ -37,10 +37,14 @@ export async function getPublicProperties(limit?: number) {
       rera_number,
       demand_tag,
       created_at,
+      pinned_at,
       media:property_media(url, is_cover, sort_order),
       nearby:nearby_places(name, distance, category)
     `)
     .eq('status', 'available')
+    // Admin-pinned properties ("Featured") float to the top here too, not
+    // just in the admin list — most-recently-pinned first, same as there.
+    .order('pinned_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
   if (limit) {
