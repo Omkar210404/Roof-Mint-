@@ -432,6 +432,42 @@ export async function togglePropertyPin(id: string, pinned: boolean) {
   return { success: true }
 }
 
+// Pin order is just pinned_at recency (properties-client.tsx sorts pinned
+// rows by it, most-recent first) — up/down here swaps pinned_at with the
+// adjacent pinned row instead of introducing a separate ordering column,
+// since recency is already the single source of truth for the sort.
+export async function reorderPinnedProperty(id: string, direction: 'up' | 'down') {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const { data: pinned, error: fetchError } = await supabase
+    .from('properties')
+    .select('id, pinned_at')
+    .not('pinned_at', 'is', null)
+    .order('pinned_at', { ascending: false })
+
+  if (fetchError) return { error: fetchError.message }
+
+  const index = (pinned || []).findIndex(p => p.id === id)
+  if (index === -1) return { error: 'Property is not pinned' }
+
+  const swapIndex = direction === 'up' ? index - 1 : index + 1
+  if (swapIndex < 0 || swapIndex >= (pinned || []).length) return { success: true } // already at the edge, nothing to do
+
+  const current = pinned![index]
+  const swapWith = pinned![swapIndex]
+
+  const [{ error: err1 }, { error: err2 }] = await Promise.all([
+    supabase.from('properties').update({ pinned_at: swapWith.pinned_at }).eq('id', current.id),
+    supabase.from('properties').update({ pinned_at: current.pinned_at }).eq('id', swapWith.id),
+  ])
+
+  if (err1 || err2) return { error: (err1 || err2)!.message }
+
+  revalidatePath('/admin/properties')
+  return { success: true }
+}
+
 export async function assignPropertyAgent(id: string, agentId: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }

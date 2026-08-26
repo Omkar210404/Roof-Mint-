@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { getProperties, deleteProperty, updatePropertyStatus, togglePropertyPin, assignPropertyAgent, logDataExport } from './actions'
+import { getProperties, deleteProperty, updatePropertyStatus, togglePropertyPin, reorderPinnedProperty, assignPropertyAgent, logDataExport } from './actions'
 import { resolveAreaLabel } from '@/lib/resolve-area-label'
 
 const statusStyles: Record<string, string> = {
@@ -97,6 +97,28 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
     const now = new Date().toISOString()
     setProperties(prev => prev.map(p => p.id === id ? { ...p, pinned_at: currentlyPinned ? null : now } : p))
     await togglePropertyPin(id, !currentlyPinned)
+  }
+
+  // Explicit reordering among pinned rows — swaps this property's pinned_at
+  // with whichever pinned property is directly above/below it, since that
+  // timestamp is what actually drives the sort. Optimistic swap here keeps
+  // the row visibly jumping immediately instead of waiting on a refetch.
+  const handleReorderPin = async (id: string, direction: 'up' | 'down') => {
+    const pinnedSorted = properties
+      .filter(p => p.pinned_at)
+      .sort((a, b) => new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime())
+    const index = pinnedSorted.findIndex(p => p.id === id)
+    const swapIndex = direction === 'up' ? index - 1 : index + 1
+    if (index === -1 || swapIndex < 0 || swapIndex >= pinnedSorted.length) return
+
+    const current = pinnedSorted[index]
+    const swapWith = pinnedSorted[swapIndex]
+    setProperties(prev => prev.map(p => {
+      if (p.id === current.id) return { ...p, pinned_at: swapWith.pinned_at }
+      if (p.id === swapWith.id) return { ...p, pinned_at: current.pinned_at }
+      return p
+    }))
+    await reorderPinnedProperty(id, direction)
   }
 
   const filteredSorted = useMemo(() => {
@@ -450,17 +472,37 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
                     />
                   </TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => handlePinToggle(property.id, !!property.pinned_at)}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
-                        property.pinned_at
-                          ? 'text-primary bg-teal-50 dark:bg-teal-950/40'
-                          : 'text-gray-300 dark:text-gray-600 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800'
-                      }`}
-                      title={property.pinned_at ? 'Unpin (return to automatic order)' : 'Pin to top'}
-                    >
-                      <Pin className="w-3.5 h-3.5" fill={property.pinned_at ? 'currentColor' : 'none'} />
-                    </button>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={() => handlePinToggle(property.id, !!property.pinned_at)}
+                        className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+                          property.pinned_at
+                            ? 'text-primary bg-teal-50 dark:bg-teal-950/40'
+                            : 'text-gray-300 dark:text-gray-600 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800'
+                        }`}
+                        title={property.pinned_at ? 'Unpin (return to automatic order)' : 'Pin to top'}
+                      >
+                        <Pin className="w-3.5 h-3.5" fill={property.pinned_at ? 'currentColor' : 'none'} />
+                      </button>
+                      {property.pinned_at && (
+                        <div className="flex flex-col">
+                          <button
+                            onClick={() => handleReorderPin(property.id, 'up')}
+                            className="w-5 h-3.5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary transition-colors"
+                            title="Move up in Featured order"
+                          >
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleReorderPin(property.id, 'down')}
+                            className="w-5 h-3.5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary transition-colors"
+                            title="Move down in Featured order"
+                          >
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium text-navy dark:text-white">
                     <div>{property.title}</div>
