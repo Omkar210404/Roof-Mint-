@@ -417,14 +417,31 @@ export async function updatePropertyStatus(id: string, status: string) {
   return { success: true }
 }
 
-export async function togglePropertyPin(id: string, pinned: boolean) {
+// 'none' = normal automatic order. 'plain' = pinned to the top (both admin
+// list and public site) with no visible marker — for cases where an admin
+// just wants a listing surfaced without implying it's a paid placement.
+// 'featured' = pinned *and* shows the public "Featured" badge, reserved
+// for actually-paid listings. Switching between 'plain' and 'featured' on
+// an already-pinned property keeps its existing pinned_at (so its position
+// in the order doesn't jump), only a fresh pin from 'none' gets a new one.
+export async function setPropertyPinMode(id: string, mode: 'none' | 'plain' | 'featured') {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
-  const { error } = await supabase.from('properties').update({ pinned_at: pinned ? new Date().toISOString() : null }).eq('id', id)
+  if (mode === 'none') {
+    const { error } = await supabase.from('properties').update({ pinned_at: null, featured: false }).eq('id', id)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/properties')
+    return { success: true }
+  }
+
+  const { data: current } = await supabase.from('properties').select('pinned_at').eq('id', id).single()
+  const pinned_at = current?.pinned_at || new Date().toISOString()
+
+  const { error } = await supabase.from('properties').update({ pinned_at, featured: mode === 'featured' }).eq('id', id)
 
   if (error) {
-    console.error('togglePropertyPin error:', error.message)
+    console.error('setPropertyPinMode error:', error.message)
     return { error: error.message }
   }
 

@@ -67,8 +67,10 @@ export function HomePropertyCards({ properties }: { properties: any[] }) {
                       <Camera className="w-3 h-3" />
                       {property.photos}
                     </div>
-                    {/* Featured Badge — admin "pinned" properties surface here too, not just in the admin list */}
-                    {property.pinned_at && (
+                    {/* Featured Badge — only for paid placements (a plain
+                        pin without "featured" still floats to the top, just
+                        without this public marker) */}
+                    {property.featured && (
                       <div className="absolute top-2 left-2 flex items-center gap-1 bg-amber-400 text-navy text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
                         <Star className="w-3 h-3 fill-navy" />
                         Featured

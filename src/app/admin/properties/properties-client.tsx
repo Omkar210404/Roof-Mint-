@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload, FileSpreadsheet, FileText, Pin } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Trash2, Eye, Edit, Search, ArrowUpDown, ArrowUp, ArrowDown, X, Upload, FileSpreadsheet, FileText, Pin, Star } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { getProperties, deleteProperty, updatePropertyStatus, togglePropertyPin, reorderPinnedProperty, assignPropertyAgent, logDataExport } from './actions'
+import { getProperties, deleteProperty, updatePropertyStatus, setPropertyPinMode, reorderPinnedProperty, assignPropertyAgent, logDataExport } from './actions'
 import { resolveAreaLabel } from '@/lib/resolve-area-label'
 
 const statusStyles: Record<string, string> = {
@@ -92,11 +92,22 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
   // Pinning is the manual "reposition it myself" escape hatch — pinned
   // properties always float to the top (most recently pinned first, so
   // pinning/unpinning in sequence lets an admin arrange a custom order),
-  // above the automatic available-first sort below.
-  const handlePinToggle = async (id: string, currentlyPinned: boolean) => {
+  // above the automatic available-first sort below. Plain vs Featured only
+  // changes whether the public "Featured" badge shows (reserved for paid
+  // placements) — both pin to the same top position either way. Clicking
+  // the mode that's already active unpins entirely.
+  const handlePinMode = async (id: string, mode: 'plain' | 'featured') => {
+    const property = properties.find(p => p.id === id)
+    const currentMode = property?.featured ? 'featured' : property?.pinned_at ? 'plain' : 'none'
+    const nextMode = currentMode === mode ? 'none' : mode
     const now = new Date().toISOString()
-    setProperties(prev => prev.map(p => p.id === id ? { ...p, pinned_at: currentlyPinned ? null : now } : p))
-    await togglePropertyPin(id, !currentlyPinned)
+
+    setProperties(prev => prev.map(p => {
+      if (p.id !== id) return p
+      if (nextMode === 'none') return { ...p, pinned_at: null, featured: false }
+      return { ...p, pinned_at: p.pinned_at || now, featured: nextMode === 'featured' }
+    }))
+    await setPropertyPinMode(id, nextMode)
   }
 
   // Explicit reordering among pinned rows — swaps this property's pinned_at
@@ -474,15 +485,26 @@ export function PropertiesClientWrapper({ initialProperties, agents = [] }: { in
                   <TableCell>
                     <div className="flex items-center gap-0.5">
                       <button
-                        onClick={() => handlePinToggle(property.id, !!property.pinned_at)}
+                        onClick={() => handlePinMode(property.id, 'plain')}
                         className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
-                          property.pinned_at
+                          property.pinned_at && !property.featured
                             ? 'text-primary bg-teal-50 dark:bg-teal-950/40'
                             : 'text-gray-300 dark:text-gray-600 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800'
                         }`}
-                        title={property.pinned_at ? 'Unpin (return to automatic order)' : 'Pin to top'}
+                        title={property.pinned_at && !property.featured ? 'Unpin (return to automatic order)' : 'Pin to top — no public badge'}
                       >
-                        <Pin className="w-3.5 h-3.5" fill={property.pinned_at ? 'currentColor' : 'none'} />
+                        <Pin className="w-3.5 h-3.5" fill={property.pinned_at && !property.featured ? 'currentColor' : 'none'} />
+                      </button>
+                      <button
+                        onClick={() => handlePinMode(property.id, 'featured')}
+                        className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+                          property.featured
+                            ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/40'
+                            : 'text-gray-300 dark:text-gray-600 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-navy-800'
+                        }`}
+                        title={property.featured ? 'Remove Featured (unpins)' : 'Pin to top + show public "Featured" badge (paid placements)'}
+                      >
+                        <Star className="w-3.5 h-3.5" fill={property.featured ? 'currentColor' : 'none'} />
                       </button>
                       {property.pinned_at && (
                         <div className="flex flex-col">
