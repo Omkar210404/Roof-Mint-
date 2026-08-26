@@ -45,8 +45,16 @@ export async function updateSession(request: NextRequest) {
     return !!aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2'
   }
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // Protect admin routes — /technical and /social are separate top-level
+  // panels but are just as admin-only as /admin itself (Technical Usage,
+  // and now Social Performance which reads real Meta/YouTube API tokens),
+  // so they get the exact same edge-level gate rather than relying only on
+  // each server action's own requireAdmin() check.
+  if (
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname.startsWith('/technical') ||
+    request.nextUrl.pathname.startsWith('/social')
+  ) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
