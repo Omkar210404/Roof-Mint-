@@ -164,16 +164,34 @@ async function getInstagramStats(): Promise<{ meta: SocialStats['instagram']; po
       `https://graph.facebook.com/v21.0/${igId}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink&limit=25&access_token=${token}`
     )
     const mediaData = await mediaRes.json()
-    const posts: SocialPost[] = (mediaData.data || []).map((m: any) => ({
-      id: m.id,
-      platform: 'instagram' as const,
-      title: (m.caption || '').split('\n')[0].slice(0, 80) || 'Untitled post',
-      thumbnail: m.thumbnail_url || m.media_url || '',
-      publishedAt: m.timestamp,
-      url: m.permalink || `https://www.instagram.com/p/${m.id}`,
-      views: null,
-      likes: Number(m.like_count || 0),
-      comments: Number(m.comments_count || 0),
+
+    // Views come from a separate per-media insights call, not the /media
+    // list itself. One extra request per post is fine at this volume;
+    // wrapped per-post so one unsupported media type (older IMAGE posts
+    // sometimes don't support the "views" metric) doesn't blank out the rest.
+    const posts: SocialPost[] = await Promise.all((mediaData.data || []).map(async (m: any) => {
+      let views: number | null = null
+      try {
+        const insightsRes = await fetch(
+          `https://graph.facebook.com/v21.0/${m.id}/insights?metric=views&access_token=${token}`
+        )
+        const insightsData = await insightsRes.json()
+        views = Number(insightsData.data?.[0]?.values?.[0]?.value ?? null) || null
+      } catch {
+        // leave views null
+      }
+
+      return {
+        id: m.id,
+        platform: 'instagram' as const,
+        title: (m.caption || '').split('\n')[0].slice(0, 80) || 'Untitled post',
+        thumbnail: m.thumbnail_url || m.media_url || '',
+        publishedAt: m.timestamp,
+        url: m.permalink || `https://www.instagram.com/p/${m.id}`,
+        views,
+        likes: Number(m.like_count || 0),
+        comments: Number(m.comments_count || 0),
+      }
     }))
 
     return {
