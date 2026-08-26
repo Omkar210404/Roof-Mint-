@@ -161,7 +161,7 @@ export async function getAIFilteredProperties(guestFilters?: AIPreferenceFilters
   let query = supabase
     .from('properties')
     .select(`
-      id, title, slug, description, property_type, listing_type, ownership, bhk, price, price_type, price_all_inclusive,
+      id, title, slug, description, property_type, listing_type, ownership, bhk, price, price_type, price_all_inclusive, price_taxes_extra,
       carpet_area, built_up_area, floor, possession, furnishing,
       location_address, city, locality, status, highlights, amenities,
       demand_tag, created_at,

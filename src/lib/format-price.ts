@@ -16,13 +16,16 @@ export function formatPrice(price: number): string {
   return `₹${price.toLocaleString('en-IN')}`
 }
 
-// price_type and price_all_inclusive are independent — a price can be
-// Negotiable *and* all-inclusive at once, so this combines whichever apply
-// instead of the two competing for a single label slot.
-export function derivePriceLabel(property: { price_type?: string | null; price_all_inclusive?: boolean | null }): string {
+// price_type is independent of the tax status — a price can be Negotiable
+// *and* all-inclusive at once, so this combines whichever apply instead of
+// competing for a single label slot. price_all_inclusive and
+// price_taxes_extra are themselves mutually exclusive (the admin form uses
+// radio buttons for these two), so at most one of them ever contributes.
+export function derivePriceLabel(property: { price_type?: string | null; price_all_inclusive?: boolean | null; price_taxes_extra?: boolean | null }): string {
   const parts: string[] = []
   if (property.price_type === 'starting_from') parts.push('Onwards')
   else if (property.price_type === 'negotiable') parts.push('Negotiable')
   if (property.price_all_inclusive) parts.push('All Inclusive')
+  else if (property.price_taxes_extra) parts.push('+ Taxes Extra')
   return parts.join(' · ')
 }

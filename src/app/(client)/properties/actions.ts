@@ -23,6 +23,7 @@ export async function getPublicProperties(limit?: number) {
       price,
       price_type,
       price_all_inclusive,
+      price_taxes_extra,
       carpet_area,
       built_up_area,
       floor,
