@@ -130,6 +130,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className={`flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg transition-colors ${isActive
                   ? "bg-teal-50 dark:bg-teal-950/40 text-primary"
                   : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-navy"
@@ -147,6 +148,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
             <Link
               href="/admin-select"
+              prefetch={false}
               className="flex items-center gap-2.5 h-10 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 hover:text-navy dark:hover:text-white transition-colors"
             >
               <ArrowLeftRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -212,6 +214,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     onClick={() => setMobileNavOpen(false)}
                     className={`flex items-center gap-2.5 h-11 px-3 text-sm font-medium rounded-lg transition-colors ${isActive
                       ? "bg-teal-50 dark:bg-teal-950/40 text-primary"
@@ -228,6 +231,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <div className="mt-2 pt-2 border-t border-gray-100/60 dark:border-gray-800/60">
                 <Link
                   href="/admin-select"
+                  prefetch={false}
                   onClick={() => setMobileNavOpen(false)}
                   className="flex items-center gap-2.5 h-11 px-3 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-navy-800 hover:text-navy dark:hover:text-white transition-colors"
                 >
