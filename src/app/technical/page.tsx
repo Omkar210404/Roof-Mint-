@@ -1,5 +1,6 @@
 import { getTechnicalUsage } from './actions';
 import { TechnicalStatCards, TechnicalUsageChart } from './technical-client';
+import { LaunchAnniversaryBanner } from '@/components/launch-anniversary-banner';
 
 export default async function TechnicalDashboardPage() {
   const data = await getTechnicalUsage();
@@ -10,6 +11,8 @@ export default async function TechnicalDashboardPage() {
         <h1 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">Technical Dashboard</h1>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">System health, API usage, and security — separate from day-to-day business admin</p>
       </div>
+
+      <LaunchAnniversaryBanner />
 
       {data ? (
         <>

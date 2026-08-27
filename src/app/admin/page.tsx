@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Building2, Users, UsersRound, TrendingUp, ArrowUpRight, ArrowDownRight, Phone, Clock, PartyPopper } from "lucide-react";
+import { Building2, Users, UsersRound, TrendingUp, ArrowUpRight, ArrowDownRight, Phone, Clock } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import { createClient } from '@/utils/supabase/client';
 import { getDashboardStats, getPropertyStatusCounts, getRecentEnquiries } from './actions';
+import { LaunchAnniversaryBanner } from '@/components/launch-anniversary-banner';
 
 const leadSources = [
   { source: 'Direct', count: 32 },
@@ -35,62 +36,6 @@ const weeklyActivity = [
   { day: 'Sat', views: 380, leads: 19 },
   { day: 'Sun', views: 290, leads: 11 },
 ];
-
-const LAUNCH_DATE = new Date(2026, 7, 5); // August 5, 2026 — Roofmint's launch day (month is 0-indexed)
-
-// Computed only after mount (not during SSR) so the "days live" count can
-// never mismatch between server and client render — a date-diff computed
-// at build/request time vs. hydration time would otherwise flash/warn.
-function LaunchAnniversaryBanner() {
-  const [stats, setStats] = useState<{ daysLive: number; daysToAnniversary: number; nextAnniversaryLabel: string; isAnniversaryToday: boolean } | null>(null);
-
-  useEffect(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const daysLive = Math.floor((today.getTime() - LAUNCH_DATE.getTime()) / 86400000);
-
-    let nextAnniversary = new Date(today.getFullYear(), LAUNCH_DATE.getMonth(), LAUNCH_DATE.getDate());
-    if (nextAnniversary.getTime() < today.getTime()) {
-      nextAnniversary = new Date(today.getFullYear() + 1, LAUNCH_DATE.getMonth(), LAUNCH_DATE.getDate());
-    }
-    const daysToAnniversary = Math.round((nextAnniversary.getTime() - today.getTime()) / 86400000);
-    const yearsAtAnniversary = nextAnniversary.getFullYear() - LAUNCH_DATE.getFullYear();
-
-    setStats({
-      daysLive,
-      daysToAnniversary,
-      nextAnniversaryLabel: `${yearsAtAnniversary}-year anniversary — ${nextAnniversary.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-      isAnniversaryToday: daysToAnniversary === 0,
-    });
-  }, []);
-
-  if (!stats) return null;
-
-  return (
-    <div className="rounded-xl bg-gradient-to-r from-navy via-slate-900 to-teal-950 text-white shadow-sm p-5 flex flex-wrap items-center gap-4 justify-between">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center shrink-0">
-          <PartyPopper className="w-6 h-6 text-teal-300" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-teal-300 uppercase tracking-wide">Roofmint is live</p>
-          <p className="text-2xl md:text-3xl font-extrabold leading-tight">{stats.daysLive} day{stats.daysLive === 1 ? '' : 's'}</p>
-          <p className="text-xs text-slate-300">Since 5 August 2026</p>
-        </div>
-      </div>
-      <div className="text-right">
-        {stats.isAnniversaryToday ? (
-          <p className="text-sm font-bold text-teal-300">🎉 Happy Anniversary, today!</p>
-        ) : (
-          <>
-            <p className="text-lg md:text-xl font-bold">{stats.daysToAnniversary} day{stats.daysToAnniversary === 1 ? '' : 's'} to go</p>
-            <p className="text-xs text-slate-300">{stats.nextAnniversaryLabel}</p>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
