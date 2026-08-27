@@ -12,12 +12,23 @@ const MOTIVATIONAL_LINES = [
   'Small daily wins, big long-term gains 📈',
 ];
 
-// Ticks every second so the clock actually feels alive, not a static
+function TimeBox({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="w-12 md:w-14 rounded-lg bg-white/10 border border-white/10 py-1.5 text-center">
+        <span className="text-lg md:text-xl font-mono font-bold tabular-nums">{String(value).padStart(2, '0')}</span>
+      </div>
+      <span className="text-[9px] text-slate-400 uppercase tracking-wide mt-1">{label}</span>
+    </div>
+  );
+}
+
+// Ticks every second so the countdown actually feels alive, not a static
 // snapshot from page load. Nothing is computed until after mount (first
 // render returns null) so the server-rendered HTML and the client's first
-// paint can never disagree on "what time is it" or "how many days live" —
-// a plain `new Date()` evaluated during SSR would otherwise risk a
-// hydration mismatch warning the moment those two clocks land on
+// paint can never disagree on "how many days live" or "time to next
+// anniversary" — a plain `new Date()` evaluated during SSR would otherwise
+// risk a hydration mismatch warning the moment those two clocks land on
 // different seconds (or, rarely, different calendar days).
 export function LaunchAnniversaryBanner() {
   const [now, setNow] = useState<Date | null>(null);
@@ -37,12 +48,18 @@ export function LaunchAnniversaryBanner() {
   if (nextAnniversary.getTime() < today.getTime()) {
     nextAnniversary = new Date(today.getFullYear() + 1, LAUNCH_DATE.getMonth(), LAUNCH_DATE.getDate());
   }
-  const daysToAnniversary = Math.round((nextAnniversary.getTime() - today.getTime()) / 86400000);
   const yearsAtAnniversary = nextAnniversary.getFullYear() - LAUNCH_DATE.getFullYear();
-  const isAnniversaryToday = daysToAnniversary === 0;
+  const isAnniversaryToday = nextAnniversary.getTime() === today.getTime();
 
-  const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-  const dateString = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+  const remainingMs = Math.max(0, nextAnniversary.getTime() - now.getTime());
+  const remainingSeconds = Math.floor(remainingMs / 1000);
+  const countdown = {
+    days: Math.floor(remainingSeconds / 86400),
+    hours: Math.floor((remainingSeconds % 86400) / 3600),
+    minutes: Math.floor((remainingSeconds % 3600) / 60),
+    seconds: remainingSeconds % 60,
+  };
+
   const motivationalLine = MOTIVATIONAL_LINES[daysLive % MOTIVATIONAL_LINES.length];
 
   return (
@@ -63,22 +80,22 @@ export function LaunchAnniversaryBanner() {
           </div>
         </div>
 
-        <div className="text-right">
-          {isAnniversaryToday ? (
-            <p className="text-sm font-bold text-teal-300">🎂 Happy Anniversary, today!</p>
-          ) : (
-            <>
-              <p className="text-lg md:text-xl font-bold">{daysToAnniversary} day{daysToAnniversary === 1 ? '' : 's'} to go 🎯</p>
-              <p className="text-[11px] text-slate-300">{yearsAtAnniversary}-year anniversary — {nextAnniversary.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            </>
-          )}
-        </div>
-
-        <div className="text-right border-l border-white/10 pl-4 md:pl-5">
-          <p className="text-[10px] text-slate-400 uppercase tracking-wide">🕒 Right now</p>
-          <p className="text-xl md:text-2xl font-mono font-bold tabular-nums">{timeString}</p>
-          <p className="text-[11px] text-slate-400">{dateString}</p>
-        </div>
+        {isAnniversaryToday ? (
+          <p className="text-sm font-bold text-teal-300">🎂 Happy Anniversary, today!</p>
+        ) : (
+          <div className="text-right">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1.5">🎯 {yearsAtAnniversary}-year anniversary in</p>
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <TimeBox value={countdown.days} label="days" />
+              <span className="text-white/30 font-bold pb-4">:</span>
+              <TimeBox value={countdown.hours} label="hrs" />
+              <span className="text-white/30 font-bold pb-4">:</span>
+              <TimeBox value={countdown.minutes} label="min" />
+              <span className="text-white/30 font-bold pb-4">:</span>
+              <TimeBox value={countdown.seconds} label="sec" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
