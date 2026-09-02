@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch *)",
+      "Bash(git ls-tree *)",
+      "Bash(timeout 30 git ls-remote origin)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git push *)"
+    ]
+  }
+}
