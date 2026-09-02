@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { getLeads, updateLeadStatus, assignLeadAgent, deleteLead, setLeadAgentVisibility, setLeadAgentMessage, logDataExport } from './actions'
 import { AddLeadModal } from './add-lead-modal'
+import { EditLeadModal } from './edit-lead-modal'
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Eye, EyeOff, MessageCircle, FileEdit, Globe } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Eye, EyeOff, MessageCircle, FileEdit, Globe, Pencil } from 'lucide-react'
 import { isSuspiciousPhone } from '@/lib/suspicious-phone'
 import { SuspiciousPhoneBadge } from '@/components/suspicious-phone-badge'
 
@@ -44,6 +45,7 @@ type SortDir = 'asc' | 'desc'
 export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = [] }: { initialLeads: any[]; agents?: any[]; allProperties?: any[] }) {
   const [leads, setLeads] = useState<any[]>(initialLeads)
   const [showAddLead, setShowAddLead] = useState(false)
+  const [editingLead, setEditingLead] = useState<any | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -121,6 +123,11 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const handleLeadAdded = async () => {
     setLeads(await getLeads())
     setShowAddLead(false)
+  }
+
+  const handleLeadUpdated = async () => {
+    setLeads(await getLeads())
+    setEditingLead(null)
   }
 
   const filteredSorted = useMemo(() => {
@@ -697,14 +704,26 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
                     </button>
                   </TableCell>
                   <TableCell className="align-top py-3 text-right">
-                    <button
-                      onClick={() => handleDeleteLead(lead.id, lead.name)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 h-8 px-2.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1"
-                      title="Delete Lead"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      {(lead.source === 'manual') && (
+                        <button
+                          onClick={() => setEditingLead(lead)}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 h-8 px-2.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1"
+                          title="Edit Lead"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteLead(lead.id, lead.name)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 h-8 px-2.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1"
+                        title="Delete Lead"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -745,6 +764,16 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
           properties={allProperties}
           onClose={() => setShowAddLead(false)}
           onAdded={handleLeadAdded}
+        />
+      )}
+
+      {editingLead && (
+        <EditLeadModal
+          lead={editingLead}
+          agents={agents}
+          properties={allProperties}
+          onClose={() => setEditingLead(null)}
+          onUpdated={handleLeadUpdated}
         />
       )}
     </div>

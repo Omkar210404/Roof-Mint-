@@ -83,6 +83,46 @@ export async function createManualLead(formData: FormData) {
   return { success: true }
 }
 
+export async function updateManualLead(id: string, formData: FormData) {
+  const { authorized, supabase } = await requireAdmin()
+  if (!authorized) return { error: 'Unauthorized' }
+
+  const name = (formData.get('name') as string || '').trim()
+  const phone = (formData.get('phone') as string || '').trim()
+  const email = (formData.get('email') as string || '').trim()
+  const property_id = (formData.get('property_id') as string) || null
+  const budget_hint = (formData.get('budget_hint') as string || '').trim()
+  const message = (formData.get('message') as string || '').trim()
+  const status = (formData.get('status') as string) || 'new'
+  const assigned_agent_id = (formData.get('assigned_agent_id') as string) || null
+
+  if (!name || !phone) {
+    return { error: 'Name and phone are required.' }
+  }
+
+  const { error } = await supabase
+    .from('enquiries')
+    .update({
+      name,
+      phone,
+      email: email || null,
+      property_id: property_id || null,
+      budget_hint: budget_hint || null,
+      message: message || null,
+      status,
+      assigned_agent_id: assigned_agent_id || null,
+    })
+    .eq('id', id)
+
+  if (error) {
+    console.error('updateManualLead error:', error.message)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/leads')
+  return { success: true }
+}
+
 export async function updateLeadStatus(id: string, status: string) {
   const { authorized, supabase } = await requireAdmin()
   if (!authorized) return
