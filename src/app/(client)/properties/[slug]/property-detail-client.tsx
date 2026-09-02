@@ -349,7 +349,7 @@ export function PropertyDetailClient({ slug }: { slug: string }) {
   };
 
   const getWaLink = (name?: string) =>
-    `https://wa.me/917096867438?text=${encodeURIComponent(`Hi Roofmint, I'm${name ? ` ${name},` : ''} interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`;
+    `https://wa.me/917758839446?text=${encodeURIComponent(`Hi Roofmint, I'm${name ? ` ${name},` : ''} interested in ${property.title} (${property.formattedPrice}) located at ${property.location_address}. Please share details.`)}`;
 
   // WhatsApp doesn't require login — the moment someone hits send in that
   // chat, their number lands in Roofmint's WhatsApp inbox automatically, so

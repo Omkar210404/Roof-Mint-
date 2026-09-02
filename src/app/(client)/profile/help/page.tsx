@@ -110,7 +110,7 @@ export default function HelpPage() {
         {/* Contact Channels Bar */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <a
-            href="https://wa.me/917096867438?text=Hi%20Roofmint%20Support"
+            href="https://wa.me/917758839446?text=Hi%20Roofmint%20Support"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-2xl p-4 transition-colors flex items-center gap-3"
@@ -120,12 +120,12 @@ export default function HelpPage() {
             </div>
             <div>
               <p className="text-xs font-bold text-emerald-950">WhatsApp Support</p>
-              <p className="text-xs text-emerald-700 font-semibold mt-0.5">+91 70968 67438</p>
+              <p className="text-xs text-emerald-700 font-semibold mt-0.5">+91 77588 39446</p>
             </div>
           </a>
 
           <a
-            href="tel:+917096867438"
+            href="tel:+917758839446"
             className="bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 border border-teal-200 dark:border-teal-800 rounded-2xl p-4 transition-colors flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
@@ -133,7 +133,7 @@ export default function HelpPage() {
             </div>
             <div>
               <p className="text-xs font-bold text-teal-950">Call Us</p>
-              <p className="text-xs text-teal-700 font-semibold mt-0.5">+91 70968 67438</p>
+              <p className="text-xs text-teal-700 font-semibold mt-0.5">+91 77588 39446</p>
             </div>
           </a>
 

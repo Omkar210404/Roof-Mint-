@@ -112,7 +112,7 @@ export function AgentDashboardClient({ leads, properties, plan, profile }: {
             <p className="text-xs text-red-600 dark:text-red-400/80">Renew or upgrade to get your leads and listings back.</p>
           </div>
           <a
-            href="https://wa.me/917096867438?text=Hi%20Roofmint%2C%20my%20agent%20plan%20has%20ended%20and%20I%27d%20like%20to%20renew%20or%20upgrade."
+            href="https://wa.me/917758839446?text=Hi%20Roofmint%2C%20my%20agent%20plan%20has%20ended%20and%20I%27d%20like%20to%20renew%20or%20upgrade."
             target="_blank"
             rel="noopener noreferrer"
             className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0"

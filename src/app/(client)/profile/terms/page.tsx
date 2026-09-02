@@ -236,7 +236,7 @@ export default function TermsPage() {
             </p>
             <div className="bg-gray-50 dark:bg-navy-800 p-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 mt-2 space-y-1 font-mono text-xs">
               <p className="font-bold text-navy dark:text-white flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-primary" /> Roofmint Legal & Compliance Desk</p>
-              <p>Phone: +91 70968 67438</p>
+              <p>Phone: +91 77588 39446</p>
               <p>Address: Yashwant Shrushti, Boisar, Maharashtra - 401501</p>
             </div>
           </section>
