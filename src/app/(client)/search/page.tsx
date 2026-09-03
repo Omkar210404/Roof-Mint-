@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, MapPin, ArrowLeft, X, Clock, Sparkles, Trash2 } from 'lucide-react';
+import { Search, MapPin, ArrowLeft, X, Clock, Sparkles, Trash2, Home } from 'lucide-react';
 import { searchProperties } from '../properties/actions';
 
 export default function SearchPage() {
@@ -12,6 +12,8 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  // Whether the current search was triggered from the "Nearby Properties" button
+  const [isNearbySearch, setIsNearbySearch] = useState(false);
 
   useEffect(() => {
     try {
@@ -37,10 +39,11 @@ export default function SearchPage() {
     localStorage.removeItem('roofmint_recent_searches');
   };
 
-  const doSearch = useCallback(async (term: string) => {
+  const doSearch = useCallback(async (term: string, nearby = false) => {
     if (!term.trim()) return;
     setLoading(true);
     setSearched(true);
+    setIsNearbySearch(nearby);
     saveSearch(term.trim());
     const data = await searchProperties(term.trim());
     setResults(data);
@@ -49,7 +52,7 @@ export default function SearchPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    doSearch(query);
+    doSearch(query, false);
   };
 
   // Prefill + auto-run from a shared/deep link (e.g. the home page's
@@ -61,7 +64,8 @@ export default function SearchPage() {
     const q = params.get('q');
     if (q) {
       setQuery(q);
-      doSearch(q);
+      // Treat any ?q= param from the URL as a nearby/location-based search
+      doSearch(q, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -85,7 +89,7 @@ export default function SearchPage() {
               className="w-full h-10 md:h-12 pl-10 pr-9 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-gray-50 dark:bg-navy-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
             {query && (
-              <button type="button" onClick={() => { setQuery(''); setSearched(false); setResults([]); }}
+              <button type="button" onClick={() => { setQuery(''); setSearched(false); setResults([]); setIsNearbySearch(false); }}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
@@ -100,20 +104,67 @@ export default function SearchPage() {
       {/* Content */}
       <div className="px-4 pt-6 md:px-8 max-w-6xl mx-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            {isNearbySearch && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+                Looking for properties near <span className="font-semibold text-navy dark:text-white">{query}</span>...
+              </p>
+            )}
           </div>
         ) : searched && results.length === 0 ? (
-          <div className="flex flex-col items-center py-20">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-              <Search className="w-7 h-7 text-gray-400 dark:text-gray-500" />
+          /* ─── No results ─── */
+          <div className="flex flex-col items-center py-14 px-4">
+            {/* Icon */}
+            <div className="relative mb-5">
+              <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-navy-800 flex items-center justify-center shadow-inner">
+                <MapPin className="w-9 h-9 text-gray-300 dark:text-gray-600" />
+              </div>
+              <span className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-base">
+                🔍
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-navy dark:text-white mb-1">No properties found</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Try adjusting your search criteria or browse our full listings.</p>
+
+            {/* Message */}
+            <h3 className="text-lg font-bold text-navy dark:text-white mb-2 text-center">
+              {isNearbySearch
+                ? <>No properties found near <span className="text-primary">&ldquo;{query}&rdquo;</span></>
+                : <>No results for <span className="text-primary">&ldquo;{query}&rdquo;</span></>
+              }
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-xs mb-8 leading-relaxed">
+              {isNearbySearch
+                ? "We don't have any listings in this area yet. Try searching a nearby locality, or browse all our verified properties below."
+                : "We couldn't find any properties matching that search. Try a different keyword or browse all our listings."}
+            </p>
+
+            {/* Browse all CTA */}
+            <Link
+              href="/"
+              className="h-12 px-8 bg-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center gap-2 active:scale-[0.98] mb-3"
+            >
+              <Home className="w-4 h-4" />
+              Browse All Available Properties
+            </Link>
+
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+              Or try a different locality / landmark in the search bar above
+            </p>
           </div>
         ) : searched && results.length > 0 ? (
+          /* ─── Results ─── */
           <>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 font-semibold">{results.length} properties matching &quot;{query}&quot;</p>
+            {/* Result count header */}
+            <div className="flex items-center gap-2 mb-4">
+              {isNearbySearch && <MapPin className="w-4 h-4 text-primary flex-shrink-0" />}
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-semibold">
+                {isNearbySearch
+                  ? <>{results.length} {results.length === 1 ? 'property' : 'properties'} near <span className="text-navy dark:text-white">&ldquo;{query}&rdquo;</span></>
+                  : <>{results.length} {results.length === 1 ? 'property' : 'properties'} matching &quot;{query}&quot;</>
+                }
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((property) => (
                 <Link key={property.id} href={`/properties/${property.slug}`}>
@@ -144,6 +195,20 @@ export default function SearchPage() {
                   </div>
                 </Link>
               ))}
+            </div>
+
+            {/* "See other properties" section below results */}
+            <div className="mt-10 pt-6 border-t border-gray-100/60 dark:border-gray-800/60 flex flex-col items-center gap-3">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Not finding what you&apos;re looking for?
+              </p>
+              <Link
+                href="/"
+                className="h-11 px-7 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-xl transition-all flex items-center gap-2 text-sm active:scale-[0.98]"
+              >
+                <Sparkles className="w-4 h-4" />
+                See All Available Properties
+              </Link>
             </div>
           </>
         ) : (
@@ -180,7 +245,7 @@ export default function SearchPage() {
                 </div>
                 <div className="space-y-1">
                   {recentSearches.map(term => (
-                    <button key={term} onClick={() => { setQuery(term); doSearch(term); }}
+                    <button key={term} onClick={() => { setQuery(term); doSearch(term, false); }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-navy-800 text-sm text-gray-700 dark:text-gray-300 font-medium flex items-center justify-between transition-colors">
                       <span className="flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
