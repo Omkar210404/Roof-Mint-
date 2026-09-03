@@ -39,13 +39,23 @@ export default function SearchPage() {
     localStorage.removeItem('roofmint_recent_searches');
   };
 
-  const doSearch = useCallback(async (term: string, nearby = false) => {
+  const doSearch = useCallback(async (term: string, nearby = false, fallbackTerm = '') => {
     if (!term.trim()) return;
     setLoading(true);
     setSearched(true);
     setIsNearbySearch(nearby);
     saveSearch(term.trim());
-    const data = await searchProperties(term.trim());
+    let data = await searchProperties(term.trim());
+
+    if (data.length === 0 && fallbackTerm.trim() && fallbackTerm.toLowerCase() !== term.toLowerCase()) {
+      const fallbackData = await searchProperties(fallbackTerm.trim());
+      if (fallbackData.length > 0) {
+        setQuery(fallbackTerm.trim());
+        saveSearch(fallbackTerm.trim());
+        data = fallbackData;
+      }
+    }
+
     setResults(data);
     setLoading(false);
   }, [recentSearches]);
@@ -62,10 +72,11 @@ export default function SearchPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const q = params.get('q');
+    const fallback = params.get('fallback');
     if (q) {
       setQuery(q);
       // Treat any ?q= param from the URL as a nearby/location-based search
-      doSearch(q, true);
+      doSearch(q, true, fallback || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

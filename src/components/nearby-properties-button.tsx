@@ -13,15 +13,29 @@ export function NearbyPropertiesButton() {
 
   const handleClick = () => {
     let query = '';
+    let cityFallback = '';
     try {
       const cached = localStorage.getItem('roofmint_user_location');
       if (cached) {
         const { locality, city } = JSON.parse(cached);
         query = locality || city || '';
+        // Pass city separately so the search page can auto-retry with it
+        // when the micro-locality (e.g. a society name like "Yashwant Srushti")
+        // is too granular to match any stored property.
+        cityFallback = city || '';
       }
     } catch {}
 
-    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
+    if (!query) {
+      router.push('/search');
+      return;
+    }
+
+    const params = new URLSearchParams({ q: query });
+    if (cityFallback && cityFallback.toLowerCase() !== query.toLowerCase()) {
+      params.set('fallback', cityFallback);
+    }
+    router.push(`/search?${params.toString()}`);
   };
 
   return (
