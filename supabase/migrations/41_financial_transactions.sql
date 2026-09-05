@@ -1,6 +1,10 @@
 -- Financial board — track every income, expense, and miscellaneous entry
 -- with full edit/delete support. The net total (income − expenses) drives
 -- the "Money Earned" metric in the admin dashboard banner.
+-- This script is safe to re-run — it won't delete existing data.
+
+-- Drop policy first so re-running doesn't fail with "already exists"
+drop policy if exists financial_transactions_admin_all on financial_transactions;
 
 create table if not exists financial_transactions (
   id uuid primary key default gen_random_uuid(),
