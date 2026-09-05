@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, History, Menu, X, Receipt, ArrowLeftRight } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Briefcase, LogOut, UserCheck, Bell, MessageSquare, History, Menu, X, Receipt, ArrowLeftRight, Wallet } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoofmintLogo } from "@/components/roofmint-logo";
@@ -97,6 +97,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/properties", icon: Building2, label: "Properties" },
     { href: "/admin/leads", icon: Users, label: "Leads" },
+    { href: "/admin/financial", icon: Wallet, label: "Financial" },
     { href: "/admin/users", icon: UserCheck, label: "User Data" },
     { href: "/admin/notifications", icon: Bell, label: "Send Notifications" },
     { href: "/admin/agents", icon: Briefcase, label: "Agents" },

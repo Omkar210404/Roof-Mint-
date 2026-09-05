@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { getFinancialSummary } from '@/app/admin/financial/actions';
 
 const LAUNCH_DATE = new Date(2026, 7, 5); // August 5, 2026 — Roofmint's launch day (month is 0-indexed)
 
@@ -42,6 +43,11 @@ export function LaunchAnniversaryBanner() {
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 1000);
+
+    // Fetch the financial summary from the server on mount
+    getFinancialSummary().then(summary => {
+      setFinancial({ net: summary.net, totalIncome: summary.totalIncome, totalExpense: summary.totalExpense });
+    });
 
     // Listen for financial summary updates from the FinancialBoard component
     const handleFinancialUpdate = (e: Event) => {
