@@ -10,6 +10,7 @@ import {
 import { createClient } from '@/utils/supabase/client';
 import { getDashboardStats, getPropertyStatusCounts, getRecentEnquiries } from './actions';
 import { LaunchAnniversaryBanner } from '@/components/launch-anniversary-banner';
+import { FinancialBoard } from '@/components/financial-board';
 
 const leadSources = [
   { source: 'Direct', count: 32 },
@@ -66,7 +67,7 @@ export default function AdminDashboardPage() {
       getPropertyStatusCounts(),
       getRecentEnquiries()
     ]);
-    
+
     setStats(newStats);
     setStatusCounts(newStatusCounts);
     setEnquiries(newEnquiries);
@@ -105,6 +106,9 @@ export default function AdminDashboardPage() {
         <MetricCard icon={UsersRound} iconBg="bg-purple-50" iconColor="text-purple-600" label="Active Agents" value={stats.activeAgents.toString()} change="0" />
         <MetricCard icon={TrendingUp} iconBg="bg-green-50 dark:bg-green-950/40" iconColor="text-green-600 dark:text-green-400" label="Total Views" value={stats.totalViews.toLocaleString()} change="+12%" up />
       </div>
+
+      {/* ─── Financial Board — track income, expenses, profit/loss ─────── */}
+      <FinancialBoard />
 
       {/* ─── Row: Activity Chart + Property Status ─────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-3">

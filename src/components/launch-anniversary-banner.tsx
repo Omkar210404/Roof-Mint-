@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const LAUNCH_DATE = new Date(2026, 7, 5); // August 5, 2026 — Roofmint's launch day (month is 0-indexed)
 
@@ -32,24 +33,30 @@ function TimeBox({ value, label }: { value: number; label: string }) {
 // different seconds (or, rarely, different calendar days).
 export function LaunchAnniversaryBanner() {
   const [now, setNow] = useState<Date | null>(null);
-  
-  // Custom Editable Metric State
-  const [metricValue, setMetricValue] = useState<string | null>(null);
-  const [metricSymbol, setMetricSymbol] = useState<string>('₹');
-  const [isEditingMetric, setIsEditingMetric] = useState(false);
-  const [metricInput, setMetricInput] = useState('');
+
+  // Financial summary — connected to the Financial Board below. The board
+  // dispatches a custom window event whenever its data changes (add/edit/
+  // delete or realtime), and this banner listens to stay in sync.
+  const [financial, setFinancial] = useState<{ net: number; totalIncome: number; totalExpense: number } | null>(null);
 
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 1000);
-    
-    // Load saved metric from local storage
-    const savedMetric = localStorage.getItem('adminLaunchMetric');
-    const savedSymbol = localStorage.getItem('adminLaunchMetricSymbol');
-    if (savedMetric) setMetricValue(savedMetric);
-    if (savedSymbol) setMetricSymbol(savedSymbol);
-    
-    return () => clearInterval(timer);
+
+    // Listen for financial summary updates from the FinancialBoard component
+    const handleFinancialUpdate = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setFinancial({ net: detail.net, totalIncome: detail.totalIncome, totalExpense: detail.totalExpense });
+      }
+    };
+
+    window.addEventListener('financial-summary-updated', handleFinancialUpdate);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('financial-summary-updated', handleFinancialUpdate);
+    };
   }, []);
 
   if (!now) return null;
@@ -75,23 +82,10 @@ export function LaunchAnniversaryBanner() {
 
   const motivationalLine = MOTIVATIONAL_LINES[daysLive % MOTIVATIONAL_LINES.length];
 
-  const handleSaveMetric = () => {
-    if (metricInput.trim()) {
-      localStorage.setItem('adminLaunchMetric', metricInput);
-      localStorage.setItem('adminLaunchMetricSymbol', metricSymbol);
-      setMetricValue(metricInput);
-    }
-    setIsEditingMetric(false);
-  };
-
-  const handleDeleteMetric = () => {
-    localStorage.removeItem('adminLaunchMetric');
-    localStorage.removeItem('adminLaunchMetricSymbol');
-    setMetricValue(null);
-    setMetricInput('');
-    setMetricSymbol('₹');
-    setIsEditingMetric(false);
-  };
+  const isProfit = (financial?.net ?? 0) >= 0;
+  const moneyDisplay = financial
+    ? `₹${Math.abs(financial.net).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+    : '₹0';
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy via-slate-900 to-teal-950 text-white shadow-md p-5 md:p-6">
@@ -112,72 +106,26 @@ export function LaunchAnniversaryBanner() {
         </div>
 
         <div className="flex flex-wrap items-center gap-6 lg:gap-10">
-          {/* Custom Editable Metric */}
+          {/* Money Earned — connected to the Financial Board */}
           <div className="flex flex-col items-end border-r border-white/10 pr-6 lg:pr-10">
-            {isEditingMetric ? (
-              <div className="flex items-center gap-2">
-                <select
-                  className="bg-white/10 border border-white/20 rounded-md px-2 py-1 text-sm text-white focus:outline-none focus:border-teal-400"
-                  value={metricSymbol}
-                  onChange={(e) => setMetricSymbol(e.target.value)}
-                >
-                  <option value="₹" className="text-black">₹ Rupee</option>
-                  <option value="$" className="text-black">$ Dollar</option>
-                  <option value="€" className="text-black">€ Euro</option>
-                  <option value="£" className="text-black">£ Pound</option>
-                  <option value="" className="text-black">None</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="e.g. 10,500 Earned"
-                  className="bg-white/10 border border-white/20 rounded-md px-2 py-1 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-teal-400 w-32"
-                  value={metricInput}
-                  onChange={(e) => setMetricInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveMetric()}
-                  autoFocus
-                />
-                <button onClick={handleSaveMetric} className="text-teal-400 hover:text-teal-300 text-xs font-semibold px-2 py-1 bg-teal-500/10 rounded-md">
-                  Save
-                </button>
-                <button onClick={() => setIsEditingMetric(false)} className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 bg-white/5 rounded-md">
-                  Cancel
-                </button>
+            <div className="text-right">
+              <p className="text-[10px] text-teal-300 uppercase tracking-wide mb-0.5">Money Earned</p>
+              <div className="flex items-center gap-1.5 justify-end">
+                <p className={`text-xl font-bold leading-none ${isProfit ? 'text-green-400' : 'text-red-400'}`}>
+                  {isProfit ? '+' : '−'}{moneyDisplay}
+                </p>
+                {isProfit ? (
+                  <ArrowUpRight className="w-4 h-4 text-green-400" />
+                ) : (
+                  <ArrowDownRight className="w-4 h-4 text-red-400" />
+                )}
               </div>
-            ) : (
-              <div className="group flex items-center gap-3">
-                <div className="text-right">
-                  {metricValue ? (
-                    <>
-                      <p className="text-[10px] text-teal-300 uppercase tracking-wide mb-0.5">Money Earned / Goal</p>
-                      <p className="text-xl font-bold text-white leading-none">
-                        {metricSymbol}{metricValue}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-white/50 italic">No custom metric set</p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => {
-                      setMetricInput(metricValue || '');
-                      setIsEditingMetric(true);
-                    }}
-                    className="text-[10px] bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded transition-colors"
-                  >
-                    {metricValue ? 'Edit' : 'Add'}
-                  </button>
-                  {metricValue && (
-                    <button
-                      onClick={handleDeleteMetric}
-                      className="text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-200 px-2 py-0.5 rounded transition-colors"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+              {financial && (
+                <p className="text-[9px] text-slate-400 mt-1">
+                  {isProfit ? 'In profit' : 'Net loss'} · Income ₹{financial.totalIncome.toLocaleString('en-IN')} · Expenses ₹{financial.totalExpense.toLocaleString('en-IN')}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Anniversary Countdown */}
