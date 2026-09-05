@@ -101,6 +101,15 @@ export function AddLeadModal({ agents, properties, onClose, onAdded }: {
               </select>
             </div>
             <div className="col-span-2 sm:col-span-1 space-y-1">
+              <label className={labelCls}>Source</label>
+              <select name="source" defaultValue="manual" className={inputCls}>
+                <option value="manual">Manual / Direct</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </div>
+            <div className="col-span-2 sm:col-span-1 space-y-1">
               <label className={labelCls}>Assign Agent</label>
               <select name="assigned_agent_id" className={inputCls}>
                 <option value="">Unassigned</option>

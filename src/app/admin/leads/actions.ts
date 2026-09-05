@@ -53,6 +53,7 @@ export async function createManualLead(formData: FormData) {
   const budget_hint = (formData.get('budget_hint') as string || '').trim()
   const message = (formData.get('message') as string || '').trim()
   const status = (formData.get('status') as string) || 'new'
+  const source = (formData.get('source') as string) || 'manual'
   const assigned_agent_id = (formData.get('assigned_agent_id') as string) || null
 
   if (!name || !phone) {
@@ -71,7 +72,7 @@ export async function createManualLead(formData: FormData) {
     status,
     assigned_agent_id: assigned_agent_id || null,
     user_id: null,
-    source: 'manual',
+    source,
   })
 
   if (error) {
