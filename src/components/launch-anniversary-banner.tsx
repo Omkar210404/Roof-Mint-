@@ -35,6 +35,7 @@ export function LaunchAnniversaryBanner() {
   
   // Custom Editable Metric State
   const [metricValue, setMetricValue] = useState<string | null>(null);
+  const [metricSymbol, setMetricSymbol] = useState<string>('₹');
   const [isEditingMetric, setIsEditingMetric] = useState(false);
   const [metricInput, setMetricInput] = useState('');
 
@@ -44,7 +45,9 @@ export function LaunchAnniversaryBanner() {
     
     // Load saved metric from local storage
     const savedMetric = localStorage.getItem('adminLaunchMetric');
+    const savedSymbol = localStorage.getItem('adminLaunchMetricSymbol');
     if (savedMetric) setMetricValue(savedMetric);
+    if (savedSymbol) setMetricSymbol(savedSymbol);
     
     return () => clearInterval(timer);
   }, []);
@@ -75,6 +78,7 @@ export function LaunchAnniversaryBanner() {
   const handleSaveMetric = () => {
     if (metricInput.trim()) {
       localStorage.setItem('adminLaunchMetric', metricInput);
+      localStorage.setItem('adminLaunchMetricSymbol', metricSymbol);
       setMetricValue(metricInput);
     }
     setIsEditingMetric(false);
@@ -82,8 +86,10 @@ export function LaunchAnniversaryBanner() {
 
   const handleDeleteMetric = () => {
     localStorage.removeItem('adminLaunchMetric');
+    localStorage.removeItem('adminLaunchMetricSymbol');
     setMetricValue(null);
     setMetricInput('');
+    setMetricSymbol('₹');
     setIsEditingMetric(false);
   };
 
@@ -110,10 +116,21 @@ export function LaunchAnniversaryBanner() {
           <div className="flex flex-col items-end border-r border-white/10 pr-6 lg:pr-10">
             {isEditingMetric ? (
               <div className="flex items-center gap-2">
+                <select
+                  className="bg-white/10 border border-white/20 rounded-md px-2 py-1 text-sm text-white focus:outline-none focus:border-teal-400"
+                  value={metricSymbol}
+                  onChange={(e) => setMetricSymbol(e.target.value)}
+                >
+                  <option value="₹" className="text-black">₹ Rupee</option>
+                  <option value="$" className="text-black">$ Dollar</option>
+                  <option value="€" className="text-black">€ Euro</option>
+                  <option value="£" className="text-black">£ Pound</option>
+                  <option value="" className="text-black">None</option>
+                </select>
                 <input
                   type="text"
-                  placeholder="e.g. $10,500 Earned"
-                  className="bg-white/10 border border-white/20 rounded-md px-2 py-1 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-teal-400 w-36"
+                  placeholder="e.g. 10,500 Earned"
+                  className="bg-white/10 border border-white/20 rounded-md px-2 py-1 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-teal-400 w-32"
                   value={metricInput}
                   onChange={(e) => setMetricInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveMetric()}
@@ -132,7 +149,9 @@ export function LaunchAnniversaryBanner() {
                   {metricValue ? (
                     <>
                       <p className="text-[10px] text-teal-300 uppercase tracking-wide mb-0.5">Money Earned / Goal</p>
-                      <p className="text-xl font-bold text-white leading-none">{metricValue}</p>
+                      <p className="text-xl font-bold text-white leading-none">
+                        {metricSymbol}{metricValue}
+                      </p>
                     </>
                   ) : (
                     <p className="text-sm text-white/50 italic">No custom metric set</p>
