@@ -37,6 +37,10 @@ function formatINR(n: number) {
     return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
+function formatINRPDF(n: number) {
+    return `Rs. ${n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
 const inputCls = "w-full h-10 px-3 rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
 const labelCls = "text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
 
@@ -46,6 +50,7 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
     const [showAdd, setShowAdd] = useState(false)
     const [editing, setEditing] = useState<any | null>(null)
     const [typeFilter, setTypeFilter] = useState('all')
+    const [monthFilter, setMonthFilter] = useState('all')
     const [searchQuery, setSearchQuery] = useState('')
     const supabase = createClient()
 
@@ -68,30 +73,10 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
         }
     }, [supabase])
 
-    // Compute summary and dispatch a custom event so the banner can listen
-    const summary = useMemo(() => {
-        let totalIncome = 0
-        let totalExpense = 0
-        let totalMisc = 0
-        transactions.forEach(t => {
-            const amt = Number(t.amount) || 0
-            if (t.type === 'income') totalIncome += amt
-            else if (t.type === 'expense') totalExpense += amt
-            else totalMisc += amt
-        })
-        return { totalIncome, totalExpense, totalMisc, net: totalIncome - totalExpense }
-    }, [transactions])
-
-    // Dispatch the net total to the banner via a custom window event
-    useEffect(() => {
-        window.dispatchEvent(new CustomEvent('financial-summary-updated', {
-            detail: { net: summary.net, totalIncome: summary.totalIncome, totalExpense: summary.totalExpense },
-        }))
-    }, [summary])
-
     const filtered = useMemo(() => {
         let result = transactions
         if (typeFilter !== 'all') result = result.filter(t => t.type === typeFilter)
+        if (monthFilter !== 'all') result = result.filter(t => t.transaction_date.startsWith(monthFilter))
         const q = searchQuery.trim().toLowerCase()
         if (q) {
             result = result.filter(t =>
@@ -100,7 +85,37 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
             )
         }
         return result
-    }, [transactions, typeFilter, searchQuery])
+    }, [transactions, typeFilter, monthFilter, searchQuery])
+
+    // Compute summary based on filtered data
+    const summary = useMemo(() => {
+        let totalIncome = 0
+        let totalExpense = 0
+        let totalMisc = 0
+        filtered.forEach(t => {
+            const amt = Number(t.amount) || 0
+            if (t.type === 'income') totalIncome += amt
+            else if (t.type === 'expense') totalExpense += amt
+            else totalMisc += amt
+        })
+        return { totalIncome, totalExpense, totalMisc, net: totalIncome - totalExpense }
+    }, [filtered])
+
+    // Dispatch the net total to the banner via a custom window event
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('financial-summary-updated', {
+            detail: { net: summary.net, totalIncome: summary.totalIncome, totalExpense: summary.totalExpense },
+        }))
+    }, [summary])
+
+    const availableMonths = useMemo(() => {
+        const months = new Set<string>()
+        transactions.forEach(t => {
+            const m = t.transaction_date.slice(0, 7) // YYYY-MM
+            months.add(m)
+        })
+        return Array.from(months).sort().reverse()
+    }, [transactions])
 
     const handleDelete = async (id: string, description: string) => {
         if (!confirm(`Delete "${description}"? This cannot be undone.`)) return
@@ -125,7 +140,7 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
             { name: 'Misc', value: summary.totalMisc, color: '#a855f7' }, // purple-500
         ].filter(d => d.value > 0)
 
-        const sortedTransactions = [...transactions].sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime())
+        const sortedTransactions = [...filtered].sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime())
         const orderedGrouped: Record<string, { date: string, income: number, expense: number }> = {}
         sortedTransactions.forEach(t => {
              const amt = Number(t.amount) || 0
@@ -139,10 +154,13 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
             barData: Object.values(orderedGrouped),
             pieData
         }
-    }, [transactions, summary])
+    }, [filtered, summary])
 
     const handleDownloadPDF = async () => {
         const doc = new jsPDF()
+        
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(30, 41, 59)
         
         try {
             const img = new window.Image()
@@ -151,40 +169,59 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
                 img.onload = resolve
                 img.onerror = reject
             })
-            doc.addImage(img, 'PNG', 14, 10, 40, 15) // Adjust logo size if needed
-            doc.setFontSize(20)
-            doc.text('Financial Balance Sheet', 60, 22)
+            doc.addImage(img, 'PNG', 14, 12, 35, 12)
+            doc.setFontSize(22)
+            doc.text('Financial Balance Sheet', 55, 22)
         } catch (e) {
             console.error('Failed to load logo for PDF', e)
-            doc.setFontSize(20)
+            doc.setFontSize(22)
             doc.text('Financial Balance Sheet', 14, 22)
         }
 
-        doc.setFontSize(12)
-        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 32)
+        doc.setDrawColor(226, 232, 240)
+        doc.setLineWidth(0.5)
+        doc.line(14, 28, 196, 28)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(10)
+        doc.setTextColor(100, 116, 139)
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 35)
         
+        const periodStr = monthFilter === 'all' ? 'All Time' : new Date(monthFilter + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        doc.text(`Period: ${periodStr}`, 14, 40)
+        
+        doc.setFont('helvetica', 'bold')
         doc.setFontSize(11)
-        doc.text(`Total Income: ${formatINR(summary.totalIncome)}`, 14, 42)
-        doc.text(`Total Expenses: ${formatINR(summary.totalExpense)}`, 14, 48)
-        doc.text(`Net Profit/Loss: ${summary.net >= 0 ? '+' : ''}${formatINR(summary.net)}`, 14, 54)
+        doc.setTextColor(15, 23, 42)
+        
+        doc.text(`Total Income: ${formatINRPDF(summary.totalIncome)}`, 14, 50)
+        doc.text(`Total Expenses: ${formatINRPDF(summary.totalExpense)}`, 80, 50)
+        
+        doc.setTextColor(summary.net >= 0 ? 22 : 220, summary.net >= 0 ? 163 : 38, summary.net >= 0 ? 74 : 38)
+        doc.text(`Net Profit/Loss: ${summary.net >= 0 ? '+' : ''}${formatINRPDF(summary.net)}`, 150, 50)
 
         const tableData = filtered.map(t => [
-            new Date(t.transaction_date).toLocaleDateString(),
+            new Date(t.transaction_date).toLocaleDateString('en-IN'),
             t.type.toUpperCase(),
             t.category,
             t.description,
-            formatINR(Number(t.amount) || 0)
+            formatINRPDF(Number(t.amount) || 0)
         ])
 
         autoTable(doc, {
-            startY: 64,
+            startY: 55,
             head: [['Date', 'Type', 'Category', 'Description', 'Amount']],
             body: tableData,
             theme: 'striped',
-            headStyles: { fillColor: [41, 128, 185] },
+            headStyles: { fillColor: [15, 118, 110], textColor: 255, fontStyle: 'bold' },
+            styles: { font: 'helvetica', fontSize: 9, cellPadding: 4 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: {
+                4: { halign: 'right', fontStyle: 'bold' }
+            }
         })
 
-        doc.save('balance_sheet.pdf')
+        doc.save(`balance_sheet_${monthFilter === 'all' ? 'all' : monthFilter}.pdf`)
     }
 
     return (
@@ -316,6 +353,16 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
                     />
                 </div>
                 <div className="flex items-center gap-2">
+                    <select
+                        value={monthFilter}
+                        onChange={(e) => setMonthFilter(e.target.value)}
+                        className="h-10 px-3 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-navy-900 text-sm font-medium text-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 flex-1 sm:flex-none"
+                    >
+                        <option value="all">All Months</option>
+                        {availableMonths.map(m => (
+                            <option key={m} value={m}>{new Date(m + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</option>
+                        ))}
+                    </select>
                     <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
