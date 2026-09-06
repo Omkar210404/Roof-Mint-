@@ -18,8 +18,14 @@ import {
 } from '@/components/ui/table'
 import {
     Plus, Pencil, Trash2, TrendingUp, TrendingDown, MoreHorizontal,
-    X, Check, Loader2, IndianRupee, ArrowUpRight, ArrowDownRight, Search,
+    X, Check, Loader2, IndianRupee, ArrowUpRight, ArrowDownRight, Search, Download
 } from 'lucide-react'
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    PieChart, Pie, Cell
+} from 'recharts'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const typeMeta: Record<string, { label: string; badge: string; icon: any }> = {
     income: { label: 'Income', badge: 'bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400', icon: TrendingUp },
@@ -112,6 +118,75 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
         setEditing(null)
     }
 
+    const chartData = useMemo(() => {
+        const pieData = [
+            { name: 'Income', value: summary.totalIncome, color: '#10b981' }, // green-500
+            { name: 'Expense', value: summary.totalExpense, color: '#ef4444' }, // red-500
+            { name: 'Misc', value: summary.totalMisc, color: '#a855f7' }, // purple-500
+        ].filter(d => d.value > 0)
+
+        const sortedTransactions = [...transactions].sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime())
+        const orderedGrouped: Record<string, { date: string, income: number, expense: number }> = {}
+        sortedTransactions.forEach(t => {
+             const amt = Number(t.amount) || 0
+             const date = new Date(t.transaction_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
+             if (!orderedGrouped[date]) orderedGrouped[date] = { date, income: 0, expense: 0 }
+             if (t.type === 'income') orderedGrouped[date].income += amt
+             if (t.type === 'expense') orderedGrouped[date].expense += amt
+        })
+
+        return {
+            barData: Object.values(orderedGrouped),
+            pieData
+        }
+    }, [transactions, summary])
+
+    const handleDownloadPDF = async () => {
+        const doc = new jsPDF()
+        
+        try {
+            const img = new window.Image()
+            img.src = '/images/logo.png'
+            await new Promise((resolve, reject) => {
+                img.onload = resolve
+                img.onerror = reject
+            })
+            doc.addImage(img, 'PNG', 14, 10, 40, 15) // Adjust logo size if needed
+            doc.setFontSize(20)
+            doc.text('Financial Balance Sheet', 60, 22)
+        } catch (e) {
+            console.error('Failed to load logo for PDF', e)
+            doc.setFontSize(20)
+            doc.text('Financial Balance Sheet', 14, 22)
+        }
+
+        doc.setFontSize(12)
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 32)
+        
+        doc.setFontSize(11)
+        doc.text(`Total Income: ${formatINR(summary.totalIncome)}`, 14, 42)
+        doc.text(`Total Expenses: ${formatINR(summary.totalExpense)}`, 14, 48)
+        doc.text(`Net Profit/Loss: ${summary.net >= 0 ? '+' : ''}${formatINR(summary.net)}`, 14, 54)
+
+        const tableData = filtered.map(t => [
+            new Date(t.transaction_date).toLocaleDateString(),
+            t.type.toUpperCase(),
+            t.category,
+            t.description,
+            formatINR(Number(t.amount) || 0)
+        ])
+
+        autoTable(doc, {
+            startY: 64,
+            head: [['Date', 'Type', 'Category', 'Description', 'Amount']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [41, 128, 185] },
+        })
+
+        doc.save('balance_sheet.pdf')
+    }
+
     return (
         <div className="space-y-4 sm:space-y-6">
             {/* Header */}
@@ -120,12 +195,20 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
                     <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-navy dark:text-white">Finance Board</h1>
                     <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">Track every income, expense, and miscellaneous entry</p>
                 </div>
-                <button
-                    onClick={() => setShowAdd(true)}
-                    className="h-9 sm:h-10 px-3 sm:px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap shrink-0"
-                >
-                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Add Transaction
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleDownloadPDF}
+                        className="h-9 sm:h-10 px-3 sm:px-4 bg-white dark:bg-navy-800 border border-gray-200/60 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-navy-900 text-navy dark:text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap shrink-0"
+                    >
+                        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Download PDF
+                    </button>
+                    <button
+                        onClick={() => setShowAdd(true)}
+                        className="h-9 sm:h-10 px-3 sm:px-4 bg-primary hover:bg-teal-700 text-white font-semibold rounded-lg transition-all shadow-sm flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap shrink-0"
+                    >
+                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Add Transaction
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards — 2 cols on mobile, 4 on desktop */}
@@ -167,6 +250,58 @@ export function FinancialClientWrapper({ initialTransactions }: { initialTransac
                     </div>
                 </div>
             </div>
+
+            {/* Charts Section */}
+            {transactions.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl p-4 sm:p-5">
+                        <h3 className="text-sm font-bold text-navy dark:text-white mb-4">Income vs Expense Trend</h3>
+                        <div className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData.barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(val) => `₹${val}`} />
+                                    <Tooltip
+                                        cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                                    <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                    <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                    <div className="bg-white dark:bg-navy-900 border border-gray-100/60 dark:border-gray-800/60 shadow-sm rounded-xl p-4 sm:p-5">
+                        <h3 className="text-sm font-bold text-navy dark:text-white mb-4">Transaction Distribution</h3>
+                        <div className="h-[250px] w-full flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={chartData.pieData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {chartData.pieData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value: any) => formatINR(Number(value))}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Search + Filter */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
