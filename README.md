@@ -93,6 +93,10 @@ Most local real estate sites are either (a) static brochures with no lead intell
 - Full CRM (kept as a clean lead export/integration point instead)
 - Multi-tenant white-label for other agencies (single-agency v1)
 
+## Screenshots
+![UI](Screenshots/UI.png)
+![Admin panel](Screenshots/Admin.png)
+
 # ARCHITECTURE — Real Estate Lead Generation Platform
 
 ## 1. Tech Stack
