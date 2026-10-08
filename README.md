@@ -95,6 +95,7 @@ Most local real estate sites are either (a) static brochures with no lead intell
 
 ## Screenshots
 ![UI](Screenshots/UI.png)
+
 ![Admin panel](Screenshots/Admin.png)
 
 # ARCHITECTURE — Real Estate Lead Generation Platform
