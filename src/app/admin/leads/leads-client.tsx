@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Eye, EyeOff, MessageCircle, FileEdit, Globe, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, X, FileSpreadsheet, FileText, Plus, Eye, EyeOff, MessageCircle, FileEdit, Globe, Pencil, Check, Copy } from 'lucide-react'
 import { isSuspiciousPhone } from '@/lib/suspicious-phone'
 import { SuspiciousPhoneBadge } from '@/components/suspicious-phone-badge'
 
@@ -61,6 +61,7 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [copiedMsg, setCopiedMsg] = useState(false)
   const pageSize = 10
   const supabase = createClient()
 
@@ -355,6 +356,70 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
     logDataExport('pdf', filteredSorted.length)
   }
 
+  // WhatsApp-style quick message — only the 3 essentials an agent needs
+  // (property, name, phone). Email & budget are intentionally left out
+  // because they are optional and may be empty, which breaks the message.
+  const buildWhatsAppText = () => {
+    const blocks = filteredSorted.map((l, i) => {
+      const property = l.property?.title || 'General Enquiry'
+      return `${i + 1}. 🏠 *${property}*\n   👤 ${l.name || 'Unknown'}\n   📞 ${l.phone || '—'}`
+    })
+    return [`📡 *New Leads Enquiries* 📡`, '', ...blocks].join('\n\n')
+  }
+
+  const copyWhatsAppMessage = async () => {
+    const text = buildWhatsAppText()
+    const fallbackCopy = () => {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      fallbackCopy()
+    }
+    setCopiedMsg(true)
+    setTimeout(() => setCopiedMsg(false), 2000)
+    logDataExport('message', filteredSorted.length)
+  }
+
+  // Simple 3-column PDF (property, name, phone) — clean for forwarding to
+  // an agent via WhatsApp without exposing email or budget.
+  const exportSimplePDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const doc = new jsPDF({ orientation: 'landscape' })
+
+    doc.setFontSize(16)
+    doc.text('Roofmint — WhatsApp Leads List', 14, 16)
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(
+      `Generated ${new Date().toLocaleString('en-IN')} · ${filteredSorted.length} lead${filteredSorted.length === 1 ? '' : 's'}`,
+      14, 22
+    )
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['#', 'Property', 'Lead Name', 'Phone']],
+      body: filteredSorted.map((l, i) => [
+        i + 1,
+        l.property?.title || 'General Enquiry',
+        l.name,
+        l.phone || '',
+      ]),
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: [13, 148, 136] },
+    })
+
+    doc.save(`roofmint-whatsapp-leads-${new Date().toISOString().slice(0, 10)}.pdf`)
+    logDataExport('pdf', filteredSorted.length)
+  }
+
   const SortHeader = ({ label, sortKeyVal }: { label: string; sortKeyVal: SortKey }) => (
     <button
       onClick={() => toggleSort(sortKeyVal)}
@@ -402,6 +467,23 @@ export function LeadsClientWrapper({ initialLeads, agents = [], allProperties = 
             className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <FileText className="w-3.5 h-3.5" /> Export PDF
+          </button>
+          <button
+            onClick={copyWhatsAppMessage}
+            disabled={filteredSorted.length === 0}
+            title="Copies a WhatsApp-ready message with only Property, Name & Phone (no email/budget)"
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/60 border border-green-200/60 dark:border-green-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+          >
+            {copiedMsg ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copiedMsg ? 'Copied!' : 'Copy Message'}
+          </button>
+          <button
+            onClick={exportSimplePDF}
+            disabled={filteredSorted.length === 0}
+            title="PDF with only property name, latest name & phone — no email/budget"
+            className="h-9 px-3 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-navy-800 text-navy dark:text-white hover:bg-gray-200 dark:hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+          >
+            <MessageCircle className="w-3.5 h-3.5" /> Simple PDF
           </button>
           <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-navy-800 px-3 py-1 rounded-full whitespace-nowrap shrink-0">{leads.length} total</span>
         </div>

@@ -218,7 +218,7 @@ export async function deleteLead(id: string) {
 // Exporting leads moves every enquirer's name/phone/email/budget out of the
 // system at once (whoever's currently visible under the applied filters) —
 // worth a specific audit trail, same reasoning as the user-data export.
-export async function logDataExport(exportType: 'csv' | 'pdf', recordCount: number) {
+export async function logDataExport(exportType: 'csv' | 'pdf' | 'message', recordCount: number) {
   const { authorized, supabase, user } = await requireAdmin()
   if (!authorized) return { error: 'Unauthorized' }
 
